@@ -3,7 +3,7 @@
 
 void UMDFastBindingContainer::InitializeBindings(UObject* SourceObject)
 {
-	for (const TObjectPtr<UMDFastBindingDestinationBase> Destination : Destinations)
+	for (UMDFastBindingDestinationBase* Destination : Destinations)
 	{
 		Destination->InitializeDestination(SourceObject);
 	}
@@ -13,7 +13,7 @@ void UMDFastBindingContainer::UpdateBindings(UObject* SourceObject)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE_STR(__FUNCTION__);
 	TRACE_CPUPROFILER_EVENT_SCOPE_TEXT(*GetNameSafe(SourceObject));
-	for (const TObjectPtr<UMDFastBindingDestinationBase> Destination : Destinations)
+	for (UMDFastBindingDestinationBase* Destination : Destinations)
 	{
 		Destination->UpdateDestination(SourceObject);
 	}
@@ -21,7 +21,7 @@ void UMDFastBindingContainer::UpdateBindings(UObject* SourceObject)
 
 void UMDFastBindingContainer::TerminateBindings(UObject* SourceObject)
 {
-	for (const TObjectPtr<UMDFastBindingDestinationBase> Destination : Destinations)
+	for (UMDFastBindingDestinationBase* Destination : Destinations)
 	{
 		Destination->TerminateDestination(SourceObject);
 	}

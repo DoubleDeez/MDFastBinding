@@ -125,7 +125,7 @@ void SMDFastBindingEditorWidget::Construct(const FArguments&, const TWeakPtr<FBl
 		FNewMenuDelegate::CreateSP(this, &SMDFastBindingEditorWidget::FillSelectMenu_Root));
 	
 	const TSharedRef<SWidget> MenuBarWidget = MenuBuilder.MakeWidget();
-	//MenuBarWidget->SetVisibility(TAttribute<EVisibility>(this, &SMDFastBindingEditorWidget::GetContainerSelectorVisibility));
+	MenuBarWidget->SetVisibility(TAttribute<EVisibility>(this, &SMDFastBindingEditorWidget::GetContainerSelectorVisibility));
 	
 	AssignBindingData(InBlueprintEditor.Pin()->GetBlueprintObj()->GeneratedClass);
 	SelectBindingContainer(nullptr);
@@ -146,7 +146,9 @@ void SMDFastBindingEditorWidget::Construct(const FArguments&, const TWeakPtr<FBl
 	[
 		SNew(SSplitter)
 		+SSplitter::Slot()
+#if ENGINE_MAJOR_VERSION > 4
 		.MinSize(350.f)
+#endif
 		.Value(0.15f)
 		[
 			SAssignNew(DetailSwitcher, SWidgetSwitcher)
@@ -192,8 +194,12 @@ void SMDFastBindingEditorWidget::Construct(const FArguments&, const TWeakPtr<FBl
 						.AutoWidth()
 						.Padding(0, 0, 4.f, 0)
 						[
-							SNew(SImage)
-							.Image(FAppStyle::Get().GetBrush(TEXT("EditableComboBox.Add")))
+						SNew(SImage)
+#if ENGINE_MAJOR_VERSION <= 4
+						.Image(FCoreStyle::Get().GetBrush(TEXT("EditableComboBox.Add")))
+#else
+						.Image(FAppStyle::Get().GetBrush(TEXT("EditableComboBox.Add")))
+#endif
 						]
 						+SHorizontalBox::Slot()
 						.HAlign(HAlign_Left)
@@ -437,7 +443,11 @@ TSharedRef<ITableRow> SMDFastBindingEditorWidget::GenerateBindingListWidget(TWea
 				.ToolTipText(LOCTEXT("DuplicateBindingTooltip", "Create a duplicate of this binding"))
 				[
 					SNew(SImage)
+#if ENGINE_MAJOR_VERSION <= 4
+					.Image(FCoreStyle::Get().GetBrush(TEXT("GenericCommands.Duplicate")))
+#else
 					.Image(FAppStyle::Get().GetBrush(TEXT("GenericCommands.Duplicate")))
+#endif
 				]
 			]
 			+SHorizontalBox::Slot()
@@ -453,7 +463,11 @@ TSharedRef<ITableRow> SMDFastBindingEditorWidget::GenerateBindingListWidget(TWea
 				.ToolTipText(LOCTEXT("DeleteBindingTooltip", "Delete this binding"))
 				[
 					SNew(SImage)
+#if ENGINE_MAJOR_VERSION <= 4
+					.Image(FCoreStyle::Get().GetBrush(TEXT("GenericCommands.Delete")))
+#else
 					.Image(FAppStyle::Get().GetBrush(TEXT("GenericCommands.Delete")))
+#endif
 				]
 			]
 		];

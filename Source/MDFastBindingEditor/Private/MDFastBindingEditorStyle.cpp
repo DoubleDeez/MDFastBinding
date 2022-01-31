@@ -43,11 +43,19 @@ TSharedRef<FSlateStyleSet> FMDFastBindingEditorStyle::Create()
 {
 	TSharedRef<FSlateStyleSet> Style = MakeShareable(new FSlateStyleSet(GetStyleSetName()));
 	Style->SetContentRoot(IPluginManager::Get().FindPlugin(TEXT("MDFastBinding"))->GetBaseDir() / TEXT("Resources"));
+#if ENGINE_MAJOR_VERSION <= 4
+	Style->Set(TEXT("Icon.Check"), const_cast<FSlateBrush*>(&FCoreStyle::Get().GetWidgetStyle<FCheckBoxStyle>(TEXT("Menu.Check")).CheckedImage));
+#else
 	Style->Set(TEXT("Icon.Check"), const_cast<FSlateBrush*>(&FAppStyle::Get().GetWidgetStyle<FCheckBoxStyle>(TEXT("Menu.Check")).CheckedImage));
+#endif
 	Style->Set(TEXT("Icon.FastBinding_16x"), new IMAGE_BRUSH(TEXT("FastBindingIcon_16x"), Icon16x16));
 	Style->Set(TEXT("Icon.FastBinding_24x"), new IMAGE_BRUSH(TEXT("FastBindingIcon_24x"), Icon24x24));
 
+#if ENGINE_MAJOR_VERSION <= 4
+	FButtonStyle ButtonStyle = FCoreStyle::Get().GetWidgetStyle< FButtonStyle >("FlatButton");
+#else
 	FButtonStyle ButtonStyle = FAppStyle::Get().GetWidgetStyle< FButtonStyle >("FlatButton");
+#endif
 	ButtonStyle.SetNormalPadding(FMargin(2.f));
 	ButtonStyle.SetPressedPadding(FMargin(2.f));
 	Style->Set(TEXT("BindingButton"), ButtonStyle);
