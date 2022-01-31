@@ -1,0 +1,29 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "MDFastBinding",
+	"Description": "A versatile and performant alternative to property bindings. Intended for UMG widgets but usable in any blueprint.",
+	"Category": "Other",
+	"CreatedBy": "DoubleDeez",
+	"CreatedByURL": "https://github.com/DoubleDeez",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "MDFastBinding",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "MDFastBindingEditor",
+			"Type": "Editor",
+			"LoadingPhase": "PostEngineInit"
+		}
+	]
+}

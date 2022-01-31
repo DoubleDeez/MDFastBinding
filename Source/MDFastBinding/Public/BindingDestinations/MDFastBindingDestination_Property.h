@@ -1,0 +1,40 @@
+﻿#pragma once
+
+#include "CoreMinimal.h"
+#include "MDFastBindingFieldPath.h"
+#include "BindingDestinations/MDFastBindingDestinationBase.h"
+#include "MDFastBindingDestination_Property.generated.h"
+
+/**
+ * Set the value of a property
+ */
+UCLASS(collapseCategories, meta=(DisplayName = "Property"))
+class MDFASTBINDING_API UMDFastBindingDestination_Property : public UMDFastBindingDestinationBase
+{
+	GENERATED_BODY()
+
+public:
+	UMDFastBindingDestination_Property();
+
+#if WITH_EDITOR
+	virtual EDataValidationResult IsDataValid(TArray<FText>& ValidationErrors) override;
+#endif
+
+protected:
+	virtual void InitializeDestination_Internal(UObject* SourceObject) override;
+	virtual void UpdateDestination_Internal(UObject* SourceObject) override;
+
+	virtual void PostInitProperties() override;
+
+	virtual UObject* GetPropertyOwner(UObject* SourceObject);
+	virtual UClass* GetPropertyOwnerClass();
+	
+	virtual void SetupBindingItems() override;
+	
+	// Path to the property you want to set
+	UPROPERTY(EditDefaultsOnly, Category = "Binding")
+	FMDFastBindingFieldPath PropertyPath;
+
+	UPROPERTY(Transient)
+	UObject* ObjectProperty = nullptr;
+};
