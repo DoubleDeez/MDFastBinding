@@ -24,10 +24,15 @@ public:
 protected:
 	virtual UObject* GetPropertyOwner(UObject* SourceObject);
 	virtual UClass* GetPropertyOwnerClass();
+	
+	virtual void SetupBindingItems() override;
 
 	virtual void PostInitProperties() override;
 	
 	// Path to the property you want to get
 	UPROPERTY(EditDefaultsOnly, Category = "Binding")
 	FMDFastBindingFieldPath PropertyPath;
+
+	UPROPERTY(Transient)
+	UObject* ObjectProperty = nullptr;
 };
