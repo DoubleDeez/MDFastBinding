@@ -33,9 +33,20 @@ void FMDFastBindingFieldPathCustomization::CustomizeHeader(TSharedRef<IPropertyH
 
 FText FMDFastBindingFieldPathCustomization::GetComboButtonText() const
 {
-	if (const FMDFastBindingFieldPath* FieldPath = ResolveFieldPath())
+	if (FMDFastBindingFieldPath* FieldPath = ResolveFieldPath())
 	{
-		if (FieldPath->FieldPath.Num() == 0)
+		UClass* OwnerClass = FieldPath->GetPathOwnerClass();
+		if (OwnerClass == nullptr)
+		{
+			return LOCTEXT("InvalidPathOwner", "The path owner is invalid");
+		}
+		
+		if (GatherPossibleFields(OwnerClass).Num() == 0)
+		{
+			return FText::Format(LOCTEXT("NoOptionsForPath", "{0} has 0 valid options"), OwnerClass->GetDisplayNameText());
+		}
+		
+		if (FieldPath->GetLeafProperty() == nullptr)
 		{
 			return LOCTEXT("EmptyFieldPathPrompt", "Select a property...");
 		}
@@ -76,7 +87,10 @@ TSharedRef<SWidget> FMDFastBindingFieldPathCustomization::BuildPropertyWidget(co
 {
 	if (InProperty == nullptr)
 	{
-		return SNullWidget::NullWidget;
+		// Something's wrong, the text might have info
+		return SNew(STextBlock)
+			.Text(InText)
+			.ToolTipText(InToolTip);
 	}
 	
 	const UEdGraphSchema_K2* Schema = GetDefault<UEdGraphSchema_K2>();

@@ -1,16 +1,66 @@
 #include "MDFastBinding.h"
 
+#include "PropertySetters/MDFastBindingPropertySetter_Objects.h"
+
 #define LOCTEXT_NAMESPACE "FMDFastBindingModule"
 
 void FMDFastBindingModule::StartupModule()
 {
-	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
+	AddPropertySetter(MakeShared<FMDFastBindingPropertySetter_Objects>());
 }
 
 void FMDFastBindingModule::ShutdownModule()
 {
-	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
-	// we call this function before unloading the module.
+}
+
+void FMDFastBindingModule::AddPropertySetter(TSharedRef<IMDFastBindingPropertySetter> InPropertySetter)
+{
+	FMDFastBindingModule& Module = FModuleManager::GetModuleChecked<FMDFastBindingModule>(TEXT("MDFastBinding"));
+	Module.PropertySetters.Add(InPropertySetter);
+}
+
+bool FMDFastBindingModule::CanSetProperty(const FProperty* DestinationProp, const FProperty* SourceProp)
+{
+	if (SourceProp == nullptr || DestinationProp == nullptr)
+	{
+		return false;
+	}
+
+	FMDFastBindingModule& Module = FModuleManager::GetModuleChecked<FMDFastBindingModule>(TEXT("MDFastBinding"));
+	for (const TSharedRef<IMDFastBindingPropertySetter>& Setter : Module.PropertySetters)
+	{
+		if (Setter->CanSetProperty(*DestinationProp, *SourceProp))
+		{
+			return true;
+		}
+	}
+
+	// Fallback to same type check
+	return SourceProp != nullptr && DestinationProp != nullptr && SourceProp->SameType(DestinationProp);
+}
+
+void FMDFastBindingModule::SetProperty(const FProperty* DestinationProp, void* DestinationValuePtr, const FProperty* SourceProp, const void* SourceValuePtr)
+{
+	if (SourceProp == nullptr || SourceValuePtr == nullptr || DestinationProp == nullptr || DestinationValuePtr == nullptr)
+	{
+		return;
+	}
+	
+	FMDFastBindingModule& Module = FModuleManager::GetModuleChecked<FMDFastBindingModule>(TEXT("MDFastBinding"));
+	for (const TSharedRef<IMDFastBindingPropertySetter>& Setter : Module.PropertySetters)
+	{
+		if (Setter->CanSetProperty(*DestinationProp, *SourceProp))
+		{
+			Setter->SetProperty(*DestinationProp, DestinationValuePtr, *SourceProp, SourceValuePtr);
+			return;
+		}
+	}
+
+	// Fallback to setting same type
+	if (SourceProp->SameType(DestinationProp))
+	{		
+		DestinationProp->CopyCompleteValue(DestinationValuePtr, SourceValuePtr);
+	}
 }
 
 #undef LOCTEXT_NAMESPACE

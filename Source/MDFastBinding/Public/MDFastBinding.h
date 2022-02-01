@@ -1,13 +1,20 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Modules/ModuleManager.h"
+#include "PropertySetters/IMDFastBindingPropertySetter.h"
 
-class FMDFastBindingModule : public IModuleInterface
+class MDFASTBINDING_API FMDFastBindingModule : public IModuleInterface
 {
 public:
-
-	/** IModuleInterface implementation */
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
+
+	static void AddPropertySetter(TSharedRef<IMDFastBindingPropertySetter> InPropertySetter);
+	
+	static bool CanSetProperty(const FProperty* DestinationProp, const FProperty* SourceProp);
+	static void SetProperty(const FProperty* DestinationProp, void* DestinationValuePtr, const FProperty* SourceProp, const void* SourceValuePtr);
+
+private:
+	TArray<TSharedRef<IMDFastBindingPropertySetter>> PropertySetters;
+	
 };

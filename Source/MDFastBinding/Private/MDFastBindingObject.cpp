@@ -1,4 +1,6 @@
 ﻿#include "MDFastBindingObject.h"
+
+#include "MDFastBinding.h"
 #include "MDFastBindingContainer.h"
 #include "BindingValues/MDFastBindingValueBase.h"
 
@@ -123,8 +125,7 @@ EDataValidationResult UMDFastBindingObject::IsDataValid(TArray<FText>& Validatio
 				return EDataValidationResult::Invalid;
 			}
 
-			// TODO - Converters
-			if (!OutputProp->SameType(BindingItem.ItemProperty.Get()))
+			if (!FMDFastBindingModule::CanSetProperty(BindingItem.ItemProperty.Get(), OutputProp))
 			{
 				ValidationErrors.Add(FText::Format(LOCTEXT("BindingItemTypeMismatchError", "Pin '{0}' expects type '{1}' but Value '{2}' has type '{3}'")
 					, FText::FromName(BindingItem.ItemName)

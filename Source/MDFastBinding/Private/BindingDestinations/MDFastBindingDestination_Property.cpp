@@ -1,5 +1,7 @@
 ﻿#include "BindingDestinations/MDFastBindingDestination_Property.h"
 
+#include "MDFastBinding.h"
+
 #define LOCTEXT_NAMESPACE "MDFastBindingDestination_Property"
 
 namespace MDFastBindingDestination_Property_Private
@@ -23,24 +25,9 @@ void UMDFastBindingDestination_Property::InitializeDestination_Internal(UObject*
 void UMDFastBindingDestination_Property::UpdateDestination_Internal(UObject* SourceObject)
 {
 	const TTuple<const FProperty*, void*> Value = GetBindingItemValue(SourceObject, MDFastBindingDestination_Property_Private::ValueSourceName);
-	if (Value.Key ==  nullptr || Value.Value == nullptr)
-	{
-		return;
-	}
-
 	const TTuple<const FProperty*, void*> Property = PropertyPath.ResolvePath(SourceObject);
-	if (Property.Key == nullptr || Property.Value == nullptr)
-	{
-		return;
-	}
 	
-	// TODO - Converters
-	if (!Property.Key->SameType(Value.Key))
-	{
-		return;
-	}
-	
-	Property.Key->CopyCompleteValue(Property.Value, Value.Value);
+	FMDFastBindingModule::SetProperty(Property.Key, Property.Value, Value.Key, Value.Value);
 }
 
 void UMDFastBindingDestination_Property::PostInitProperties()
