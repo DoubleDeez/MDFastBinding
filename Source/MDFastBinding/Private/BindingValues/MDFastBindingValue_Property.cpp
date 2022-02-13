@@ -50,10 +50,10 @@ void UMDFastBindingValue_Property::SetupBindingItems()
 
 void UMDFastBindingValue_Property::PostInitProperties()
 {
-	Super::PostInitProperties();
-	
 	PropertyPath.OwnerClassGetter.BindUObject(this, &UMDFastBindingValue_Property::GetPropertyOwnerClass);
 	PropertyPath.OwnerGetter.BindUObject(this, &UMDFastBindingValue_Property::GetPropertyOwner);
+	
+	Super::PostInitProperties();
 }
 
 #if WITH_EDITOR

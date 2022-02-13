@@ -7,6 +7,8 @@
 #include "MDFastBindingEditorStyle.h"
 #include "MDFastBindingFieldPath.h"
 #include "MDFastBindingFieldPathCustomization.h"
+#include "MDFastBindingFunctionWrapper.h"
+#include "MDFastBindingFunctionWrapperCustomization.h"
 #include "SMDFastBindingEditorWidget.h"
 #include "PropertyEditorDelegates.h"
 #include "PropertyEditorModule.h"
@@ -52,6 +54,7 @@ void FMDFastBindingEditorModule::StartupModule()
 	
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	PropertyModule.RegisterCustomPropertyTypeLayout(FMDFastBindingFieldPath::StaticStruct()->GetFName(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FMDFastBindingFieldPathCustomization::MakeInstance));
+	PropertyModule.RegisterCustomPropertyTypeLayout(FMDFastBindingFunctionWrapper::StaticStruct()->GetFName(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FMDFastBindingFunctionWrapperCustomization::MakeInstance));
 	
 	FBlueprintEditorModule& BlueprintEditorModule = FModuleManager::LoadModuleChecked<FBlueprintEditorModule>("Kismet");
 	BlueprintEditorModule.GetMenuExtensibilityManager()->GetExtenderDelegates().Add(FAssetEditorExtender::CreateRaw(this, &FMDFastBindingEditorModule::CheckAddBindingEditorToolbarButton));
@@ -62,6 +65,7 @@ void FMDFastBindingEditorModule::ShutdownModule()
 	if (FPropertyEditorModule* PropertyModule = FModuleManager::GetModulePtr<FPropertyEditorModule>("PropertyEditor"))
 	{
 		PropertyModule->UnregisterCustomPropertyTypeLayout(FMDFastBindingFieldPath::StaticStruct()->GetFName());
+		PropertyModule->UnregisterCustomPropertyTypeLayout(FMDFastBindingFunctionWrapper::StaticStruct()->GetFName());
 	}
 	
 	FMDFastBindingEditorStyle::Shutdown();

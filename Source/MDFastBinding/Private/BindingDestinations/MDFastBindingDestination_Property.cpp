@@ -32,10 +32,10 @@ void UMDFastBindingDestination_Property::UpdateDestination_Internal(UObject* Sou
 
 void UMDFastBindingDestination_Property::PostInitProperties()
 {
-	Super::PostInitProperties();
-	
 	PropertyPath.OwnerClassGetter.BindUObject(this, &UMDFastBindingDestination_Property::GetPropertyOwnerClass);
 	PropertyPath.OwnerGetter.BindUObject(this, &UMDFastBindingDestination_Property::GetPropertyOwner);
+	
+	Super::PostInitProperties();
 }
 
 UObject* UMDFastBindingDestination_Property::GetPropertyOwner(UObject* SourceObject)
