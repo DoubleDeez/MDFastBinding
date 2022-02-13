@@ -15,6 +15,8 @@ class MDFASTBINDING_API UMDFastBindingDestination_Property : public UMDFastBindi
 
 public:
 	UMDFastBindingDestination_Property();
+	
+	virtual bool DoesBindingItemDefaultToSelf(const FName& InItemName) const override;
 
 #if WITH_EDITOR
 	virtual EDataValidationResult IsDataValid(TArray<FText>& ValidationErrors) override;

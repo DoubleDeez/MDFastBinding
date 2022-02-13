@@ -7,17 +7,29 @@
 
 class UMDFastBindingValueBase;
 
+// Represented as a pin in the binding editor graph
 USTRUCT()
 struct FMDFastBindingItem
 {
 	GENERATED_BODY()
 
 public:
+	~FMDFastBindingItem();
+	
 	UPROPERTY(VisibleAnywhere, Category = "Bindings")
 	FName ItemName = NAME_None;
 	
 	UPROPERTY(EditDefaultsOnly, Instanced, Category = "Bindings")
 	UMDFastBindingValueBase* Value = nullptr;
+
+	UPROPERTY()
+	FString DefaultString;
+
+	UPROPERTY()
+	FText DefaultText;
+
+	UPROPERTY()
+	UObject* DefaultObject = nullptr;
 
 	FText ToolTip;
 
@@ -29,6 +41,18 @@ public:
 	{
 		return ItemName == InName;
 	}
+
+	void ClearDefaultValues()
+	{
+		DefaultString = {};
+		DefaultText = {};
+		DefaultObject = nullptr;
+	}
+
+	TTuple<const FProperty*, void*> GetValue(UObject* SourceObject);
+
+private:
+	void* AllocatedDefaultValue = nullptr;
 };
 
 /**
@@ -44,6 +68,8 @@ public:
 	
 	virtual void SetupBindingItems() {}
 
+	virtual bool DoesBindingItemDefaultToSelf(const FName& InItemName) const { return false; }
+
 // Editor only operations
 #if WITH_EDITORONLY_DATA
 	UPROPERTY()
@@ -58,11 +84,12 @@ public:
 	UPROPERTY()
 	bool bIsCommentBubbleVisible = false;
 
-	virtual FText GetDisplayName() const;
-	virtual FText GetToolTipText() const;
+	virtual FText GetDisplayName();
+	virtual FText GetToolTipText();
 
 	const TArray<FMDFastBindingItem>& GetBindingItems() const { return BindingItems; }
 	const FMDFastBindingItem* FindBindingItem(const FName& ItemName) const;
+	FMDFastBindingItem* FindBindingItem(const FName& ItemName);
 	UMDFastBindingValueBase* SetBindingItem(const FName& ItemName, TSubclassOf<UMDFastBindingValueBase> ValueClass);
 	void ClearBindingItemValue(const FName& ItemName);
 #endif
@@ -80,8 +107,8 @@ protected:
 	void EnsureBindingItemExists(const FName& ItemName, const FProperty* ItemProperty, const FText& ItemDescription, bool bIsOptional = false);
 	
 	const FProperty* GetBindingItemValueProperty(const FName& Name) const;
-	TTuple<const FProperty*, void*> GetBindingItemValue(UObject* SourceObject, const FName& Name) const;
-	TTuple<const FProperty*, void*> GetBindingItemValue(UObject* SourceObject, int32 Index) const;
+	TTuple<const FProperty*, void*> GetBindingItemValue(UObject* SourceObject, const FName& Name);
+	TTuple<const FProperty*, void*> GetBindingItemValue(UObject* SourceObject, int32 Index);
 
 	UPROPERTY()
 	TArray<FMDFastBindingItem> BindingItems;

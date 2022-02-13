@@ -6,6 +6,53 @@
 
 #define LOCTEXT_NAMESPACE "MDFastBindingObject"
 
+FMDFastBindingItem::~FMDFastBindingItem()
+{
+	if (AllocatedDefaultValue != nullptr)
+	{
+		FMemory::Free(AllocatedDefaultValue);
+	}
+}
+
+TTuple<const FProperty*, void*> FMDFastBindingItem::GetValue(UObject* SourceObject)
+{
+	const FProperty* ItemProp = ItemProperty.Get();
+	if (ItemProp == nullptr)
+	{
+		return {};
+	}
+	
+	if (Value != nullptr)
+	{
+		return Value->GetValue(SourceObject);
+	}
+	else if (AllocatedDefaultValue != nullptr)
+	{
+		return TTuple<const FProperty*, void*>{ ItemProp, AllocatedDefaultValue };
+	}
+	else if (ItemProp->IsA<FObjectPropertyBase>())
+	{
+		return TTuple<const FProperty*, void*>{ ItemProp, &DefaultObject };
+	}
+	else if (ItemProp->IsA<FTextProperty>())
+	{
+		return TTuple<const FProperty*, void*>{ ItemProp, &DefaultText };
+	}
+	else if (ItemProp->IsA<FStrProperty>())
+	{
+		return TTuple<const FProperty*, void*>{ ItemProp, &DefaultString };
+	}
+	else if (!DefaultString.IsEmpty())
+	{
+		AllocatedDefaultValue = FMemory::Malloc(ItemProp->GetSize(), ItemProp->GetMinAlignment());
+		ItemProp->InitializeValue(AllocatedDefaultValue);
+		ItemProp->ImportText(*DefaultString, AllocatedDefaultValue, PPF_None, nullptr);
+		return TTuple<const FProperty*, void*>{ ItemProp, AllocatedDefaultValue };
+	}
+
+	return {};
+}
+
 UClass* UMDFastBindingObject::GetBindingOuterClass() const
 {
 #if !WITH_EDITOR
@@ -50,7 +97,9 @@ void UMDFastBindingObject::EnsureBindingItemExists(const FName& ItemName, const 
 	FMDFastBindingItem* BindingItem = BindingItems.FindByKey(ItemName);
 	if (BindingItem == nullptr)
 	{
-		BindingItems.Add({ ItemName });
+		FMDFastBindingItem Item;
+		Item.ItemName = ItemName;
+		BindingItems.Add(MoveTemp(Item));
 		BindingItem = BindingItems.FindByKey(ItemName);
 	}
 
@@ -73,27 +122,21 @@ const FProperty* UMDFastBindingObject::GetBindingItemValueProperty(const FName& 
 }
 
 TTuple<const FProperty*, void*> UMDFastBindingObject::GetBindingItemValue(UObject* SourceObject,
-                                                                          const FName& Name) const
+                                                                          const FName& Name)
 {
-	if (const FMDFastBindingItem* Item = BindingItems.FindByKey(Name))
+	if (FMDFastBindingItem* Item = BindingItems.FindByKey(Name))
 	{
-		if (Item->Value != nullptr)
-		{
-			return Item->Value->GetValue(SourceObject);
-		}
+		return Item->GetValue(SourceObject);
 	}
 	
 	return {};
 }
 
-TTuple<const FProperty*, void*> UMDFastBindingObject::GetBindingItemValue(UObject* SourceObject, int32 Index) const
+TTuple<const FProperty*, void*> UMDFastBindingObject::GetBindingItemValue(UObject* SourceObject, int32 Index)
 {
 	if (BindingItems.IsValidIndex(Index))
 	{
-		if (BindingItems[Index].Value != nullptr)
-		{
-			return BindingItems[Index].Value->GetValue(SourceObject);
-		}
+		return BindingItems[Index].GetValue(SourceObject);
 	}
 	
 	return {};
@@ -109,14 +152,17 @@ EDataValidationResult UMDFastBindingObject::IsDataValid(TArray<FText>& Validatio
 			ValidationErrors.Add(FText::Format(LOCTEXT("BindingItemNullTypeError", "Pin '{0}' is missing an expected type"), FText::FromName(BindingItem.ItemName)));
 			return EDataValidationResult::Invalid;
 		}
-		
-		if (!BindingItem.bAllowNullValue && BindingItem.Value == nullptr)
-		{
-			ValidationErrors.Add(FText::Format(LOCTEXT("NullBindingItemValueError", "Pin '{0}' is empty"), FText::FromName(BindingItem.ItemName)));
-			return EDataValidationResult::Invalid;
-		}
 
-		if (BindingItem.Value != nullptr)
+		if (BindingItem.Value == nullptr && !BindingItem.bAllowNullValue)
+		{
+			const FProperty* ItemProp = BindingItem.ItemProperty.Get();
+			if (!ItemProp->IsA<FObjectPropertyBase>() && !ItemProp->IsA<FTextProperty>() && !ItemProp->IsA<FStrProperty>() && BindingItem.DefaultString.IsEmpty())
+			{
+				ValidationErrors.Add(FText::Format(LOCTEXT("NullBindingItemValueError", "Pin '{0}' is empty"), FText::FromName(BindingItem.ItemName)));
+				return EDataValidationResult::Invalid;
+			}
+		}
+		else if (BindingItem.Value != nullptr)
 		{
 			const FProperty* OutputProp = BindingItem.Value->GetOutputProperty();
 			if (OutputProp == nullptr)
@@ -149,12 +195,12 @@ void UMDFastBindingObject::PostEditChangeProperty(FPropertyChangedEvent& Propert
 #endif
 
 #if WITH_EDITORONLY_DATA
-FText UMDFastBindingObject::GetDisplayName() const
+FText UMDFastBindingObject::GetDisplayName()
 {
 	return DevName.IsEmptyOrWhitespace() ? GetClass()->GetDisplayNameText() : DevName;
 }
 
-FText UMDFastBindingObject::GetToolTipText() const
+FText UMDFastBindingObject::GetToolTipText()
 {
 	return GetClass()->GetToolTipText();
 }
@@ -164,14 +210,20 @@ const FMDFastBindingItem* UMDFastBindingObject::FindBindingItem(const FName& Ite
 	return BindingItems.FindByKey(ItemName);
 }
 
+FMDFastBindingItem* UMDFastBindingObject::FindBindingItem(const FName& ItemName)
+{
+	return BindingItems.FindByKey(ItemName);
+}
+
 UMDFastBindingValueBase* UMDFastBindingObject::SetBindingItem(const FName& ItemName,
-	TSubclassOf<UMDFastBindingValueBase> ValueClass)
+                                                              TSubclassOf<UMDFastBindingValueBase> ValueClass)
 {
 	if (FMDFastBindingItem* BindingItem = BindingItems.FindByKey(ItemName))
 	{
 		if (UMDFastBindingValueBase* NewValue = NewObject<UMDFastBindingValueBase>(this, ValueClass, NAME_None, RF_Public | RF_Transactional))
 		{
 			BindingItem->Value = NewValue;
+			BindingItem->ClearDefaultValues();
 			return NewValue;
 		}
 	}
@@ -184,6 +236,7 @@ void UMDFastBindingObject::ClearBindingItemValue(const FName& ItemName)
 	if (FMDFastBindingItem* BindingItem = BindingItems.FindByKey(ItemName))
 	{
 		BindingItem->Value = nullptr;
+		BindingItem->ClearDefaultValues();
 	}
 }
 #endif

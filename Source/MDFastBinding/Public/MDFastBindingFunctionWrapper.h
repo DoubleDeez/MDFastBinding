@@ -27,6 +27,8 @@ public:
 
 	const FProperty* GetReturnProp();
 
+	UFunction* GetFunctionPtr();
+
 	TTuple<const FProperty*, void*> CallFunction(UObject* SourceObject);
 
 	const FName& GetFunctionName() const { return FunctionName; }

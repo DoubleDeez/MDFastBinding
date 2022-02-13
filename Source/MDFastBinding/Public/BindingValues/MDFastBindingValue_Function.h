@@ -16,7 +16,11 @@ class MDFASTBINDING_API UMDFastBindingValue_Function : public UMDFastBindingValu
 public:
 	virtual TTuple<const FProperty*, void*> GetValue(UObject* SourceObject) override;
 	virtual const FProperty* GetOutputProperty() override;
+	virtual bool DoesBindingItemDefaultToSelf(const FName& InItemName) const override;
 
+#if WITH_EDITORONLY_DATA
+	virtual FText GetDisplayName() override;
+#endif
 #if WITH_EDITOR
 	virtual EDataValidationResult IsDataValid(TArray<FText>& ValidationErrors) override;
 #endif

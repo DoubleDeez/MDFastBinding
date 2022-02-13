@@ -19,12 +19,34 @@ const FProperty* UMDFastBindingValue_Function::GetOutputProperty()
 	return Function.GetReturnProp();
 }
 
+bool UMDFastBindingValue_Function::DoesBindingItemDefaultToSelf(const FName& InItemName) const
+{
+	return InItemName == MDFastBindingValue_Function_Private::FunctionOwnerName;
+}
+
+#if WITH_EDITORONLY_DATA
+FText UMDFastBindingValue_Function::GetDisplayName()
+{
+	if (!DevName.IsEmptyOrWhitespace())
+	{
+		return DevName;
+	}
+
+	if (const UFunction* Func = Function.GetFunctionPtr())
+	{
+		return Func->GetDisplayNameText();
+	}
+	
+	return Super::GetDisplayName();
+}
+#endif
+
 UObject* UMDFastBindingValue_Function::GetFunctionOwner(UObject* SourceObject)
 {
-	const TTuple<const FProperty*, void*> PathRoot = GetBindingItemValue(SourceObject, MDFastBindingValue_Function_Private::FunctionOwnerName);
-	if (PathRoot.Value != nullptr)
+	const TTuple<const FProperty*, void*> FunctionOwner = GetBindingItemValue(SourceObject, MDFastBindingValue_Function_Private::FunctionOwnerName);
+	if (FunctionOwner.Value != nullptr)
 	{
-		return *static_cast<UObject**>(PathRoot.Value);
+		return *static_cast<UObject**>(FunctionOwner.Value);
 	}
 	
 	return SourceObject;

@@ -2,8 +2,19 @@
 
 #include "CoreMinimal.h"
 #include "SGraphNode.h"
+#include "SGraphPin.h"
+#include "KismetPins/SGraphPinObject.h"
 
 class UMDFastBindingGraphNode;
+
+class MDFASTBINDINGEDITOR_API SMDFastBindingSelfGraphPinWidget : public SGraphPinObject
+{
+public:
+	using SGraphPinObject::Construct;
+
+	virtual bool ShouldDisplayAsSelfPin() const override { return true; }
+};
+
 /**
  * 
  */
@@ -28,5 +39,9 @@ public:
 
 protected:
 	virtual void UpdateErrorInfo() override;
+
+	virtual TSharedPtr<SGraphPin> CreatePinWidget(UEdGraphPin* Pin) const override;
+
+	bool IsSelfPin(UEdGraphPin& Pin) const;
 	
 };

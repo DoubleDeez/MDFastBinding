@@ -15,6 +15,11 @@ UMDFastBindingDestination_Property::UMDFastBindingDestination_Property()
 	PropertyPath.bOnlyAllowBlueprintReadWriteProperties = true;
 }
 
+bool UMDFastBindingDestination_Property::DoesBindingItemDefaultToSelf(const FName& InItemName) const
+{
+	return InItemName == MDFastBindingDestination_Property_Private::PathRootName;
+}
+
 void UMDFastBindingDestination_Property::InitializeDestination_Internal(UObject* SourceObject)
 {
 	Super::InitializeDestination_Internal(SourceObject);
@@ -43,7 +48,10 @@ UObject* UMDFastBindingDestination_Property::GetPropertyOwner(UObject* SourceObj
 	const TTuple<const FProperty*, void*> PathRoot = GetBindingItemValue(SourceObject, MDFastBindingDestination_Property_Private::PathRootName);
 	if (PathRoot.Value != nullptr)
 	{
-		return *static_cast<UObject**>(PathRoot.Value);
+		if (UObject* Owner = *static_cast<UObject**>(PathRoot.Value))
+		{
+			return Owner;
+		}
 	}
 
 	return SourceObject;

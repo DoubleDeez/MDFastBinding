@@ -428,7 +428,7 @@ TSharedRef<ITableRow> SMDFastBindingEditorWidget::GenerateBindingListWidget(TWea
 			.FillWidth(1.f)
 			[
 				SNew(STextBlock)
-				.Text_UObject(BindingPtr, &UMDFastBindingObject::GetDisplayName)
+				.Text(TAttribute<FText>::Create(TAttribute<FText>::FGetter::CreateUObject(BindingPtr, &UMDFastBindingObject::GetDisplayName)))
 			]
 			+SHorizontalBox::Slot()
 			.VAlign(VAlign_Center)

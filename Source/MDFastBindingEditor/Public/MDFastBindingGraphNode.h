@@ -29,6 +29,8 @@ public:
 
 	void DeleteNode();
 
+	virtual void PinDefaultValueChanged(UEdGraphPin* Pin) override;
+
 	static const FName OutputPinName;
 
 protected:

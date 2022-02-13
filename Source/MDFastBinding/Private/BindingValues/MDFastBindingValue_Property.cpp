@@ -17,12 +17,37 @@ const FProperty* UMDFastBindingValue_Property::GetOutputProperty()
 	return PropertyPath.GetLeafProperty();
 }
 
+bool UMDFastBindingValue_Property::DoesBindingItemDefaultToSelf(const FName& InItemName) const
+{
+	return InItemName == MDFastBindingValue_Property_Private::PathRootName;
+}
+
+#if WITH_EDITORONLY_DATA
+FText UMDFastBindingValue_Property::GetDisplayName()
+{
+	if (!DevName.IsEmptyOrWhitespace())
+	{
+		return DevName;
+	}
+
+	if (const FProperty* LeafProp = PropertyPath.GetLeafProperty())
+	{
+		return LeafProp->GetDisplayNameText();
+	}
+	
+	return Super::GetDisplayName();
+}
+#endif
+
 UObject* UMDFastBindingValue_Property::GetPropertyOwner(UObject* SourceObject)
 {
 	const TTuple<const FProperty*, void*> PathRoot = GetBindingItemValue(SourceObject, MDFastBindingValue_Property_Private::PathRootName);
 	if (PathRoot.Value != nullptr)
 	{
-		return *static_cast<UObject**>(PathRoot.Value);
+		if (UObject* Owner = *static_cast<UObject**>(PathRoot.Value))
+		{
+			return Owner;
+		}
 	}
 	
 	return SourceObject;

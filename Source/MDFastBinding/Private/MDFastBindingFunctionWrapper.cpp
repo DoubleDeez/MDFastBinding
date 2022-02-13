@@ -55,6 +55,18 @@ const FProperty* FMDFastBindingFunctionWrapper::GetReturnProp()
 	return ReturnProp;
 }
 
+UFunction* FMDFastBindingFunctionWrapper::GetFunctionPtr()
+{
+#if !WITH_EDITOR
+	if (FunctionPtr == nullptr)
+#endif
+	{
+		BuildFunctionData();
+	}
+	
+	return FunctionPtr;
+}
+
 TTuple<const FProperty*, void*> FMDFastBindingFunctionWrapper::CallFunction(UObject* SourceObject)
 {
 #if !WITH_EDITOR

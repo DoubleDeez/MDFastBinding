@@ -2,6 +2,7 @@
 
 #include "MDFastBindingGraphNode.h"
 #include "MDFastBindingObject.h"
+#include "NodeFactory.h"
 
 #define LOCTEXT_NAMESPACE "MDFastBindingGraphNodeWidget"
 
@@ -59,6 +60,33 @@ void SMDFastBindingGraphNodeWidget::UpdateErrorInfo()
 			}
 		}
 	}
+}
+
+TSharedPtr<SGraphPin> SMDFastBindingGraphNodeWidget::CreatePinWidget(UEdGraphPin* Pin) const
+{
+	if (IsSelfPin(*Pin))
+	{
+		return SNew(SMDFastBindingSelfGraphPinWidget, Pin);
+	}
+	else if (TSharedPtr<SGraphPin> K2Pin = FNodeFactory::CreateK2PinWidget(Pin))
+	{
+		return K2Pin;
+	}
+	
+	return SGraphNode::CreatePinWidget(Pin);
+}
+
+bool SMDFastBindingGraphNodeWidget::IsSelfPin(UEdGraphPin& Pin) const
+{
+	if (const UMDFastBindingGraphNode* Node = GetGraphNode())
+	{
+		if (const UMDFastBindingObject* BindingObject = Node->GetBindingObject())
+		{
+			return BindingObject->DoesBindingItemDefaultToSelf(Pin.GetFName());
+		}
+	}
+
+	return false;
 }
 
 #undef LOCTEXT_NAMESPACE

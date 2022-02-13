@@ -77,9 +77,23 @@ void UMDFastBindingGraphNode::DeleteNode()
 	}
 }
 
+void UMDFastBindingGraphNode::PinDefaultValueChanged(UEdGraphPin* Pin)
+{
+	if (UMDFastBindingObject* Object = BindingObject.Get())
+	{
+		if (FMDFastBindingItem* Item = Object->FindBindingItem(Pin->GetFName()))
+		{
+			Object->Modify();
+			Item->DefaultObject = Pin->DefaultObject;
+			Item->DefaultString = Pin->DefaultValue;
+			Item->DefaultText = Pin->DefaultTextValue;
+		}
+	}
+}
+
 FText UMDFastBindingGraphNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
-	if (const UMDFastBindingObject* Object = BindingObject.Get())
+	if (UMDFastBindingObject* Object = BindingObject.Get())
 	{
 		return Object->GetDisplayName();
 	}
@@ -140,7 +154,7 @@ FLinearColor UMDFastBindingGraphNode::GetNodeTitleColor() const
 
 FText UMDFastBindingGraphNode::GetTooltipText() const
 {
-	if (const UMDFastBindingObject* Object = BindingObject.Get())
+	if (UMDFastBindingObject* Object = BindingObject.Get())
 	{
 		return Object->GetToolTipText();
 	}
@@ -163,6 +177,9 @@ void UMDFastBindingGraphNode::AllocateDefaultPins()
 				if (UEdGraphPin* Pin = CreatePin(EGPD_Input, ItemPinType, Item.ItemName))
 				{
 					Pin->PinToolTip = Item.ToolTip.ToString();
+					Pin->DefaultObject = Item.DefaultObject;
+					Pin->DefaultValue = Item.DefaultString;
+					Pin->DefaultTextValue = Item.DefaultText;
 				}
 			}
 		}

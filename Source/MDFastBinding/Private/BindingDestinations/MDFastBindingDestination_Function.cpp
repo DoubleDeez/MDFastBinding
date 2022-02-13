@@ -23,10 +23,13 @@ void UMDFastBindingDestination_Function::UpdateDestination_Internal(UObject* Sou
 
 UObject* UMDFastBindingDestination_Function::GetFunctionOwner(UObject* SourceObject)
 {
-	const TTuple<const FProperty*, void*> PathRoot = GetBindingItemValue(SourceObject, MDFastBindingDestination_Function_Private::FunctionOwnerName);
-	if (PathRoot.Value != nullptr)
+	const TTuple<const FProperty*, void*> FunctionOwner = GetBindingItemValue(SourceObject, MDFastBindingDestination_Function_Private::FunctionOwnerName);
+	if (FunctionOwner.Value != nullptr)
 	{
-		return *static_cast<UObject**>(PathRoot.Value);
+		if (UObject* Owner = *static_cast<UObject**>(FunctionOwner.Value))
+		{
+			return Owner;
+		}
 	}
 
 	return SourceObject;
@@ -94,7 +97,13 @@ void UMDFastBindingDestination_Function::PostInitProperties()
 	Super::PostInitProperties();
 }
 
+bool UMDFastBindingDestination_Function::DoesBindingItemDefaultToSelf(const FName& InItemName) const
+{
+	return InItemName == MDFastBindingDestination_Function_Private::FunctionOwnerName;
+}
+
 #if WITH_EDITOR
+
 EDataValidationResult UMDFastBindingDestination_Function::IsDataValid(TArray<FText>& ValidationErrors)
 {
 	EDataValidationResult Result = Super::IsDataValid(ValidationErrors);
