@@ -30,14 +30,6 @@ TTuple<const FProperty*, void*> FMDFastBindingItem::GetValue(UObject* SourceObje
 	{
 		return TTuple<const FProperty*, void*>{ ItemProp, AllocatedDefaultValue };
 	}
-	else if (ItemProp->IsA<FObjectPropertyBase>())
-	{
-		return TTuple<const FProperty*, void*>{ ItemProp, &DefaultObject };
-	}
-	else if (ItemProp->IsA<FTextProperty>())
-	{
-		return TTuple<const FProperty*, void*>{ ItemProp, &DefaultText };
-	}
 	else if (ItemProp->IsA<FStrProperty>())
 	{
 		return TTuple<const FProperty*, void*>{ ItemProp, &DefaultString };
@@ -48,6 +40,14 @@ TTuple<const FProperty*, void*> FMDFastBindingItem::GetValue(UObject* SourceObje
 		ItemProp->InitializeValue(AllocatedDefaultValue);
 		ItemProp->ImportText(*DefaultString, AllocatedDefaultValue, PPF_None, nullptr);
 		return TTuple<const FProperty*, void*>{ ItemProp, AllocatedDefaultValue };
+	}
+	else if (ItemProp->IsA<FObjectPropertyBase>())
+	{
+		return TTuple<const FProperty*, void*>{ ItemProp, &DefaultObject };
+	}
+	else if (ItemProp->IsA<FTextProperty>())
+	{
+		return TTuple<const FProperty*, void*>{ ItemProp, &DefaultText };
 	}
 
 	return {};

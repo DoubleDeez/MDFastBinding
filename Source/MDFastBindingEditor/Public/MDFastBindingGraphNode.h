@@ -48,6 +48,8 @@ protected:
 	
 	virtual FText GetTooltipText() const override;
 
+	void RefreshGraph();
+
 private:
 	TWeakObjectPtr<UMDFastBindingObject> BindingObject;
 };

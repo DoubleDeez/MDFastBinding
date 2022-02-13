@@ -1,6 +1,7 @@
 ﻿#include "MDFastBindingGraphNode.h"
 
 #include "MDFastBindingEditorStyle.h"
+#include "MDFastBindingGraph.h"
 #include "MDFastBindingObject.h"
 #include "SMDFastBindingGraphNodeWidget.h"
 #include "BindingDestinations/MDFastBindingDestinationBase.h"
@@ -87,6 +88,7 @@ void UMDFastBindingGraphNode::PinDefaultValueChanged(UEdGraphPin* Pin)
 			Item->DefaultObject = Pin->DefaultObject;
 			Item->DefaultString = Pin->DefaultValue;
 			Item->DefaultText = Pin->DefaultTextValue;
+			RefreshGraph();
 		}
 	}
 }
@@ -160,6 +162,14 @@ FText UMDFastBindingGraphNode::GetTooltipText() const
 	}
 	
 	return Super::GetTooltipText();
+}
+
+void UMDFastBindingGraphNode::RefreshGraph()
+{
+	if (UMDFastBindingGraph* MDGraph = Cast<UMDFastBindingGraph>(GetGraph()))
+	{
+		MDGraph->RefreshGraph();
+	}
 }
 
 void UMDFastBindingGraphNode::AllocateDefaultPins()
