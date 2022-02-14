@@ -53,3 +53,21 @@ void FMDFastBindingHelpers::SplitFunctionParamsAndReturnProp(const UFunction* Fu
 		}
 	}
 }
+
+FString FMDFastBindingHelpers::PropertyToString(const FProperty& Prop)
+{
+	if (const FArrayProperty* ArrayProp = CastField<const FArrayProperty>(&Prop))
+	{
+		return FString::Printf(TEXT("%s<%s>"), *Prop.GetCPPType(), *PropertyToString(*ArrayProp->Inner));
+	}
+	else if (const FSetProperty* SetProp = CastField<const FSetProperty>(&Prop))
+	{
+		return FString::Printf(TEXT("%s<%s>"), *Prop.GetCPPType(), *PropertyToString(*SetProp->ElementProp));
+	}
+	else if (const FMapProperty* MapProp = CastField<const FMapProperty>(&Prop))
+	{
+		return FString::Printf(TEXT("%s<%s, %s>"), *Prop.GetCPPType(), *PropertyToString(*MapProp->KeyProp), *PropertyToString(*MapProp->ValueProp));
+	}
+
+	return Prop.GetCPPType();
+}

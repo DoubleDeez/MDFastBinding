@@ -13,7 +13,19 @@ void FMDFastBindingPropertySetter_Objects::SetProperty(const FProperty& Destinat
 	const FObjectPropertyBase* SrcObjProp = CastField<const FObjectPropertyBase>(&SourceProp);
 
 	UObject* ObjectValue = SrcObjProp->GetObjectPropertyValue(SourceValuePtr);
-	DestObjProp->SetObjectPropertyValue(DestinationValuePtr, ObjectValue);
+
+	// Check if the declared types are compatible, if not, check if the actual type is compatible
+	const bool bCanAssign = (SrcObjProp->PropertyClass->IsChildOf(DestObjProp->PropertyClass))
+		|| (ObjectValue != nullptr && ObjectValue->IsA(DestObjProp->PropertyClass));
+	
+	if (bCanAssign)
+	{
+		DestObjProp->SetObjectPropertyValue(DestinationValuePtr, ObjectValue);
+	}
+	else
+	{
+		DestObjProp->SetObjectPropertyValue(DestinationValuePtr, nullptr);
+	}
 }
 
 bool FMDFastBindingPropertySetter_Objects::CanSetProperty(const FProperty& DestinationProp, const FProperty& SourceProp) const
@@ -25,10 +37,5 @@ bool FMDFastBindingPropertySetter_Objects::CanSetProperty(const FProperty& Desti
 
 	const FObjectPropertyBase* DestObjProp = CastField<const FObjectPropertyBase>(&DestinationProp);
 	const FObjectPropertyBase* SrcObjProp = CastField<const FObjectPropertyBase>(&SourceProp);
-	if (DestObjProp == nullptr || SrcObjProp == nullptr)
-	{
-		return false;
-	}
-
-	return SrcObjProp->PropertyClass->IsChildOf(DestObjProp->PropertyClass);
+	return DestObjProp != nullptr && SrcObjProp != nullptr;
 }

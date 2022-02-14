@@ -1,5 +1,6 @@
 #include "MDFastBinding.h"
 
+#include "PropertySetters/MDFastBindingPropertySetter_Containers.h"
 #include "PropertySetters/MDFastBindingPropertySetter_Objects.h"
 
 #define LOCTEXT_NAMESPACE "FMDFastBindingModule"
@@ -7,6 +8,7 @@
 void FMDFastBindingModule::StartupModule()
 {
 	AddPropertySetter(MakeShared<FMDFastBindingPropertySetter_Objects>());
+	AddPropertySetter(MakeShared<FMDFastBindingPropertySetter_Containers>());
 }
 
 void FMDFastBindingModule::ShutdownModule()

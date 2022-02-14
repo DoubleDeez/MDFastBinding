@@ -107,7 +107,7 @@ TSharedRef<SWidget> FMDFastBindingFieldPathCustomization::BuildPropertyWidget(co
 			SNew(SImage)
 			.Image(bIsFunction ? FEditorStyle::Get().GetBrush(TEXT("GraphEditor.Function_16x")) : FBlueprintEditorUtils::GetIconFromPin(PinType, true))
 			.ColorAndOpacity(Schema->GetPinTypeColor(PinType))
-			.ToolTipText(FText::FromString(InProperty->GetCPPType()))
+			.ToolTipText(FText::FromString(FMDFastBindingHelpers::PropertyToString(*InProperty)))
 		]
 		+SHorizontalBox::Slot()
 		.HAlign(HAlign_Left)
@@ -183,7 +183,7 @@ void FMDFastBindingFieldPathCustomization::BuildFieldPathMenu(FMenuBuilder& Menu
 			
 			Path.Add(Func->GetFName());
 			DisplayName = FText::FromName(Func->GetFName());
-			ToolTip = FText::Format(FuncToolTipFormat, Func->GetDisplayNameText(), FText::FromString(FieldProp->GetCPPType()), Func->GetToolTipText());
+			ToolTip = FText::Format(FuncToolTipFormat, Func->GetDisplayNameText(), FText::FromString(FMDFastBindingHelpers::PropertyToString(*FieldProp)), Func->GetToolTipText());
 			bIsFunction = true;
 		}
 		else
@@ -193,7 +193,7 @@ void FMDFastBindingFieldPathCustomization::BuildFieldPathMenu(FMenuBuilder& Menu
 			FieldProp = CastField<const FProperty>(Field.ToField());
 			Path.Add(FieldProp->GetFName());
 			DisplayName = FText::FromName(FieldProp->GetFName());
-			ToolTip = FText::Format(PropToolTipFormat, FieldProp->GetDisplayNameText(), FText::FromString(FieldProp->GetCPPType()), FieldProp->GetToolTipText());
+			ToolTip = FText::Format(PropToolTipFormat, FieldProp->GetDisplayNameText(), FText::FromString(FMDFastBindingHelpers::PropertyToString(*FieldProp)), FieldProp->GetToolTipText());
 		}
 
 		FUIAction OnFieldSelected = FUIAction(FExecuteAction::CreateSP(this, &FMDFastBindingFieldPathCustomization::SetFieldPath, Path));

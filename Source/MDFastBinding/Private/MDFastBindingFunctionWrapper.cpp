@@ -170,11 +170,11 @@ FString FMDFastBindingFunctionWrapper::FunctionToString_Internal(UFunction* Func
 				ParamString += TEXT(", ");
 			}
 
-			ParamString += Param->GetCPPType() + TEXT(" ") + Param->GetName();
+			ParamString += FMDFastBindingHelpers::PropertyToString(*Param) + TEXT(" ") + Param->GetName();
 		}
 	}
 
-	const FString ReturnString = ReturnProp != nullptr ? ReturnProp->GetCPPType() : TEXT("void"); 
+	const FString ReturnString = ReturnProp != nullptr ? FMDFastBindingHelpers::PropertyToString(*ReturnProp) : TEXT("void"); 
 
 	return FString::Printf(TEXT("%s %s(%s)"), *ReturnString, *Func->GetDisplayNameText().ToString(), *ParamString);
 }

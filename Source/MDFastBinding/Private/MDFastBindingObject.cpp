@@ -2,6 +2,7 @@
 
 #include "MDFastBinding.h"
 #include "MDFastBindingContainer.h"
+#include "MDFastBindingHelpers.h"
 #include "BindingValues/MDFastBindingValueBase.h"
 
 #define LOCTEXT_NAMESPACE "MDFastBindingObject"
@@ -175,9 +176,9 @@ EDataValidationResult UMDFastBindingObject::IsDataValid(TArray<FText>& Validatio
 			{
 				ValidationErrors.Add(FText::Format(LOCTEXT("BindingItemTypeMismatchError", "Pin '{0}' expects type '{1}' but Value '{2}' has type '{3}'")
 					, FText::FromName(BindingItem.ItemName)
-					, FText::FromString(BindingItem.ItemProperty->GetCPPType())
+					, FText::FromString(FMDFastBindingHelpers::PropertyToString(*BindingItem.ItemProperty.Get()))
 					, BindingItem.Value->GetDisplayName()
-					, FText::FromString(OutputProp->GetCPPType())));
+					, FText::FromString(FMDFastBindingHelpers::PropertyToString(*OutputProp))));
 				return EDataValidationResult::Invalid;
 			}
 		}
