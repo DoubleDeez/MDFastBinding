@@ -60,6 +60,9 @@ private:
 	FReply OnDeleteBinding(TWeakObjectPtr<UMDFastBindingDestinationBase> Binding);
 
 	void OnDetailsPanelPropertyChanged(const FPropertyChangedEvent& Event);
+
+	FText GetBindingValidationTooltip(TWeakObjectPtr<UMDFastBindingDestinationBase> Binding) const;
+	const FSlateBrush* GetBindingValidationBrush(TWeakObjectPtr<UMDFastBindingDestinationBase> Binding) const;
 	
 	TWeakObjectPtr<UMDFastBindingContainer> SelectedBindingContainer;
 	TSharedPtr<FMDBindingEditorContainerSelectMenuNode> RootBindingNode;

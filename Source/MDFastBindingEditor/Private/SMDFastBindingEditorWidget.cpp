@@ -417,11 +417,21 @@ void SMDFastBindingEditorWidget::PopulateBindingsList()
 TSharedRef<ITableRow> SMDFastBindingEditorWidget::GenerateBindingListWidget(TWeakObjectPtr<UMDFastBindingDestinationBase> Binding, const TSharedRef<STableViewBase>& OwnerTable)
 {
 	if (UMDFastBindingDestinationBase* BindingPtr = Binding.Get())
-	{
+	{		
 		return SNew(STableRow<TWeakObjectPtr<UMDFastBindingDestinationBase>>, OwnerTable)
 		.Padding(3.f)
 		[
 			SNew(SHorizontalBox)
+			+SHorizontalBox::Slot()
+			.VAlign(VAlign_Center)
+			.HAlign(HAlign_Fill)
+			.AutoWidth()
+			.Padding(4.f, 0.f)
+			[
+				SNew(SImage)
+				.ToolTipText(this, &SMDFastBindingEditorWidget::GetBindingValidationTooltip, Binding)
+				.Image(this, &SMDFastBindingEditorWidget::GetBindingValidationBrush, Binding)
+			]
 			+SHorizontalBox::Slot()
 			.VAlign(VAlign_Center)
 			.HAlign(HAlign_Fill)
@@ -550,6 +560,45 @@ FReply SMDFastBindingEditorWidget::OnDeleteBinding(TWeakObjectPtr<UMDFastBinding
 void SMDFastBindingEditorWidget::OnDetailsPanelPropertyChanged(const FPropertyChangedEvent& Event)
 {
 	RefreshGraph();
+}
+
+FText SMDFastBindingEditorWidget::GetBindingValidationTooltip(TWeakObjectPtr<UMDFastBindingDestinationBase> Binding) const
+{
+	if (UMDFastBindingDestinationBase* BindingPtr = Binding.Get())
+	{
+		TArray<FText> Errors;
+		BindingPtr->IsDataValid(Errors);
+		return FText::Join(FText::FromString(TEXT("\n")), Errors);
+	}
+
+	return FText::GetEmpty();
+}
+
+const FSlateBrush* SMDFastBindingEditorWidget::GetBindingValidationBrush(TWeakObjectPtr<UMDFastBindingDestinationBase> Binding) const
+{
+	if (UMDFastBindingDestinationBase* BindingPtr = Binding.Get())
+	{
+		TArray<FText> Errors;
+		const EDataValidationResult Result = BindingPtr->IsDataValid(Errors);
+		if (Result == EDataValidationResult::Valid)
+		{
+#if ENGINE_MAJOR_VERSION <= 4
+			return FEditorStyle::GetBrush("Symbols.Check");
+#else
+			return FAppStyle::Get().GetBrush("Icons.SuccessWithColor");
+#endif
+		}
+		else if (Result == EDataValidationResult::Invalid)
+		{
+#if ENGINE_MAJOR_VERSION <= 4
+			return FCoreStyle::Get().GetBrush("Icons.Error");
+#else
+			return FAppStyle::Get().GetBrush("Icons.ErrorWithColor");
+#endif
+		}
+	}
+
+	return nullptr;
 }
 
 const FName FMDFastBindingEditorSummoner::TabId = TEXT("MDFastBindingID");
