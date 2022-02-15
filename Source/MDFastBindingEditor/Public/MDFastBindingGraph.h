@@ -23,6 +23,7 @@ public:
 	void RefreshGraph();
 	
 	void SetBindingDestination(UMDFastBindingDestinationBase* InBinding);
+	UMDFastBindingDestinationBase* GetBindingDestination() const { return Binding.Get(); }
 
 	UMDFastBindingGraphNode* FindNodeWithBindingObject(UMDFastBindingObject* InObject) const;
 	void SelectNodeWithBindingObject(UMDFastBindingObject* InObject);

@@ -20,6 +20,12 @@ public:
 	void TerminateDestination(UObject* SourceObject);
 
 #if WITH_EDITORONLY_DATA
+	UMDFastBindingValueBase* AddOrphan(UMDFastBindingValueBase* InValue);
+	void RemoveOrphan(UMDFastBindingValueBase* InValue);
+
+	
+	virtual void OrphanBindingItem(UMDFastBindingValueBase* InValue) override { AddOrphan(InValue); }
+	
 	UPROPERTY(Instanced)
 	TArray<UMDFastBindingValueBase*> OrphanedValues;
 #endif

@@ -5,6 +5,7 @@
 #include "MDFastBindingGraphSchema.h"
 #include "MDFastBindingObject.h"
 #include "SGraphActionMenu.h"
+#include "Algo/Transform.h"
 #include "BindingDestinations/MDFastBindingDestinationBase.h"
 #include "BindingValues/MDFastBindingValueBase.h"
 #include "Framework/Commands/GenericCommands.h"
@@ -154,13 +155,13 @@ FActionMenuContent SMDFastBindingEditorGraphWidget::OnCreateNodeOrPinMenu(UEdGra
 
 void SMDFastBindingEditorGraphWidget::OnActionSelected(const TArray<TSharedPtr<FEdGraphSchemaAction>>& SelectedActions, ESelectInfo::Type InSelectionType, FVector2D InNodePosition, TArray<UEdGraphPin*> InDraggedPins) const
 {
-	if (InDraggedPins.Num() > 0 && (InSelectionType == ESelectInfo::OnMouseClick  || InSelectionType == ESelectInfo::OnKeyPress))
+	if (InSelectionType == ESelectInfo::OnMouseClick  || InSelectionType == ESelectInfo::OnKeyPress)
 	{
 		for (TSharedPtr<FEdGraphSchemaAction> SelectedAction : SelectedActions)
 		{
 			if (SelectedAction.IsValid() && GraphObj != nullptr)
 			{
-				SelectedAction->PerformAction(GraphObj, InDraggedPins[0], InNodePosition);
+				SelectedAction->PerformAction(GraphObj, InDraggedPins.Num() > 0 ? InDraggedPins[0] : nullptr, InNodePosition);
 			}
 		}
 	}
@@ -170,16 +171,12 @@ void SMDFastBindingEditorGraphWidget::OnActionSelected(const TArray<TSharedPtr<F
 
 void SMDFastBindingEditorGraphWidget::CollectAllActions(FGraphActionListBuilderBase& OutAllActions, TArray<UEdGraphPin*> InDraggedPins)
 {
-	if (InDraggedPins.Num() == 1 && InDraggedPins[0] != nullptr)
+	if (InDraggedPins.Num() == 0 || (InDraggedPins.Num() == 1 && InDraggedPins[0] != nullptr && InDraggedPins[0]->Direction == EGPD_Input))
 	{
-		const UEdGraphPin* Pin = InDraggedPins[0];
-		if (Pin->Direction == EGPD_Input)
+		static const FString CreateValueCategory = TEXT("Create Value Node...");
+		for (const TSubclassOf<UMDFastBindingValueBase>& ValueClass : GetValueClasses())
 		{
-			static const FString CreateValueCategory = TEXT("Create Value Node...");
-			for (const TSubclassOf<UMDFastBindingValueBase>& ValueClass : GetValueClasses())
-			{
-				OutAllActions.AddAction(MakeShared<FMDFastBindingSchemaAction_CreateValue>(ValueClass), CreateValueCategory);
-			}
+			OutAllActions.AddAction(MakeShared<FMDFastBindingSchemaAction_CreateValue>(ValueClass), CreateValueCategory);
 		}
 	}
 }
@@ -207,13 +204,24 @@ void SMDFastBindingEditorGraphWidget::DeleteSelectedNodes() const
 {
 	const FScopedTransaction Transaction(FGenericCommands::Get().Delete->GetDescription());
 
-	const FGraphPanelSelectionSet& SelectedNodes = GraphEditor->GetSelectedNodes();
-	for (UObject* SelectedNode : SelectedNodes)
+	const TSet<UObject*>& SelectedNodeSet = GraphEditor->GetSelectedNodes();
+
+	TSet<UObject*> ValuesBeingDeleted;
+	Algo::Transform(SelectedNodeSet, ValuesBeingDeleted, [](UObject* InNode) -> UMDFastBindingObject*
+	{
+		if (const UMDFastBindingGraphNode* GraphNode = Cast<UMDFastBindingGraphNode>(InNode))
+		{
+			return GraphNode->GetBindingObject();
+		}
+
+		return nullptr;
+	});
+	
+	for (UObject* SelectedNode : SelectedNodeSet)
 	{
 		if (UMDFastBindingGraphNode* GraphNode = Cast<UMDFastBindingGraphNode>(SelectedNode))
 		{
-			// TODO - orphan child items
-			GraphNode->DeleteNode();
+			GraphNode->DeleteNode(ValuesBeingDeleted);
 		}
 	}
 

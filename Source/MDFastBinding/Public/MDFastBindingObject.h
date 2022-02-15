@@ -91,7 +91,16 @@ public:
 	const FMDFastBindingItem* FindBindingItem(const FName& ItemName) const;
 	FMDFastBindingItem* FindBindingItem(const FName& ItemName);
 	UMDFastBindingValueBase* SetBindingItem(const FName& ItemName, TSubclassOf<UMDFastBindingValueBase> ValueClass);
+	UMDFastBindingValueBase* SetBindingItem(const FName& ItemName, UMDFastBindingValueBase* InValue);
 	void ClearBindingItemValue(const FName& ItemName);
+
+	void OrphanBindingItem(const FName& ItemName);
+	virtual void OrphanBindingItem(UMDFastBindingValueBase* InValue) {}
+
+private:
+	UMDFastBindingValueBase* SetBindingItem_Internal(const FName& ItemName, UMDFastBindingValueBase* InValue);
+
+public:
 #endif
 
 #if WITH_EDITOR

@@ -72,7 +72,12 @@ void UMDFastBindingDestination_Function::SetupBindingItems()
 	{
 		if (!ExpectedInputs.Contains(BindingItems[i].ItemName))
 		{
-			// TODO - Add Binding Item Value to orphans
+#if WITH_EDITORONLY_DATA
+			if (BindingItems[i].Value != nullptr)
+			{
+				AddOrphan(BindingItems[i].Value);
+			}
+#endif
 			BindingItems.RemoveAt(i);
 		}
 	}
@@ -115,7 +120,7 @@ EDataValidationResult UMDFastBindingDestination_Function::IsDataValid(TArray<FTe
 	}
 	else if (!Function.BuildFunctionData())
 	{
-		ValidationErrors.Add(FText::Format(LOCTEXT("InvalidFunctionData", "Could not find the function [%s]"), FText::FromName(Function.GetFunctionName())));
+		ValidationErrors.Add(FText::Format(LOCTEXT("InvalidFunctionData", "Could not find the function [{0}]"), FText::FromName(Function.GetFunctionName())));
 		Result = EDataValidationResult::Invalid;
 	}
 

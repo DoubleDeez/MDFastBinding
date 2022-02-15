@@ -27,7 +27,7 @@ public:
 
 	void OnMoved();
 
-	void DeleteNode();
+	void DeleteNode(const TSet<UObject*>& OrphanExclusionSet);
 
 	virtual void PinDefaultValueChanged(UEdGraphPin* Pin) override;
 

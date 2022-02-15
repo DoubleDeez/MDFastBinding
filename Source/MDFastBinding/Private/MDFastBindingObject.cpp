@@ -216,17 +216,28 @@ FMDFastBindingItem* UMDFastBindingObject::FindBindingItem(const FName& ItemName)
 	return BindingItems.FindByKey(ItemName);
 }
 
-UMDFastBindingValueBase* UMDFastBindingObject::SetBindingItem(const FName& ItemName,
-                                                              TSubclassOf<UMDFastBindingValueBase> ValueClass)
+UMDFastBindingValueBase* UMDFastBindingObject::SetBindingItem(const FName& ItemName, TSubclassOf<UMDFastBindingValueBase> ValueClass)
+{
+	return SetBindingItem_Internal(ItemName,  NewObject<UMDFastBindingValueBase>(this, ValueClass, NAME_None, RF_Public | RF_Transactional));
+}
+
+UMDFastBindingValueBase* UMDFastBindingObject::SetBindingItem(const FName& ItemName, UMDFastBindingValueBase* InValue)
+{
+	return SetBindingItem_Internal(ItemName, DuplicateObject(InValue, this));
+}
+
+UMDFastBindingValueBase* UMDFastBindingObject::SetBindingItem_Internal(const FName& ItemName, UMDFastBindingValueBase* InValue)
 {
 	if (FMDFastBindingItem* BindingItem = BindingItems.FindByKey(ItemName))
 	{
-		if (UMDFastBindingValueBase* NewValue = NewObject<UMDFastBindingValueBase>(this, ValueClass, NAME_None, RF_Public | RF_Transactional))
+		if (BindingItem->Value != nullptr)
 		{
-			BindingItem->Value = NewValue;
-			BindingItem->ClearDefaultValues();
-			return NewValue;
+			OrphanBindingItem(BindingItem->Value);
 		}
+		
+		BindingItem->Value = InValue;
+		BindingItem->ClearDefaultValues();
+		return InValue;
 	}
 
 	return nullptr;
@@ -239,6 +250,16 @@ void UMDFastBindingObject::ClearBindingItemValue(const FName& ItemName)
 		BindingItem->Value = nullptr;
 		BindingItem->ClearDefaultValues();
 	}
+}
+
+void UMDFastBindingObject::OrphanBindingItem(const FName& ItemName)
+{
+	if (const FMDFastBindingItem* BindingItem = BindingItems.FindByKey(ItemName))
+	{
+		OrphanBindingItem(BindingItem->Value);
+	}
+
+	ClearBindingItemValue(ItemName);
 }
 #endif
 

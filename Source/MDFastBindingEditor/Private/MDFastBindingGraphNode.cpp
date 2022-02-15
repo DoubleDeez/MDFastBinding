@@ -46,7 +46,7 @@ void UMDFastBindingGraphNode::OnMoved()
 	}
 }
 
-void UMDFastBindingGraphNode::DeleteNode()
+void UMDFastBindingGraphNode::DeleteNode(const TSet<UObject*>& OrphanExclusionSet)
 {
 	if (UMDFastBindingObject* Object = BindingObject.Get())
 	{
@@ -59,6 +59,17 @@ void UMDFastBindingGraphNode::DeleteNode()
 		UEdGraphPin* OutputPin = FindPin(OutputPinName);
 		if (OutputPin == nullptr || OutputPin->LinkedTo.Num() == 0)
 		{
+			// We're probably an orphan
+			if (UMDFastBindingValueBase* ValueBase = Cast<UMDFastBindingValueBase>(Object))
+			{
+				if (UMDFastBindingDestinationBase* BindingDest = ValueBase->GetOuterBindingDestination())
+				{
+					BindingDest->Modify();
+					BindingDest->RemoveOrphan(ValueBase);
+					ValueBase->OrphanAllBindingItems(OrphanExclusionSet);
+				}
+			}
+			
 			return;
 		}
 
@@ -66,6 +77,12 @@ void UMDFastBindingGraphNode::DeleteNode()
 		if (ConnectedPin == nullptr)
 		{
 			return;
+		}
+
+		if (UMDFastBindingValueBase* BindingValue = Cast<UMDFastBindingValueBase>(Object))
+		{
+			BindingValue->Modify();
+			BindingValue->OrphanAllBindingItems(OrphanExclusionSet);
 		}
 
 		UMDFastBindingGraphNode* ConnectedNode = Cast<UMDFastBindingGraphNode>(ConnectedPin->GetOwningNode());

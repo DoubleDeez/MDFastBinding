@@ -1,6 +1,7 @@
 ﻿#include "BindingValues/MDFastBindingValue_Function.h"
 
 #include "MDFastBinding.h"
+#include "BindingDestinations/MDFastBindingDestinationBase.h"
 
 #define LOCTEXT_NAMESPACE "MDFastBindingDestination_Function"
 
@@ -98,7 +99,13 @@ void UMDFastBindingValue_Function::SetupBindingItems()
 	{
 		if (!ExpectedInputs.Contains(BindingItems[i].ItemName))
 		{
-			// TODO - Add Binding Item Value to orphans
+#if WITH_EDITORONLY_DATA
+			if (UMDFastBindingDestinationBase* OuterDest = GetOuterBindingDestination())
+			if (BindingItems[i].Value != nullptr)
+			{
+				OuterDest->AddOrphan(BindingItems[i].Value);
+			}
+#endif
 			BindingItems.RemoveAt(i);
 		}
 	}
@@ -139,12 +146,12 @@ EDataValidationResult UMDFastBindingValue_Function::IsDataValid(TArray<FText>& V
 	}
 	else if (!Function.BuildFunctionData())
 	{
-		ValidationErrors.Add(FText::Format(LOCTEXT("InvalidFunctionData", "Could not find the function [%s]"), FText::FromName(Function.GetFunctionName())));
+		ValidationErrors.Add(FText::Format(LOCTEXT("InvalidFunctionData", "Could not find the function [{0}]"), FText::FromName(Function.GetFunctionName())));
 		Result = EDataValidationResult::Invalid;
 	}
 	else if (Function.GetReturnProp() == nullptr)
 	{
-		ValidationErrors.Add(FText::Format(LOCTEXT("NoReturnValue", "The function [%s] does not have a return value"), FText::FromName(Function.GetFunctionName())));
+		ValidationErrors.Add(FText::Format(LOCTEXT("NoReturnValue", "The function [{0}] does not have a return value"), FText::FromName(Function.GetFunctionName())));
 		Result = EDataValidationResult::Invalid;
 	}
 
