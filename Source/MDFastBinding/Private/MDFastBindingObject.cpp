@@ -172,6 +172,8 @@ TTuple<const FProperty*, void*> UMDFastBindingObject::GetBindingItemValue(UObjec
 #if WITH_EDITOR
 EDataValidationResult UMDFastBindingObject::IsDataValid(TArray<FText>& ValidationErrors)
 {
+	SetupBindingItems();
+	
 	for (const FMDFastBindingItem& BindingItem : BindingItems)
 	{
 		if (!BindingItem.ItemProperty.IsValid())
@@ -275,6 +277,14 @@ void UMDFastBindingObject::ClearBindingItemValue(const FName& ItemName)
 	{
 		BindingItem->Value = nullptr;
 		BindingItem->ClearDefaultValues();
+	}
+}
+
+void UMDFastBindingObject::ClearBindingItemValuePtrs()
+{
+	for (FMDFastBindingItem& BindingItem : BindingItems)
+	{
+		BindingItem.Value = nullptr;
 	}
 }
 

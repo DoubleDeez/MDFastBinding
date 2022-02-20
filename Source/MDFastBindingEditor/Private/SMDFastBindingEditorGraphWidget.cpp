@@ -1,5 +1,6 @@
 ﻿#include "SMDFastBindingEditorGraphWidget.h"
 
+#include "EdGraphUtilities.h"
 #include "MDFastBindingEditorCommands.h"
 #include "MDFastBindingGraph.h"
 #include "MDFastBindingGraphNode.h"
@@ -11,6 +12,7 @@
 #include "BindingDestinations/MDFastBindingDestinationBase.h"
 #include "BindingValues/MDFastBindingValueBase.h"
 #include "Framework/Commands/GenericCommands.h"
+#include "HAL/PlatformApplicationMisc.h"
 
 #define LOCTEXT_NAMESPACE "SMDFastBindingEditorGraphWidget"
 
@@ -64,6 +66,21 @@ void SMDFastBindingEditorGraphWidget::RegisterCommands()
 	GraphEditorCommands->MapAction(FGenericCommands::Get().Rename,
 		FExecuteAction::CreateSP(this, &SMDFastBindingEditorGraphWidget::RenameSelectedNode),
 		FCanExecuteAction()
+		);
+
+	GraphEditorCommands->MapAction(FGenericCommands::Get().Copy,
+		FExecuteAction::CreateSP(this, &SMDFastBindingEditorGraphWidget::CopySelectedNodes),
+		FCanExecuteAction()
+		);
+
+	GraphEditorCommands->MapAction(FGenericCommands::Get().Paste,
+		FExecuteAction::CreateSP(this, &SMDFastBindingEditorGraphWidget::PasteNodes),
+		FCanExecuteAction::CreateSP(this, &SMDFastBindingEditorGraphWidget::CanPasteNodes)
+		);
+
+	GraphEditorCommands->MapAction(FGenericCommands::Get().Cut,
+		FExecuteAction::CreateSP(this, &SMDFastBindingEditorGraphWidget::CutSelectedNodes),
+		FCanExecuteAction::CreateSP(this, &SMDFastBindingEditorGraphWidget::CanCutSelectedNodes)
 		);
 
 	GraphEditorCommands->MapAction(FMDFastBindingEditorCommands::Get().SetDestinationActive,
@@ -205,16 +222,13 @@ void SMDFastBindingEditorGraphWidget::OnActionSelected(const TArray<TSharedPtr<F
 
 void SMDFastBindingEditorGraphWidget::CollectAllActions(FGraphActionListBuilderBase& OutAllActions, TArray<UEdGraphPin*> InDraggedPins)
 {
-	if (InDraggedPins.Num() == 0 || (InDraggedPins.Num() == 1 && InDraggedPins[0] != nullptr && InDraggedPins[0]->Direction == EGPD_Input))
+	static const FString CreateValueCategory = TEXT("Create Value Node...");
+	for (const TSubclassOf<UMDFastBindingValueBase>& ValueClass : GetValueClasses())
 	{
-		static const FString CreateValueCategory = TEXT("Create Value Node...");
-		for (const TSubclassOf<UMDFastBindingValueBase>& ValueClass : GetValueClasses())
-		{
-			OutAllActions.AddAction(MakeShared<FMDFastBindingSchemaAction_CreateValue>(ValueClass), CreateValueCategory);
-		}
+		OutAllActions.AddAction(MakeShared<FMDFastBindingSchemaAction_CreateValue>(ValueClass), CreateValueCategory);
 	}
-
-	if (InDraggedPins.Num() == 0)
+	
+	if (InDraggedPins.Num() == 0 || (InDraggedPins.Num() == 1 && InDraggedPins[0] != nullptr && InDraggedPins[0]->Direction == EGPD_Output))
 	{
 		static const FString SetDestinationCategory = TEXT("Set Destination Node...");
 		for (const TSubclassOf<UMDFastBindingDestinationBase>& DestinationClass : GetDestinationClasses())
@@ -278,6 +292,130 @@ void SMDFastBindingEditorGraphWidget::RenameSelectedNode() const
 			break;
 		}
 	}
+}
+
+void SMDFastBindingEditorGraphWidget::CopySelectedNodes() const
+{
+	const FGraphPanelSelectionSet& SelectedNodes = GraphEditor->GetSelectedNodes();
+	TSet<UObject*> NodesToCopy;
+
+	for (UObject* NodeObject : SelectedNodes)
+	{
+		if (UMDFastBindingGraphNode* BindingNode = Cast<UMDFastBindingGraphNode>(NodeObject))
+		{
+			BindingNode->PrepareForCopying();
+			NodesToCopy.Add(BindingNode);
+		}
+	}
+
+	if(NodesToCopy.Num() > 0)
+	{
+		FString ExportedText;
+		FEdGraphUtilities::ExportNodesToText(NodesToCopy, /*out*/ ExportedText);
+		FPlatformApplicationMisc::ClipboardCopy(*ExportedText);
+	}
+
+	for (UObject* NodeObject : NodesToCopy)
+	{
+		if (UMDFastBindingGraphNode* BindingNode = Cast<UMDFastBindingGraphNode>(NodeObject))
+		{
+			BindingNode->CleanUpCopying();
+		}
+	}
+}
+
+void SMDFastBindingEditorGraphWidget::PasteNodes() const
+{
+	GraphEditor->ClearSelectionSet();
+
+	// Grab the text to paste from the clipboard.
+	FString TextToImport;
+	FPlatformApplicationMisc::ClipboardPaste(TextToImport);
+
+	// Create temporary graph
+	const FName UniqueGraphName = MakeUniqueObjectName(GetTransientPackage(), UWorld::StaticClass(), FName(*(LOCTEXT("MDFastBindingTempGraph", "TempGraph").ToString())));
+	const TStrongObjectPtr<UMDFastBindingGraph> DataprepGraph = TStrongObjectPtr<UMDFastBindingGraph>(NewObject<UMDFastBindingGraph>(GetTransientPackage(), UniqueGraphName));
+	DataprepGraph->Schema = UMDFastBindingGraphSchema::StaticClass();
+
+	TSet<UEdGraphNode*> PastedNodes;
+	FEdGraphUtilities::ImportNodesFromText(DataprepGraph.Get(), TextToImport, /*out*/ PastedNodes);
+
+	TArray<UMDFastBindingObject*> BindingObjects;
+	for(UEdGraphNode* Node : PastedNodes)
+	{
+		UMDFastBindingGraphNode* BindingNode = Cast<UMDFastBindingGraphNode>(Node);
+		if (BindingNode && BindingNode->CanDuplicateNode())
+		{
+			BindingObjects.Add(BindingNode->GetCopiedBindingObject());
+		}
+	}
+	FVector2D AvgNodePosition(0.0f, 0.0f);
+
+	for (const UMDFastBindingObject* Object : BindingObjects)
+	{
+		AvgNodePosition.X += Object->NodePos.X;
+		AvgNodePosition.Y += Object->NodePos.Y;
+	}
+
+	const float InvNumNodes = 1.0f / float(PastedNodes.Num());
+	AvgNodePosition.X *= InvNumNodes;
+	AvgNodePosition.Y *= InvNumNodes;
+
+	for (UMDFastBindingObject* Object : BindingObjects)
+	{
+		Object->NodePos.X = (Object->NodePos.X - AvgNodePosition.X);
+		Object->NodePos.Y = (Object->NodePos.Y - AvgNodePosition.Y);
+	}
+
+	TArray<UMDFastBindingObject*> NewObjects;
+	if(BindingObjects.Num() > 0)
+	{
+		FScopedTransaction Transaction(FGenericCommands::Get().Paste->GetDescription());
+
+		if(UMDFastBindingInstance* BindingPtr = Binding.Get())
+		{
+			for (UMDFastBindingObject* BindingObject : BindingObjects)
+			{
+				if (UMDFastBindingDestinationBase* BindingDest = Cast<UMDFastBindingDestinationBase>(BindingObject))
+				{
+					NewObjects.Add(BindingPtr->SetDestination(BindingDest));
+				}
+				else if (UMDFastBindingValueBase* BindingValue = Cast<UMDFastBindingValueBase>(BindingObject))
+				{
+					NewObjects.Add(BindingPtr->AddOrphan(BindingValue));
+				}
+			}
+		}
+	}
+
+	RefreshGraph();
+	
+	for (UMDFastBindingObject* Object : NewObjects)
+	{
+		if (UMDFastBindingGraphNode* Node = GraphObj->FindNodeWithBindingObject(Object))
+		{
+			GraphEditor->SetNodeSelection(Node, true);
+		}
+	}
+}
+
+bool SMDFastBindingEditorGraphWidget::CanPasteNodes() const
+{
+	FString ClipboardContent;
+	FPlatformApplicationMisc::ClipboardPaste(ClipboardContent);
+
+	return FEdGraphUtilities::CanImportNodesFromText(GraphObj, ClipboardContent);
+}
+
+void SMDFastBindingEditorGraphWidget::CutSelectedNodes() const
+{
+	CopySelectedNodes();
+	DeleteSelectedNodes();
+}
+
+bool SMDFastBindingEditorGraphWidget::CanCutSelectedNodes() const
+{
+	return CanDeleteSelectedNodes();
 }
 
 bool SMDFastBindingEditorGraphWidget::CanSetDestinationActive() const

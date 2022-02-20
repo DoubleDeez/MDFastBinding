@@ -50,6 +50,11 @@ public:
 		DefaultObject = nullptr;
 	}
 
+	bool HasValue() const
+	{
+		return Value != nullptr || DefaultObject != nullptr || !DefaultString.IsEmpty() || !DefaultText.IsEmpty();
+	}
+
 	TTuple<const FProperty*, void*> GetValue(UObject* SourceObject);
 
 private:
@@ -91,11 +96,13 @@ public:
 	virtual FText GetToolTipText();
 
 	const TArray<FMDFastBindingItem>& GetBindingItems() const { return BindingItems; }
+	TArray<FMDFastBindingItem>& GetBindingItems() { return BindingItems; }
 	const FMDFastBindingItem* FindBindingItem(const FName& ItemName) const;
 	FMDFastBindingItem* FindBindingItem(const FName& ItemName);
 	UMDFastBindingValueBase* SetBindingItem(const FName& ItemName, TSubclassOf<UMDFastBindingValueBase> ValueClass);
 	UMDFastBindingValueBase* SetBindingItem(const FName& ItemName, UMDFastBindingValueBase* InValue);
 	void ClearBindingItemValue(const FName& ItemName);
+	void ClearBindingItemValuePtrs();
 	
 	void OrphanBindingItem(const FName& ItemName);
 	void OrphanBindingItem(UMDFastBindingValueBase* InValue);

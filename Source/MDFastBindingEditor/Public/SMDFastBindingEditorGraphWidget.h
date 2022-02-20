@@ -53,6 +53,14 @@ private:
 	
 	void RenameSelectedNode() const;
 	
+	void CopySelectedNodes() const;
+	
+	void PasteNodes() const;
+	bool CanPasteNodes() const;
+	
+	void CutSelectedNodes() const;
+	bool CanCutSelectedNodes() const;
+	
 	bool CanSetDestinationActive() const;
 	void SetDestinationActive() const;
 	

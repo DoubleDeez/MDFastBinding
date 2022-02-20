@@ -41,20 +41,17 @@ UEdGraphNode* FMDFastBindingSchemaAction_CreateValue::PerformAction(UEdGraph* Pa
 		return Graph->FindNodeWithBindingObject(Value);
 	};
 
-	// Add connected to pin, if there is one
-	if (FromPin != nullptr)
+	const UMDFastBindingGraphNode* FromGraphNode = FromPin != nullptr ? Cast<UMDFastBindingGraphNode>(FromPin->GetOwningNode()) : nullptr;
+	UMDFastBindingObject* FromBindingObject = FromGraphNode != nullptr ? FromGraphNode->GetBindingObject() : nullptr;
+
+	// Add connected to input pin, if there is one
+	if (FromPin != nullptr && FromPin->Direction == EGPD_Input && FromBindingObject != nullptr)
 	{
-		if (const UMDFastBindingGraphNode* GraphNode = Cast<UMDFastBindingGraphNode>(FromPin->GetOwningNode()))
+		FScopedTransaction Transaction = FScopedTransaction(LOCTEXT("SetBindingItem", "Set Binding Value"));
+		FromBindingObject->Modify();
+		if (UMDFastBindingValueBase* NewValue = FromBindingObject->SetBindingItem(FromPin->GetFName(), ValueClass))
 		{
-			if (UMDFastBindingObject* BindingObject = GraphNode->GetBindingObject())
-			{
-				FScopedTransaction Transaction = FScopedTransaction(LOCTEXT("SetBindingItem", "Set Binding Value"));
-				BindingObject->Modify();
-				if (UMDFastBindingValueBase* NewValue = BindingObject->SetBindingItem(FromPin->GetFName(), ValueClass))
-				{
-					return InitValueAndNode(NewValue);
-				}
-			}
+			return InitValueAndNode(NewValue);
 		}
 	}
 
@@ -66,7 +63,19 @@ UEdGraphNode* FMDFastBindingSchemaAction_CreateValue::PerformAction(UEdGraph* Pa
 		UMDFastBindingValueBase* NewValue = NewObject<UMDFastBindingValueBase>(Binding, ValueClass, NAME_None, RF_Public | RF_Transactional);
 		if (UMDFastBindingValueBase* OrphanValue = Binding->AddOrphan(NewValue))
 		{
-			return InitValueAndNode(OrphanValue);
+			if (UMDFastBindingGraphNode* NewNode = InitValueAndNode(OrphanValue))
+			{
+				// Connect output pin to first binding item in new node 
+				if (FromPin != nullptr && FromPin->Direction == EGPD_Output && FromBindingObject != nullptr && NewNode->Pins.Num() > 0)
+				{
+					if (const UMDFastBindingGraphSchema* Schema = Cast<const UMDFastBindingGraphSchema>(Graph->GetSchema()))
+					{
+						Schema->TryCreateConnection(FromPin, NewNode->Pins[0]);
+					}
+				}
+
+				return NewNode;
+			}
 		}
 	}
 
@@ -95,6 +104,9 @@ UEdGraphNode* FMDFastBindingSchemaAction_SetDestination::PerformAction(UEdGraph*
 		return nullptr;
 	}
 
+	const UMDFastBindingGraphNode* FromGraphNode = FromPin != nullptr ? Cast<UMDFastBindingGraphNode>(FromPin->GetOwningNode()) : nullptr;
+	UMDFastBindingObject* FromBindingObject = FromGraphNode != nullptr ? FromGraphNode->GetBindingObject() : nullptr;
+
 	if (UMDFastBindingInstance* Binding = Graph->GetBinding())
 	{
 		FScopedTransaction Transaction = FScopedTransaction(LOCTEXT("SetBindingDestinationNode", "Set Binding Destination"));
@@ -105,7 +117,19 @@ UEdGraphNode* FMDFastBindingSchemaAction_SetDestination::PerformAction(UEdGraph*
 			Graph->ClearSelection();
 			Graph->RefreshGraph();
 			Graph->SelectNodeWithBindingObject(NewDestination);
-			return Graph->FindNodeWithBindingObject(NewDestination);
+			if (UMDFastBindingGraphNode* NewNode =  Graph->FindNodeWithBindingObject(NewDestination))
+			{
+				// Connect output pin to first binding item in new node 
+				if (FromPin != nullptr && FromPin->Direction == EGPD_Output && FromBindingObject != nullptr && NewNode->Pins.Num() > 0)
+				{
+					if (const UMDFastBindingGraphSchema* Schema = Cast<const UMDFastBindingGraphSchema>(Graph->GetSchema()))
+					{
+						Schema->TryCreateConnection(FromPin, NewNode->Pins[0]);
+					}
+				}
+
+				return NewNode;
+			}
 		}
 	}
 

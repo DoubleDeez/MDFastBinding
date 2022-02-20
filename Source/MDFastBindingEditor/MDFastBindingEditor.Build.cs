@@ -35,6 +35,7 @@ public class MDFastBindingEditor : ModuleRules
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
+				"ApplicationCore",
 				"BlueprintGraph",
 				"CoreUObject",
 				"EditorStyle",

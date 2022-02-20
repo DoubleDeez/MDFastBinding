@@ -22,6 +22,7 @@ public:
 	void SetBindingObject(UMDFastBindingObject* InObject);
 
 	UMDFastBindingObject* GetBindingObject() const { return BindingObject.Get(); }
+	UMDFastBindingObject* GetCopiedBindingObject() const { return CopiedObject; }
 
 	void ClearConnection(const FName& PinName);
 
@@ -30,6 +31,10 @@ public:
 	void DeleteNode(const TSet<UObject*>& OrphanExclusionSet);
 
 	virtual void PinDefaultValueChanged(UEdGraphPin* Pin) override;
+
+	virtual void PrepareForCopying() override;
+
+	void CleanUpCopying();
 
 	static const FName OutputPinName;
 
@@ -52,4 +57,7 @@ protected:
 
 private:
 	TWeakObjectPtr<UMDFastBindingObject> BindingObject;
+
+	UPROPERTY()
+	UMDFastBindingObject* CopiedObject = nullptr;
 };
