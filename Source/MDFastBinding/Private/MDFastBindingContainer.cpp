@@ -1,11 +1,12 @@
 ﻿#include "MDFastBindingContainer.h"
+#include "MDFastBindingInstance.h"
 #include "BindingDestinations/MDFastBindingDestinationBase.h"
 
 void UMDFastBindingContainer::InitializeBindings(UObject* SourceObject)
 {
-	for (UMDFastBindingDestinationBase* Destination : Destinations)
+	for (UMDFastBindingInstance* Binding : Bindings)
 	{
-		Destination->InitializeDestination(SourceObject);
+		Binding->InitializeBinding(SourceObject);
 	}
 }
 
@@ -13,41 +14,36 @@ void UMDFastBindingContainer::UpdateBindings(UObject* SourceObject)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE_STR(__FUNCTION__);
 	TRACE_CPUPROFILER_EVENT_SCOPE_TEXT(*GetNameSafe(SourceObject));
-	for (UMDFastBindingDestinationBase* Destination : Destinations)
+	for (UMDFastBindingInstance* Binding : Bindings)
 	{
-		Destination->UpdateDestination(SourceObject);
+		Binding->UpdateBinding(SourceObject);
 	}
 }
 
 void UMDFastBindingContainer::TerminateBindings(UObject* SourceObject)
 {
-	for (UMDFastBindingDestinationBase* Destination : Destinations)
+	for (UMDFastBindingInstance* Binding : Bindings)
 	{
-		Destination->TerminateDestination(SourceObject);
+		Binding->TerminateBinding(SourceObject);
 	}
 }
 
 #if WITH_EDITORONLY_DATA
-UMDFastBindingDestinationBase* UMDFastBindingContainer::AddBinding(TSubclassOf<UMDFastBindingDestinationBase> BindingClass)
+UMDFastBindingInstance* UMDFastBindingContainer::AddBinding()
 {
-	if (BindingClass != nullptr)
-	{
-		UMDFastBindingDestinationBase* Binding = NewObject<UMDFastBindingDestinationBase>(this, BindingClass, NAME_None, RF_Public | RF_Transactional);
-		Destinations.Add(Binding);
-		return Binding;
-	}
-
-	return nullptr;
+	UMDFastBindingInstance* Binding = NewObject<UMDFastBindingInstance>(this, NAME_None, RF_Public | RF_Transactional);
+	Bindings.Add(Binding);
+	return Binding;
 }
 
-UMDFastBindingDestinationBase* UMDFastBindingContainer::DuplicateBinding(UMDFastBindingDestinationBase* InBinding)
+UMDFastBindingInstance* UMDFastBindingContainer::DuplicateBinding(UMDFastBindingInstance* InBinding)
 {
-	const int32 CurrentIdx = Destinations.IndexOfByKey(InBinding);
+	const int32 CurrentIdx = Bindings.IndexOfByKey(InBinding);
 	if (CurrentIdx != INDEX_NONE)
 	{
-		if (UMDFastBindingDestinationBase* NewBinding = DuplicateObject<UMDFastBindingDestinationBase>(InBinding, this, NAME_None))
+		if (UMDFastBindingInstance* NewBinding = DuplicateObject<UMDFastBindingInstance>(InBinding, this, NAME_None))
 		{
-			Destinations.Insert(NewBinding, CurrentIdx + 1);
+			Bindings.Insert(NewBinding, CurrentIdx + 1);
 			return NewBinding;
 		}
 	}
@@ -55,15 +51,9 @@ UMDFastBindingDestinationBase* UMDFastBindingContainer::DuplicateBinding(UMDFast
 	return nullptr;
 }
 
-bool UMDFastBindingContainer::DeleteBinding(UMDFastBindingDestinationBase* InBinding)
+bool UMDFastBindingContainer::DeleteBinding(UMDFastBindingInstance* InBinding)
 {
-	if (Destinations.Contains(InBinding))
-	{
-		Destinations.Remove(InBinding);
-		return true;
-	}
-
-	return false;
+	return Bindings.Remove(InBinding) > 0;
 }
 #endif
 
@@ -72,11 +62,11 @@ EDataValidationResult UMDFastBindingContainer::IsDataValid(TArray<FText>& Valida
 {
 	EDataValidationResult Result = EDataValidationResult::Valid;
 
-	for (UMDFastBindingDestinationBase* Destination : Destinations)
+	for (UMDFastBindingInstance* Binding : Bindings)
 	{
-		if (Destination != nullptr)
+		if (Binding != nullptr)
 		{
-			if (Destination->IsDataValid(ValidationErrors) == EDataValidationResult::Invalid)
+			if (Binding->IsDataValid(ValidationErrors) == EDataValidationResult::Invalid)
 			{
 				Result = EDataValidationResult::Invalid;
 			}

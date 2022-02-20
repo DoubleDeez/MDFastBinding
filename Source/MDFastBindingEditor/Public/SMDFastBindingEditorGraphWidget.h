@@ -4,9 +4,10 @@
 #include "Widgets/SCompoundWidget.h"
 
 class UMDFastBindingGraph;
-class UMDFastBindingDestinationBase;
+class UMDFastBindingInstance;
 class UMDFastBindingObject;
 class UMDFastBindingValueBase;
+class UMDFastBindingDestinationBase;
 class SGraphEditor;
 
 /**
@@ -26,7 +27,7 @@ public:
 
 	void Construct(const FArguments& InArgs);
 
-	void SetBinding(UMDFastBindingDestinationBase* InBinding);
+	void SetBinding(UMDFastBindingInstance* InBinding);
 
 	void RefreshGraph() const;
 
@@ -39,6 +40,7 @@ private:
 	void RegisterCommands();
 	
 	const TArray<TSubclassOf<UMDFastBindingValueBase>>& GetValueClasses();
+	const TArray<TSubclassOf<UMDFastBindingDestinationBase>>& GetDestinationClasses();
 
 	FActionMenuContent OnCreateActionMenu(UEdGraph* InGraph, const FVector2D& InNodePosition, const TArray<UEdGraphPin*>& InDraggedPins, bool bAutoExpand, SGraphEditor::FActionMenuClosed InOnMenuClose);
 	FActionMenuContent OnCreateNodeOrPinMenu(UEdGraph* CurrentGraph, const UEdGraphNode* InGraphNode, const UEdGraphPin* InGraphPin, FMenuBuilder* MenuBuilder, bool bIsDebugging);
@@ -51,13 +53,18 @@ private:
 	
 	void RenameSelectedNode() const;
 	
+	bool CanSetDestinationActive() const;
+	void SetDestinationActive() const;
+	
 	TSharedPtr<SGraphEditor> GraphEditor;
 
 	UMDFastBindingGraph* GraphObj = nullptr;
 
-	TWeakObjectPtr<UMDFastBindingDestinationBase> Binding;
+	TWeakObjectPtr<UMDFastBindingInstance> Binding;
 
 	TArray<TSubclassOf<UMDFastBindingValueBase>> ValueClasses;
+
+	TArray<TSubclassOf<UMDFastBindingDestinationBase>> DestinationClasses;
 	
 	TSharedPtr<FUICommandList> GraphEditorCommands;
 };

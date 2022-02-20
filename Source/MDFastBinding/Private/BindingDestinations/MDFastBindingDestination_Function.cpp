@@ -75,7 +75,7 @@ void UMDFastBindingDestination_Function::SetupBindingItems()
 #if WITH_EDITORONLY_DATA
 			if (BindingItems[i].Value != nullptr)
 			{
-				AddOrphan(BindingItems[i].Value);
+				OrphanBindingItem(BindingItems[i].Value);
 			}
 #endif
 			BindingItems.RemoveAt(i);

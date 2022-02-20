@@ -5,6 +5,7 @@
 #include "MDFastBindingGraphSchema.generated.h"
 
 class UMDFastBindingValueBase;
+class UMDFastBindingDestinationBase;
 
 USTRUCT()
 struct FMDFastBindingSchemaAction_CreateValue : public FEdGraphSchemaAction
@@ -18,6 +19,24 @@ public:
 
 	UPROPERTY()
 	TSubclassOf<UMDFastBindingValueBase> ValueClass;
+
+	virtual FName GetTypeId() const override;
+
+	virtual UEdGraphNode* PerformAction(UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode = true) override;
+};
+
+USTRUCT()
+struct FMDFastBindingSchemaAction_SetDestination : public FEdGraphSchemaAction
+{
+	GENERATED_BODY()
+
+public:
+	FMDFastBindingSchemaAction_SetDestination() = default;
+	
+	explicit FMDFastBindingSchemaAction_SetDestination(TSubclassOf<UMDFastBindingDestinationBase> InDestinationClass);
+
+	UPROPERTY()
+	TSubclassOf<UMDFastBindingDestinationBase> DestinationClass;
 
 	virtual FName GetTypeId() const override;
 

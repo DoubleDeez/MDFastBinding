@@ -4,6 +4,7 @@
 #include "MDFastBindingEditorStyle.h"
 #include "MDFastBindingGraph.h"
 #include "MDFastBindingGraphNode.h"
+#include "MDFastBindingInstance.h"
 #include "BindingDestinations/MDFastBindingDestinationBase.h"
 #include "BindingValues/MDFastBindingValueBase.h"
 
@@ -58,14 +59,53 @@ UEdGraphNode* FMDFastBindingSchemaAction_CreateValue::PerformAction(UEdGraph* Pa
 	}
 
 	// Add as orphan instead
-	if (UMDFastBindingDestinationBase* BindingDest = Graph->GetBindingDestination())
+	if (UMDFastBindingInstance* Binding = Graph->GetBinding())
 	{
 		FScopedTransaction Transaction = FScopedTransaction(LOCTEXT("AddBindingNode", "Add Binding Node"));
-		BindingDest->Modify();
-		UMDFastBindingValueBase* NewValue = NewObject<UMDFastBindingValueBase>(BindingDest, ValueClass, NAME_None, RF_Public | RF_Transactional);
-		if (UMDFastBindingValueBase* OrphanValue = BindingDest->AddOrphan(NewValue))
+		Binding->Modify();
+		UMDFastBindingValueBase* NewValue = NewObject<UMDFastBindingValueBase>(Binding, ValueClass, NAME_None, RF_Public | RF_Transactional);
+		if (UMDFastBindingValueBase* OrphanValue = Binding->AddOrphan(NewValue))
 		{
 			return InitValueAndNode(OrphanValue);
+		}
+	}
+
+	return nullptr;
+}
+
+FMDFastBindingSchemaAction_SetDestination::FMDFastBindingSchemaAction_SetDestination(TSubclassOf<UMDFastBindingDestinationBase> InDestinationClass)
+	: DestinationClass(InDestinationClass)
+{
+	UpdateSearchData(DestinationClass->GetDisplayNameText()
+		, DestinationClass->GetToolTipText()
+		, FText::GetEmpty()
+		, FText::GetEmpty());
+}
+
+FName FMDFastBindingSchemaAction_SetDestination::GetTypeId() const
+{
+	return DestinationClass->GetFName();
+}
+
+UEdGraphNode* FMDFastBindingSchemaAction_SetDestination::PerformAction(UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode)
+{
+	UMDFastBindingGraph* Graph = Cast<UMDFastBindingGraph>(ParentGraph);
+	if (Graph == nullptr || DestinationClass == nullptr)
+	{
+		return nullptr;
+	}
+
+	if (UMDFastBindingInstance* Binding = Graph->GetBinding())
+	{
+		FScopedTransaction Transaction = FScopedTransaction(LOCTEXT("SetBindingDestinationNode", "Set Binding Destination"));
+		Binding->Modify();
+		if (UMDFastBindingDestinationBase* NewDestination = Binding->SetDestination(DestinationClass))
+		{
+			NewDestination->NodePos = Location.IntPoint();
+			Graph->ClearSelection();
+			Graph->RefreshGraph();
+			Graph->SelectNodeWithBindingObject(NewDestination);
+			return Graph->FindNodeWithBindingObject(NewDestination);
 		}
 	}
 
@@ -211,9 +251,9 @@ bool UMDFastBindingGraphSchema::TryCreateConnection(UEdGraphPin* A, UEdGraphPin*
 		// Delete the old ValueObject
 		if (OldOutputLinkedTo.Num() == 0)
 		{
-			if (UMDFastBindingDestinationBase* BindingDest = ValueObject->GetOuterBindingDestination())
+			if (UMDFastBindingInstance* Binding = ValueObject->GetOuterBinding())
 			{
-				BindingDest->RemoveOrphan(ValueObject);
+				Binding->RemoveOrphan(ValueObject);
 			}
 		}
 		else if (UEdGraphPin* OldOutputLinkedToPin = OldOutputLinkedTo[0])

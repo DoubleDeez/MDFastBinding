@@ -2,6 +2,7 @@
 
 #include "Interfaces/IPluginManager.h"
 #include "Styling/SlateStyleRegistry.h"
+#include "Styling/StyleColors.h"
 
 TSharedPtr<FSlateStyleSet> FMDFastBindingEditorStyle::StyleInstance = nullptr;
 
@@ -51,6 +52,9 @@ TSharedRef<FSlateStyleSet> FMDFastBindingEditorStyle::Create()
 	Style->Set(TEXT("Icon.FastBinding_16x"), new IMAGE_BRUSH(TEXT("FastBindingIcon_16x"), Icon16x16));
 	Style->Set(TEXT("Icon.FastBinding_24x"), new IMAGE_BRUSH(TEXT("FastBindingIcon_24x"), Icon24x24));
 
+	Style->Set(TEXT("Background.Selector"), new FSlateColorBrush(FStyleColors::Select.GetSpecifiedColor() * 0.5f));
+	Style->Set(TEXT("Background.SelectorInactive"), new FSlateColorBrush(FLinearColor::Transparent));
+	
 #if ENGINE_MAJOR_VERSION <= 4
 	FButtonStyle ButtonStyle = FCoreStyle::Get().GetWidgetStyle< FButtonStyle >("FlatButton");
 #else
@@ -62,6 +66,7 @@ TSharedRef<FSlateStyleSet> FMDFastBindingEditorStyle::Create()
 
 	Style->Set(TEXT("NodeTitleColor"), FLinearColor(FColorList::Cyan));
 	Style->Set(TEXT("DestinationNodeTitleColor"), FLinearColor::Green);
+	Style->Set(TEXT("InactiveDestinationNodeTitleColor"), FLinearColor::Green * 0.125f);
 	Style->Set(TEXT("InvalidPinColor"), FLinearColor(FColorList::OrangeRed));
 
 	return Style;

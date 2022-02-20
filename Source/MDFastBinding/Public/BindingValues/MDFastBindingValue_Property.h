@@ -8,7 +8,7 @@
 /**
  * Retrieve the value of a property or const function
  */
-UCLASS(meta = (DisplayName = "Property"))
+UCLASS(meta = (DisplayName = "Read a Property"))
 class MDFASTBINDING_API UMDFastBindingValue_Property : public UMDFastBindingValueBase
 {
 	GENERATED_BODY()

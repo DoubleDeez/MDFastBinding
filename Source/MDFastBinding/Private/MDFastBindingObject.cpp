@@ -3,6 +3,7 @@
 #include "MDFastBinding.h"
 #include "MDFastBindingContainer.h"
 #include "MDFastBindingHelpers.h"
+#include "MDFastBindingInstance.h"
 #include "BindingValues/MDFastBindingValueBase.h"
 
 #define LOCTEXT_NAMESPACE "MDFastBindingObject"
@@ -71,6 +72,31 @@ UClass* UMDFastBindingObject::GetBindingOuterClass() const
 			UClass* Class = Object->GetOuter()->GetClass();
 			BindingOuterClass = Class;
 			return Class;
+		}
+
+		Object = Object->GetOuter();
+	}
+
+	return nullptr;
+}
+
+
+UMDFastBindingInstance* UMDFastBindingObject::GetOuterBinding() const
+{
+#if !WITH_EDITOR
+	if (OuterBinding.IsValid())
+	{
+		return OuterBinding.Get();
+	}
+#endif
+
+	UObject* Object = GetOuter();
+	while (Object != nullptr)
+	{
+		if (UMDFastBindingInstance* Binding = Cast<UMDFastBindingInstance>(Object))
+		{
+			OuterBinding = Binding;
+			return Binding;
 		}
 
 		Object = Object->GetOuter();
@@ -260,6 +286,26 @@ void UMDFastBindingObject::OrphanBindingItem(const FName& ItemName)
 	}
 
 	ClearBindingItemValue(ItemName);
+}
+
+void UMDFastBindingObject::OrphanBindingItem(UMDFastBindingValueBase* InValue)
+{
+	if (UMDFastBindingInstance* Binding = GetOuterBinding())
+	{
+		Binding->AddOrphan(InValue);
+	}
+}
+
+void UMDFastBindingObject::OrphanAllBindingItems(const TSet<UObject*>& OrphanExclusionSet)
+{
+	for (FMDFastBindingItem& Item : BindingItems)
+	{
+		if (!OrphanExclusionSet.Contains(Item.Value))
+		{
+			OrphanBindingItem(Item.Value);
+			Item.Value = nullptr;
+		}
+	}
 }
 #endif
 

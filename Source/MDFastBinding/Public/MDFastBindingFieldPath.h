@@ -38,7 +38,8 @@ public:
 
 	// Set to true if you're going to be setting the value of the property
 	bool bOnlyAllowBlueprintReadWriteProperties = false;
-	
+
+	// TODO - store GUIDs so we can check for renames
 	UPROPERTY(EditAnywhere, Category = "Bindings")
 	TArray<FName> FieldPath;
 

@@ -2,6 +2,7 @@
 
 #include "MDFastBindingEditorStyle.h"
 #include "MDFastBindingGraph.h"
+#include "MDFastBindingInstance.h"
 #include "MDFastBindingObject.h"
 #include "SMDFastBindingGraphNodeWidget.h"
 #include "BindingDestinations/MDFastBindingDestinationBase.h"
@@ -50,9 +51,15 @@ void UMDFastBindingGraphNode::DeleteNode(const TSet<UObject*>& OrphanExclusionSe
 {
 	if (UMDFastBindingObject* Object = BindingObject.Get())
 	{
-		if (Object->IsA<UMDFastBindingDestinationBase>())
+		if (UMDFastBindingDestinationBase* BindingDest = Cast<UMDFastBindingDestinationBase>(Object))
 		{
-			// Can't delete destination
+			if (UMDFastBindingInstance* Binding = BindingDest->GetOuterBinding())
+			{
+				Binding->Modify();
+				Binding->RemoveDestination(BindingDest);
+				BindingDest->OrphanAllBindingItems(OrphanExclusionSet);
+			}
+			
 			return;
 		}
 		
@@ -62,10 +69,10 @@ void UMDFastBindingGraphNode::DeleteNode(const TSet<UObject*>& OrphanExclusionSe
 			// We're probably an orphan
 			if (UMDFastBindingValueBase* ValueBase = Cast<UMDFastBindingValueBase>(Object))
 			{
-				if (UMDFastBindingDestinationBase* BindingDest = ValueBase->GetOuterBindingDestination())
+				if (UMDFastBindingInstance* Binding = ValueBase->GetOuterBinding())
 				{
-					BindingDest->Modify();
-					BindingDest->RemoveOrphan(ValueBase);
+					Binding->Modify();
+					Binding->RemoveOrphan(ValueBase);
 					ValueBase->OrphanAllBindingItems(OrphanExclusionSet);
 				}
 			}
@@ -112,6 +119,15 @@ void UMDFastBindingGraphNode::PinDefaultValueChanged(UEdGraphPin* Pin)
 
 FText UMDFastBindingGraphNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
+	if (UMDFastBindingDestinationBase* BindingDest = Cast<UMDFastBindingDestinationBase>(GetBindingObject()))
+	{
+		if (!BindingDest->IsActive())
+		{
+			static const FText InactiveFormat = LOCTEXT("InactiveDestinationNodeTitleFormat", "{0} (Inactive)");
+			return FText::Format(InactiveFormat, BindingDest->GetDisplayName());
+		}
+	}
+	
 	if (UMDFastBindingObject* Object = BindingObject.Get())
 	{
 		return Object->GetDisplayName();
@@ -163,9 +179,14 @@ void UMDFastBindingGraphNode::OnCommentBubbleToggled(bool bInCommentBubbleVisibl
 
 FLinearColor UMDFastBindingGraphNode::GetNodeTitleColor() const
 {
-	if (Cast<UMDFastBindingDestinationBase>(GetBindingObject()) != nullptr)
+	if (const UMDFastBindingDestinationBase* BindingDest = Cast<UMDFastBindingDestinationBase>(GetBindingObject()))
 	{
-		return FMDFastBindingEditorStyle::Get().GetColor(TEXT("DestinationNodeTitleColor"));
+		if (BindingDest->IsActive())
+		{
+			return FMDFastBindingEditorStyle::Get().GetColor(TEXT("DestinationNodeTitleColor"));
+		}
+
+		return FMDFastBindingEditorStyle::Get().GetColor(TEXT("InactiveDestinationNodeTitleColor"));
 	}
 
 	return FMDFastBindingEditorStyle::Get().GetColor(TEXT("NodeTitleColor"));
@@ -173,6 +194,15 @@ FLinearColor UMDFastBindingGraphNode::GetNodeTitleColor() const
 
 FText UMDFastBindingGraphNode::GetTooltipText() const
 {
+	if (UMDFastBindingDestinationBase* BindingDest = Cast<UMDFastBindingDestinationBase>(GetBindingObject()))
+	{
+		if (!BindingDest->IsActive())
+		{
+			static const FText InactiveToolTipFormat = LOCTEXT("InactiveDestinationNodeToolTipFormat", "This binding destination is inactive and will not run. Right-click this node to set it active. Only one destination can be active within a binding at a time.\n{0}");
+			return FText::Format(InactiveToolTipFormat, BindingDest->GetToolTipText());
+		}
+	}
+	
 	if (UMDFastBindingObject* Object = BindingObject.Get())
 	{
 		return Object->GetToolTipText();

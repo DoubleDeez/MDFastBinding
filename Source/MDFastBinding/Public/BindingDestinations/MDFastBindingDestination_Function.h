@@ -8,7 +8,7 @@
 /**
  * Call a function on an object
  */
-UCLASS(collapseCategories, meta=(DisplayName = "Call Function"))
+UCLASS(collapseCategories, meta=(DisplayName = "Call a Function"))
 class MDFASTBINDING_API UMDFastBindingDestination_Function : public UMDFastBindingDestinationBase
 {
 	GENERATED_BODY()

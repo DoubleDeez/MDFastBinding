@@ -44,6 +44,7 @@ public:
 	FMDPopulateFunctionParam ParamPopulator;
 	FMDFunctionFilter FunctionFilter;
 
+	// TODO - store GUID so we can check for renames
 	UPROPERTY(EditAnywhere, Category = "Bindings")
 	FName FunctionName = NAME_None;
 

@@ -1,4 +1,6 @@
 ﻿#include "BindingDestinations/MDFastBindingDestinationBase.h"
+
+#include "MDFastBindingInstance.h"
 #include "BindingValues/MDFastBindingValueBase.h"
 
 void UMDFastBindingDestinationBase::InitializeDestination(UObject* SourceObject)
@@ -19,23 +21,14 @@ void UMDFastBindingDestinationBase::TerminateDestination(UObject* SourceObject)
 	TerminateDestination_Internal(SourceObject);
 }
 
-#if WITH_EDITORONLY_DATA
-UMDFastBindingValueBase* UMDFastBindingDestinationBase::AddOrphan(UMDFastBindingValueBase* InValue)
+#if WITH_EDITOR
+bool UMDFastBindingDestinationBase::IsActive() const
 {
-	if (InValue != nullptr && !OrphanedValues.Contains(InValue))
+	if (const UMDFastBindingInstance* Binding = GetOuterBinding())
 	{
-		Modify();
-		UMDFastBindingValueBase* Value = DuplicateObject(InValue, this);
-		OrphanedValues.Add(Value);
-		return Value;
+		return Binding->GetBindingDestination() == this;
 	}
 
-	return nullptr;
-}
-
-void UMDFastBindingDestinationBase::RemoveOrphan(UMDFastBindingValueBase* InValue)
-{
-	Modify();
-	OrphanedValues.Remove(InValue);
+	return false;
 }
 #endif

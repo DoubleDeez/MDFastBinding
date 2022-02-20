@@ -8,7 +8,7 @@
 /**
  * Set the value of a property
  */
-UCLASS(collapseCategories, meta=(DisplayName = "Property"))
+UCLASS(collapseCategories, meta=(DisplayName = "Set a Property"))
 class MDFASTBINDING_API UMDFastBindingDestination_Property : public UMDFastBindingDestinationBase
 {
 	GENERATED_BODY()

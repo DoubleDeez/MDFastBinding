@@ -4,7 +4,7 @@
 #include "UObject/Object.h"
 #include "MDFastBindingContainer.generated.h"
 
-class UMDFastBindingDestinationBase;
+class UMDFastBindingInstance;
 
 /**
  * 
@@ -23,11 +23,11 @@ public:
 
 // Editor only operations
 #if WITH_EDITORONLY_DATA
-	const TArray<UMDFastBindingDestinationBase*>& GetBindings() const { return Destinations; }
+	const TArray<UMDFastBindingInstance*>& GetBindings() const { return Bindings; }
 
-	UMDFastBindingDestinationBase* AddBinding(TSubclassOf<UMDFastBindingDestinationBase> BindingClass);
-	UMDFastBindingDestinationBase* DuplicateBinding(UMDFastBindingDestinationBase* InBinding);
-	bool DeleteBinding(UMDFastBindingDestinationBase* InBinding);
+	UMDFastBindingInstance* AddBinding();
+	UMDFastBindingInstance* DuplicateBinding(UMDFastBindingInstance* InBinding);
+	bool DeleteBinding(UMDFastBindingInstance* InBinding);
 #endif
 
 #if WITH_EDITOR
@@ -36,5 +36,5 @@ public:
 
 protected:
 	UPROPERTY(Instanced)
-	TArray<UMDFastBindingDestinationBase*> Destinations;
+	TArray<UMDFastBindingInstance*> Bindings;
 };

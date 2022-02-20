@@ -1,6 +1,7 @@
 ﻿#include "MDFastBindingGraph.h"
 
 #include "MDFastBindingGraphNode.h"
+#include "MDFastBindingInstance.h"
 #include "MDFastBindingObject.h"
 #include "SMDFastBindingEditorGraphWidget.h"
 #include "BindingValues/MDFastBindingValueBase.h"
@@ -13,10 +14,10 @@ void UMDFastBindingGraph::SetGraphWidget(TSharedRef<SMDFastBindingEditorGraphWid
 
 void UMDFastBindingGraph::RefreshGraph()
 {
-	SetBindingDestination(Binding.Get());
+	SetBinding(Binding.Get());
 }
 
-void UMDFastBindingGraph::SetBindingDestination(UMDFastBindingDestinationBase* InBinding)
+void UMDFastBindingGraph::SetBinding(UMDFastBindingInstance* InBinding)
 {
 	TArray<UEdGraphNode*> NodesCopy = Nodes;
 	for (UEdGraphNode* Node : NodesCopy)
@@ -32,8 +33,13 @@ void UMDFastBindingGraph::SetBindingDestination(UMDFastBindingDestinationBase* I
 	}
 
 	// Construct Nodes
-	TArray<UMDFastBindingObject*> NextNodes = { InBinding };
+	TArray<UMDFastBindingObject*> NextNodes;
+	if (UMDFastBindingDestinationBase* BindingDest = InBinding->GetBindingDestination())
+	{
+		NextNodes.Add(BindingDest);		
+	}
 	NextNodes.Append(InBinding->OrphanedValues);
+	NextNodes.Append(InBinding->InactiveDestinations);
 	while (NextNodes.Num() > 0)
 	{
 		TArray<UMDFastBindingObject*> CurrentNodes = MoveTemp(NextNodes);

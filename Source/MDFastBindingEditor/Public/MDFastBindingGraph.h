@@ -5,7 +5,7 @@
 #include "MDFastBindingGraph.generated.h"
 
 class UMDFastBindingObject;
-class UMDFastBindingDestinationBase;
+class UMDFastBindingInstance;
 class UMDFastBindingGraphNode;
 class SMDFastBindingEditorGraphWidget;
 
@@ -22,8 +22,8 @@ public:
 	
 	void RefreshGraph();
 	
-	void SetBindingDestination(UMDFastBindingDestinationBase* InBinding);
-	UMDFastBindingDestinationBase* GetBindingDestination() const { return Binding.Get(); }
+	void SetBinding(UMDFastBindingInstance* InBinding);
+	UMDFastBindingInstance* GetBinding() const { return Binding.Get(); }
 
 	UMDFastBindingGraphNode* FindNodeWithBindingObject(UMDFastBindingObject* InObject) const;
 	void SelectNodeWithBindingObject(UMDFastBindingObject* InObject);
@@ -31,7 +31,7 @@ public:
 	void ClearSelection();
 
 private:
-	TWeakObjectPtr<UMDFastBindingDestinationBase> Binding;
+	TWeakObjectPtr<UMDFastBindingInstance> Binding;
 
 	TWeakPtr<SMDFastBindingEditorGraphWidget> GraphWidget;
 };

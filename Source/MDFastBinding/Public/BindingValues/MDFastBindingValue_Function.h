@@ -8,7 +8,7 @@
 /**
  * Call a function and retrieve its return value
  */
-UCLASS(meta = (DisplayName = "Function"))
+UCLASS(meta = (DisplayName = "Call a Function"))
 class MDFASTBINDING_API UMDFastBindingValue_Function : public UMDFastBindingValueBase
 {
 	GENERATED_BODY()

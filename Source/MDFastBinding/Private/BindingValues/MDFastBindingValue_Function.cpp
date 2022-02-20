@@ -100,10 +100,9 @@ void UMDFastBindingValue_Function::SetupBindingItems()
 		if (!ExpectedInputs.Contains(BindingItems[i].ItemName))
 		{
 #if WITH_EDITORONLY_DATA
-			if (UMDFastBindingDestinationBase* OuterDest = GetOuterBindingDestination())
 			if (BindingItems[i].Value != nullptr)
 			{
-				OuterDest->AddOrphan(BindingItems[i].Value);
+				OrphanBindingItem(BindingItems[i].Value);
 			}
 #endif
 			BindingItems.RemoveAt(i);

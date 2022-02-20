@@ -7,7 +7,7 @@
 /**
  * Call a static function (eg. blueprint library function) and retrieve its return value
  */
-UCLASS(meta = (DisplayName = "Static Function"))
+UCLASS(meta = (DisplayName = "Call a Static Function"))
 class MDFASTBINDING_API UMDFastBindingValue_StaticFunction : public UMDFastBindingValue_Function
 {
 	GENERATED_BODY()

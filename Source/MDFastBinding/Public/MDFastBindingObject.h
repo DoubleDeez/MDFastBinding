@@ -6,6 +6,7 @@
 #include "MDFastBindingObject.generated.h"
 
 class UMDFastBindingValueBase;
+class UMDFastBindingInstance;
 
 // Represented as a pin in the binding editor graph
 USTRUCT()
@@ -70,6 +71,8 @@ public:
 
 	virtual bool DoesBindingItemDefaultToSelf(const FName& InItemName) const { return false; }
 
+	UMDFastBindingInstance* GetOuterBinding() const;
+
 // Editor only operations
 #if WITH_EDITORONLY_DATA
 	UPROPERTY()
@@ -93,9 +96,10 @@ public:
 	UMDFastBindingValueBase* SetBindingItem(const FName& ItemName, TSubclassOf<UMDFastBindingValueBase> ValueClass);
 	UMDFastBindingValueBase* SetBindingItem(const FName& ItemName, UMDFastBindingValueBase* InValue);
 	void ClearBindingItemValue(const FName& ItemName);
-
+	
 	void OrphanBindingItem(const FName& ItemName);
-	virtual void OrphanBindingItem(UMDFastBindingValueBase* InValue) {}
+	void OrphanBindingItem(UMDFastBindingValueBase* InValue);
+	void OrphanAllBindingItems(const TSet<UObject*>& OrphanExclusionSet);
 
 private:
 	UMDFastBindingValueBase* SetBindingItem_Internal(const FName& ItemName, UMDFastBindingValueBase* InValue);
@@ -124,4 +128,5 @@ protected:
 
 private:
 	mutable TWeakObjectPtr<UClass> BindingOuterClass;
+	mutable TWeakObjectPtr<UMDFastBindingInstance> OuterBinding;
 };
