@@ -33,9 +33,13 @@ public:
 
 	const FName& GetFunctionName() const { return FunctionName; }
 
+#if WITH_EDITORONLY_DATA
 	FString ToString();
 
 	static FString FunctionToString(UFunction* Func);
+	
+	static FString FunctionToString_Internal(UFunction* Func, const FProperty* ReturnProp, const TArray<const FProperty*>& Params);
+#endif
 
 	static bool IsFunctionValidForWrapper(const UFunction* Func);
 	
@@ -60,6 +64,4 @@ private:
 	UObject* GetFunctionOwner(UObject* SourceObject) const;
 	void InitFunctionMemory();
 	void PopulateParams(UObject* SourceObject);
-	
-	static FString FunctionToString_Internal(UFunction* Func, const FProperty* ReturnProp, const TArray<const FProperty*>& Params);
 };

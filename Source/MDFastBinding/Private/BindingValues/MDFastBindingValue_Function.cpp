@@ -119,7 +119,11 @@ void UMDFastBindingValue_Function::SetupBindingItems()
 
 	for (const FProperty* Param : Params)
 	{
+#if WITH_EDITORONLY_DATA
 		EnsureBindingItemExists(Param->GetFName(), Param, Param->GetToolTipText());
+#else
+		EnsureBindingItemExists(Param->GetFName(), Param, FText::GetEmpty());
+#endif
 	}
 }
 

@@ -97,6 +97,7 @@ TTuple<const FProperty*, void*> FMDFastBindingFunctionWrapper::CallFunction(UObj
 	return {};
 }
 
+#if WITH_EDITORONLY_DATA
 FString FMDFastBindingFunctionWrapper::ToString()
 {
 	BuildFunctionData();
@@ -112,6 +113,33 @@ FString FMDFastBindingFunctionWrapper::FunctionToString(UFunction* Func)
 
 	return FunctionToString_Internal(Func, ReturnProp, Params);
 }
+
+FString FMDFastBindingFunctionWrapper::FunctionToString_Internal(UFunction* Func, const FProperty* ReturnProp, const TArray<const FProperty*>& Params)
+{
+	if (Func == nullptr)
+	{
+		return TEXT("None");
+	}
+
+	FString ParamString;
+	for (int32 i = 0; i < Params.Num(); ++i)
+	{
+		if (const FProperty* Param = Params[i])
+		{
+			if (i != 0)
+			{
+				ParamString += TEXT(", ");
+			}
+
+			ParamString += FMDFastBindingHelpers::PropertyToString(*Param) + TEXT(" ") + Param->GetName();
+		}
+	}
+
+	const FString ReturnString = ReturnProp != nullptr ? FMDFastBindingHelpers::PropertyToString(*ReturnProp) : TEXT("void"); 
+
+	return FString::Printf(TEXT("%s %s(%s)"), *ReturnString, *Func->GetDisplayNameText().ToString(), *ParamString);
+}
+#endif
 
 bool FMDFastBindingFunctionWrapper::IsFunctionValidForWrapper(const UFunction* Func)
 {
@@ -151,30 +179,4 @@ void FMDFastBindingFunctionWrapper::PopulateParams(UObject* SourceObject)
 			ParamPopulator.Execute(SourceObject, Param, static_cast<uint8*>(FunctionMemory) + Param->GetOffset_ForUFunction());
 		}
 	}
-}
-
-FString FMDFastBindingFunctionWrapper::FunctionToString_Internal(UFunction* Func, const FProperty* ReturnProp, const TArray<const FProperty*>& Params)
-{
-	if (Func == nullptr)
-	{
-		return TEXT("None");
-	}
-
-	FString ParamString;
-	for (int32 i = 0; i < Params.Num(); ++i)
-	{
-		if (const FProperty* Param = Params[i])
-		{
-			if (i != 0)
-			{
-				ParamString += TEXT(", ");
-			}
-
-			ParamString += FMDFastBindingHelpers::PropertyToString(*Param) + TEXT(" ") + Param->GetName();
-		}
-	}
-
-	const FString ReturnString = ReturnProp != nullptr ? FMDFastBindingHelpers::PropertyToString(*ReturnProp) : TEXT("void"); 
-
-	return FString::Printf(TEXT("%s %s(%s)"), *ReturnString, *Func->GetDisplayNameText().ToString(), *ParamString);
 }
