@@ -302,4 +302,17 @@ bool UMDFastBindingGraphSchema::TryCreateConnection(UEdGraphPin* A, UEdGraphPin*
 	return false;
 }
 
+bool UMDFastBindingGraphSchema::IsSelfPin(const UEdGraphPin& Pin) const
+{
+	if (const UMDFastBindingGraphNode* Node = Cast<const UMDFastBindingGraphNode>(Pin.GetOwningNode()))
+	{
+		if (const UMDFastBindingObject* BindingObject = Node->GetBindingObject())
+		{
+			return BindingObject->DoesBindingItemDefaultToSelf(Pin.GetFName());
+		}
+	}
+
+	return Super::IsSelfPin(Pin);
+}
+
 #undef LOCTEXT_NAMESPACE

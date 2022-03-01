@@ -2,7 +2,9 @@
 
 #include "Interfaces/IPluginManager.h"
 #include "Styling/SlateStyleRegistry.h"
+#if ENGINE_MAJOR_VERSION >= 5
 #include "Styling/StyleColors.h"
+#endif
 
 TSharedPtr<FSlateStyleSet> FMDFastBindingEditorStyle::StyleInstance = nullptr;
 
@@ -52,11 +54,19 @@ TSharedRef<FSlateStyleSet> FMDFastBindingEditorStyle::Create()
 	Style->Set(TEXT("Icon.FastBinding_16x"), new IMAGE_BRUSH(TEXT("FastBindingIcon_16x"), Icon16x16));
 	Style->Set(TEXT("Icon.FastBinding_24x"), new IMAGE_BRUSH(TEXT("FastBindingIcon_24x"), Icon24x24));
 
+#if ENGINE_MAJOR_VERSION <= 4
+	Style->Set(TEXT("Background.Selector"), new FSlateColorBrush(FLinearColor(0.7f, 0.31f, 0.f, 0.5f)));
+#else
 	Style->Set(TEXT("Background.Selector"), new FSlateColorBrush(FStyleColors::Select.GetSpecifiedColor() * 0.5f));
+#endif
 	Style->Set(TEXT("Background.SelectorInactive"), new FSlateColorBrush(FLinearColor::Transparent));
 	
 #if ENGINE_MAJOR_VERSION <= 4
 	FButtonStyle ButtonStyle = FCoreStyle::Get().GetWidgetStyle< FButtonStyle >("FlatButton");
+	FSlateBrush NoBrush;
+	NoBrush.DrawAs = ESlateBrushDrawType::NoDrawType;
+	ButtonStyle.SetNormal(NoBrush);
+	ButtonStyle.SetPressed(NoBrush);
 #else
 	FButtonStyle ButtonStyle = FAppStyle::Get().GetWidgetStyle< FButtonStyle >("FlatButton");
 #endif

@@ -13,6 +13,7 @@
 #include "BindingValues/MDFastBindingValueBase.h"
 #include "Framework/Commands/GenericCommands.h"
 #include "HAL/PlatformApplicationMisc.h"
+#include "UObject/StrongObjectPtr.h"
 
 #define LOCTEXT_NAMESPACE "SMDFastBindingEditorGraphWidget"
 
@@ -334,11 +335,11 @@ void SMDFastBindingEditorGraphWidget::PasteNodes() const
 
 	// Create temporary graph
 	const FName UniqueGraphName = MakeUniqueObjectName(GetTransientPackage(), UWorld::StaticClass(), FName(*(LOCTEXT("MDFastBindingTempGraph", "TempGraph").ToString())));
-	const TStrongObjectPtr<UMDFastBindingGraph> DataprepGraph = TStrongObjectPtr<UMDFastBindingGraph>(NewObject<UMDFastBindingGraph>(GetTransientPackage(), UniqueGraphName));
-	DataprepGraph->Schema = UMDFastBindingGraphSchema::StaticClass();
+	const TStrongObjectPtr<UMDFastBindingGraph> TempBindingGraph = TStrongObjectPtr<UMDFastBindingGraph>(NewObject<UMDFastBindingGraph>(GetTransientPackage(), UniqueGraphName));
+	TempBindingGraph->Schema = UMDFastBindingGraphSchema::StaticClass();
 
 	TSet<UEdGraphNode*> PastedNodes;
-	FEdGraphUtilities::ImportNodesFromText(DataprepGraph.Get(), TextToImport, /*out*/ PastedNodes);
+	FEdGraphUtilities::ImportNodesFromText(TempBindingGraph.Get(), TextToImport, /*out*/ PastedNodes);
 
 	TArray<UMDFastBindingObject*> BindingObjects;
 	for(UEdGraphNode* Node : PastedNodes)

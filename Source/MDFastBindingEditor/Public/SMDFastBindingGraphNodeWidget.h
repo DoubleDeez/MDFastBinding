@@ -11,8 +11,10 @@ class MDFASTBINDINGEDITOR_API SMDFastBindingSelfGraphPinWidget : public SGraphPi
 {
 public:
 	using SGraphPinObject::Construct;
-
+	
+#if ENGINE_MAJOR_VERSION >= 5
 	virtual bool ShouldDisplayAsSelfPin() const override { return true; }
+#endif
 };
 
 /**
@@ -29,10 +31,10 @@ public:
 
 	void Construct(const FArguments& InArgs, UMDFastBindingGraphNode* InNode);
 
-#if ENGINE_MAJOR_VERSION <= 4 || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 1)
-	virtual void MoveTo( const FVector2D& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty = true ) override;
-#else
+#if ENGINE_MAJOR_VERSION <= 4
 	virtual void MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter) override;
+#else
+	virtual void MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty = true) override;
 #endif
 
 	UMDFastBindingGraphNode* GetGraphNode() const;

@@ -12,16 +12,16 @@ void SMDFastBindingGraphNodeWidget::Construct(const FArguments& InArgs, UMDFastB
 	UpdateGraphNode();
 }
 
-#if ENGINE_MAJOR_VERSION <= 4 || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 1)
-void SMDFastBindingGraphNodeWidget::MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty)
-#else
+#if ENGINE_MAJOR_VERSION <= 4
 void SMDFastBindingGraphNodeWidget::MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter)
+#else
+void SMDFastBindingGraphNodeWidget::MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty)
 #endif
 {
-#if ENGINE_MAJOR_VERSION <= 4 || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 1)
-	SGraphNode::MoveTo(NewPosition, NodeFilter, bMarkDirty);
-#else
+#if ENGINE_MAJOR_VERSION <= 4
 	SGraphNode::MoveTo(NewPosition, NodeFilter);
+#else
+	SGraphNode::MoveTo(NewPosition, NodeFilter, bMarkDirty);
 #endif
 
 	if (UMDFastBindingGraphNode* Node = GetGraphNode())

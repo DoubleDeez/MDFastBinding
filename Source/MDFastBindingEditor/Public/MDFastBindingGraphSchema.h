@@ -63,4 +63,6 @@ public:
 	virtual const FPinConnectionResponse CanCreateConnection(const UEdGraphPin* A, const UEdGraphPin* B) const override;
 	
 	virtual bool TryCreateConnection(UEdGraphPin* A, UEdGraphPin* B) const override;
+
+	virtual bool IsSelfPin(const UEdGraphPin& Pin) const override;
 };
