@@ -8,6 +8,8 @@ void UMDFastBindingContainer::InitializeBindings(UObject* SourceObject)
 	{
 		Binding->InitializeBinding(SourceObject);
 	}
+
+	UpdateBindings(SourceObject);
 }
 
 void UMDFastBindingContainer::UpdateBindings(UObject* SourceObject)
