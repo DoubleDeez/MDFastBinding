@@ -7,7 +7,13 @@ namespace MDFastBindingValue_Property_Private
 	const FName PathRootName = TEXT("Path Root");
 }
 
-TTuple<const FProperty*, void*> UMDFastBindingValue_Property::GetValue(UObject* SourceObject)
+UMDFastBindingValue_Property::UMDFastBindingValue_Property()
+{
+	// Make the default match behaviour since the property value could have changed, we ignore EMDFastBindingUpdateType::IfUpdatesNeeded
+	UpdateType = EMDFastBindingUpdateType::Always;
+}
+
+TTuple<const FProperty*, void*> UMDFastBindingValue_Property::GetValue_Internal(UObject* SourceObject)
 {
 	return PropertyPath.ResolvePath(SourceObject);
 }
@@ -41,7 +47,8 @@ FText UMDFastBindingValue_Property::GetDisplayName()
 
 UObject* UMDFastBindingValue_Property::GetPropertyOwner(UObject* SourceObject)
 {
-	const TTuple<const FProperty*, void*> PathRoot = GetBindingItemValue(SourceObject, MDFastBindingValue_Property_Private::PathRootName);
+	bool bDidUpdate = false;
+	const TTuple<const FProperty*, void*> PathRoot = GetBindingItemValue(SourceObject, MDFastBindingValue_Property_Private::PathRootName, bDidUpdate);
 	if (PathRoot.Value != nullptr)
 	{
 		if (UObject* Owner = *static_cast<UObject**>(PathRoot.Value))

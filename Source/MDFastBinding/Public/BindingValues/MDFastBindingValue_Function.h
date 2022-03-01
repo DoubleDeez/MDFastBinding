@@ -14,7 +14,8 @@ class MDFASTBINDING_API UMDFastBindingValue_Function : public UMDFastBindingValu
 	GENERATED_BODY()
 
 public:
-	virtual TTuple<const FProperty*, void*> GetValue(UObject* SourceObject) override;
+	UMDFastBindingValue_Function();
+	
 	virtual const FProperty* GetOutputProperty() override;
 	virtual bool DoesBindingItemDefaultToSelf(const FName& InItemName) const override;
 
@@ -26,6 +27,7 @@ public:
 #endif
 
 protected:
+	virtual TTuple<const FProperty*, void*> GetValue_Internal(UObject* SourceObject) override;
 	virtual UObject* GetFunctionOwner(UObject* SourceObject);
 	virtual UClass* GetFunctionOwnerClass();
 	virtual void PopulateFunctionParam(UObject* SourceObject, const FProperty* Param, void* ValuePtr);
@@ -34,6 +36,8 @@ protected:
 	virtual void SetupBindingItems() override;
 
 	virtual void PostInitProperties() override;
+
+	virtual bool ShouldCallFunction();
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Binding")
 	FMDFastBindingFunctionWrapper Function;
@@ -43,4 +47,7 @@ protected:
 
 	UPROPERTY(Transient)
 	bool bAddPathRootBindingItem = true;
+	
+	UPROPERTY(Transient)
+	bool bNeedsUpdate = false;
 };

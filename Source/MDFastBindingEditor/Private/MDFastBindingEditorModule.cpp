@@ -37,7 +37,7 @@ FMDFastBindingEditorTabBinding::~FMDFastBindingEditorTabBinding()
 
 void FMDFastBindingEditorTabBinding::RegisterBlueprintEditorLayout(FLayoutExtender& Extender)
 {
-	Extender.ExtendLayout(FBlueprintEditorTabs::CompilerResultsID, ELayoutExtensionPosition::Before, FTabManager::FTab(FMDFastBindingEditorSummoner::TabId, ETabState::ClosedTab));
+	Extender.ExtendLayout(FBlueprintEditorTabs::GraphEditorID, ELayoutExtensionPosition::Before, FTabManager::FTab(FMDFastBindingEditorSummoner::TabId, ETabState::ClosedTab));
 }
 
 void FMDFastBindingEditorTabBinding::RegisterBlueprintEditorTab(FWorkflowAllowedTabSet& TabFactories, FName InModeName,
@@ -162,7 +162,7 @@ void FMDFastBindingEditorModule::OpenBindingEditor(TWeakObjectPtr<UObject> Edito
 	for (IAssetEditorInstance* Editor : Editors)
 	{
 		// Force switch to graph mode, in case this is a Widget Blueprint, since the binding editor opens in the graph mode
-		if (Editor->GetEditorName() == FName("BlueprintEditor"))
+		if (Editor->GetEditorName() == FName("BlueprintEditor") || Editor->GetEditorName() == FName("WidgetBlueprintEditor"))
 		{
 			FWorkflowCentricApplication* WorkflowApp = static_cast<FWorkflowCentricApplication*>(Editor);
 			if (WorkflowApp->GetCurrentMode() == TEXT("DesignerName"))
@@ -176,9 +176,8 @@ void FMDFastBindingEditorModule::OpenBindingEditor(TWeakObjectPtr<UObject> Edito
 		{
 			if (const TSharedPtr<SDockTab> Tab = TabManager->TryInvokeTab(FMDFastBindingEditorSummoner::TabId))
 			{
-				UMDFastBindingContainer* BindingContainer = Cast<UMDFastBindingContainer>(EditorObject.Get());
 				const TSharedPtr<SMDFastBindingEditorWidget> BindingWidget = StaticCastSharedRef<SMDFastBindingEditorWidget>(Tab->GetContent());
-				//BindingWidget->AssignBindingData(BP->GeneratedClass, BindingContainer);
+				BindingWidget->AssignBindingData(BP->GeneratedClass);
 			}
 		}
 	}

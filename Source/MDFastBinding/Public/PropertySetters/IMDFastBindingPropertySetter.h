@@ -2,6 +2,9 @@
 
 #include "CoreMinimal.h"
 
+class FFieldClass;
+class FProperty;
+
 /**
  * 
  */
@@ -11,7 +14,7 @@ public:
 	virtual ~IMDFastBindingPropertySetter() = default;
 
 	// Get all of supported field types this setter can handle
-	virtual const TSet<FFieldClass*>& GetSupportedFieldTypes() const = 0;
+	virtual const TSet<FFieldClass*>& GetSupportedFieldTypes() const;
 
 	// This function does the actual setting by taking the value held in SourceValuePtr, optionally doing any conversion, then setting the value in DestinationValuePtr
 	// Implementation can assume the CanSetProperty check has passed

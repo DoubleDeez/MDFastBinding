@@ -14,7 +14,8 @@ class MDFASTBINDING_API UMDFastBindingValue_Property : public UMDFastBindingValu
 	GENERATED_BODY()
 
 public:
-	virtual TTuple<const FProperty*, void*> GetValue(UObject* SourceObject) override;
+	UMDFastBindingValue_Property();
+	
 	virtual const FProperty* GetOutputProperty() override;
 	virtual bool DoesBindingItemDefaultToSelf(const FName& InItemName) const override;
 	
@@ -26,6 +27,7 @@ public:
 #endif
 
 protected:
+	virtual TTuple<const FProperty*, void*> GetValue_Internal(UObject* SourceObject) override;
 	virtual UObject* GetPropertyOwner(UObject* SourceObject);
 	virtual UClass* GetPropertyOwnerClass();
 	

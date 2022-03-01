@@ -18,12 +18,15 @@ void UMDFastBindingDestination_Function::InitializeDestination_Internal(UObject*
 
 void UMDFastBindingDestination_Function::UpdateDestination_Internal(UObject* SourceObject)
 {
+	bNeedsUpdate = false;
 	Function.CallFunction(SourceObject);
 }
 
 UObject* UMDFastBindingDestination_Function::GetFunctionOwner(UObject* SourceObject)
 {
-	const TTuple<const FProperty*, void*> FunctionOwner = GetBindingItemValue(SourceObject, MDFastBindingDestination_Function_Private::FunctionOwnerName);
+	bool bDidUpdate = false;
+	const TTuple<const FProperty*, void*> FunctionOwner = GetBindingItemValue(SourceObject, MDFastBindingDestination_Function_Private::FunctionOwnerName, bDidUpdate);
+	bNeedsUpdate |= bDidUpdate;
 	if (FunctionOwner.Value != nullptr)
 	{
 		if (UObject* Owner = *static_cast<UObject**>(FunctionOwner.Value))
@@ -51,9 +54,11 @@ void UMDFastBindingDestination_Function::PopulateFunctionParam(UObject* SourceOb
 	{
 		return;
 	}
-	
-	const TTuple<const FProperty*, void*> ParamValue = GetBindingItemValue(SourceObject, Param->GetFName());
+
+	bool bDidUpdate = false;
+	const TTuple<const FProperty*, void*> ParamValue = GetBindingItemValue(SourceObject, Param->GetFName(), bDidUpdate);
 	FMDFastBindingModule::SetProperty(Param, ValuePtr, ParamValue.Key, ParamValue.Value);
+	bNeedsUpdate |= bDidUpdate;
 }
 
 void UMDFastBindingDestination_Function::SetupBindingItems()
@@ -102,8 +107,14 @@ void UMDFastBindingDestination_Function::PostInitProperties()
 	Function.OwnerClassGetter.BindUObject(this, &UMDFastBindingDestination_Function::GetFunctionOwnerClass);
 	Function.OwnerGetter.BindUObject(this, &UMDFastBindingDestination_Function::GetFunctionOwner);
 	Function.ParamPopulator.BindUObject(this, &UMDFastBindingDestination_Function::PopulateFunctionParam);
+	Function.ShouldCallFunction.BindUObject(this, &UMDFastBindingDestination_Function::ShouldCallFunction);
 	
 	Super::PostInitProperties();
+}
+
+bool UMDFastBindingDestination_Function::ShouldCallFunction()
+{
+	return UpdateType != EMDFastBindingUpdateType::IfUpdatesNeeded || bNeedsUpdate;
 }
 
 bool UMDFastBindingDestination_Function::DoesBindingItemDefaultToSelf(const FName& InItemName) const

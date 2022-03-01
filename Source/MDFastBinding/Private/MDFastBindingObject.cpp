@@ -5,6 +5,7 @@
 #include "MDFastBindingHelpers.h"
 #include "MDFastBindingInstance.h"
 #include "BindingValues/MDFastBindingValueBase.h"
+#include "UObject/TextProperty.h"
 
 #define LOCTEXT_NAMESPACE "MDFastBindingObject"
 
@@ -16,8 +17,10 @@ FMDFastBindingItem::~FMDFastBindingItem()
 	}
 }
 
-TTuple<const FProperty*, void*> FMDFastBindingItem::GetValue(UObject* SourceObject)
+TTuple<const FProperty*, void*> FMDFastBindingItem::GetValue(UObject* SourceObject, bool& OutDidUpdate)
 {
+	OutDidUpdate = false;
+	
 	const FProperty* ItemProp = ItemProperty.Get();
 	if (ItemProp == nullptr)
 	{
@@ -26,18 +29,22 @@ TTuple<const FProperty*, void*> FMDFastBindingItem::GetValue(UObject* SourceObje
 	
 	if (Value != nullptr)
 	{
-		return Value->GetValue(SourceObject);
+		return Value->GetValue(SourceObject, OutDidUpdate);
 	}
 	else if (AllocatedDefaultValue != nullptr)
 	{
 		return TTuple<const FProperty*, void*>{ ItemProp, AllocatedDefaultValue };
 	}
-	else if (ItemProp->IsA<FStrProperty>())
+
+	OutDidUpdate = !bHasRetrievedDefaultValue;
+	if (ItemProp->IsA<FStrProperty>())
 	{
+		bHasRetrievedDefaultValue = true;
 		return TTuple<const FProperty*, void*>{ ItemProp, &DefaultString };
 	}
 	else if (!DefaultString.IsEmpty())
 	{
+		bHasRetrievedDefaultValue = true;
 		AllocatedDefaultValue = FMemory::Malloc(ItemProp->GetSize(), ItemProp->GetMinAlignment());
 		ItemProp->InitializeValue(AllocatedDefaultValue);
 		ItemProp->ImportText(*DefaultString, AllocatedDefaultValue, PPF_None, nullptr);
@@ -45,10 +52,12 @@ TTuple<const FProperty*, void*> FMDFastBindingItem::GetValue(UObject* SourceObje
 	}
 	else if (ItemProp->IsA<FObjectPropertyBase>())
 	{
+		bHasRetrievedDefaultValue = true;
 		return TTuple<const FProperty*, void*>{ ItemProp, &DefaultObject };
 	}
 	else if (ItemProp->IsA<FTextProperty>())
 	{
+		bHasRetrievedDefaultValue = true;
 		return TTuple<const FProperty*, void*>{ ItemProp, &DefaultText };
 	}
 
@@ -105,6 +114,36 @@ UMDFastBindingInstance* UMDFastBindingObject::GetOuterBinding() const
 	return nullptr;
 }
 
+bool UMDFastBindingObject::CheckNeedsUpdate() const
+{
+	if (UpdateType != EMDFastBindingUpdateType::Always)
+	{
+		if (UpdateType == EMDFastBindingUpdateType::Once)
+		{
+			// Assume the child classes check for this
+			return false;
+		}
+		else if (UpdateType == EMDFastBindingUpdateType::IfUpdatesNeeded)
+		{
+			for (const FMDFastBindingItem& Item : BindingItems)
+			{
+				if (Item.Value != nullptr && Item.Value->CheckNeedsUpdate())
+				{
+					return true;
+				}
+				else if (Item.Value == nullptr && !Item.HasRetrievedDefaultValue())
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+	}
+
+	return true;
+}
+
 void UMDFastBindingObject::PostLoad()
 {
 	Super::PostLoad();
@@ -148,22 +187,21 @@ const FProperty* UMDFastBindingObject::GetBindingItemValueProperty(const FName& 
 	return nullptr;
 }
 
-TTuple<const FProperty*, void*> UMDFastBindingObject::GetBindingItemValue(UObject* SourceObject,
-                                                                          const FName& Name)
+TTuple<const FProperty*, void*> UMDFastBindingObject::GetBindingItemValue(UObject* SourceObject, const FName& Name, bool& OutDidUpdate)
 {
 	if (FMDFastBindingItem* Item = BindingItems.FindByKey(Name))
 	{
-		return Item->GetValue(SourceObject);
+		return Item->GetValue(SourceObject, OutDidUpdate);
 	}
 	
 	return {};
 }
 
-TTuple<const FProperty*, void*> UMDFastBindingObject::GetBindingItemValue(UObject* SourceObject, int32 Index)
+TTuple<const FProperty*, void*> UMDFastBindingObject::GetBindingItemValue(UObject* SourceObject, int32 Index, bool& OutDidUpdate)
 {
 	if (BindingItems.IsValidIndex(Index))
 	{
-		return BindingItems[Index].GetValue(SourceObject);
+		return BindingItems[Index].GetValue(SourceObject, OutDidUpdate);
 	}
 	
 	return {};

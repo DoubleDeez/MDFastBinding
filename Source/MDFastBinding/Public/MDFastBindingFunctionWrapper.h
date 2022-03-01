@@ -7,6 +7,7 @@ DECLARE_DELEGATE_RetVal_OneParam(UObject*, FMDGetFunctionOwner, UObject*);
 DECLARE_DELEGATE_RetVal(UClass*, FMDGetFunctionOwnerClass);
 DECLARE_DELEGATE_ThreeParams(FMDPopulateFunctionParam, UObject*, const FProperty*, void*);
 DECLARE_DELEGATE_RetVal_ThreeParams(bool, FMDFunctionFilter, UFunction*, const FProperty*, const TArray<const FProperty*>&);
+DECLARE_DELEGATE_RetVal(bool, FMDShouldCallFunction)
 
 /**
  * 
@@ -47,6 +48,9 @@ public:
 	FMDGetFunctionOwnerClass OwnerClassGetter;
 	FMDPopulateFunctionParam ParamPopulator;
 	FMDFunctionFilter FunctionFilter;
+
+	// Last chance to opt-out of calling the function (ie, if none of the params updated)
+	FMDShouldCallFunction ShouldCallFunction;
 
 	// TODO - store GUID so we can check for renames
 	UPROPERTY(EditAnywhere, Category = "Bindings")

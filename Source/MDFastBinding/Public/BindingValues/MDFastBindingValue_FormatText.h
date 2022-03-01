@@ -13,10 +13,10 @@ class MDFASTBINDING_API UMDFastBindingValue_FormatText : public UMDFastBindingVa
 	GENERATED_BODY()
 
 public:
-	virtual TTuple<const FProperty*, void*> GetValue(UObject* SourceObject) override;
 	virtual const FProperty* GetOutputProperty() override;
 	
 protected:
+	virtual TTuple<const FProperty*, void*> GetValue_Internal(UObject* SourceObject) override;
 	virtual void SetupBindingItems() override;
 	
 	UPROPERTY(EditAnywhere, Category = "Binding")

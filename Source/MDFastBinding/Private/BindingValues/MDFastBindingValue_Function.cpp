@@ -10,8 +10,15 @@ namespace MDFastBindingValue_Function_Private
 	const FName FunctionOwnerName = TEXT("Function Owner");
 }
 
-TTuple<const FProperty*, void*> UMDFastBindingValue_Function::GetValue(UObject* SourceObject)
+UMDFastBindingValue_Function::UMDFastBindingValue_Function()
 {
+	// Make the default case more 'correct' since a function _could_ return different results given the same inputs
+	UpdateType = EMDFastBindingUpdateType::Always;
+}
+
+TTuple<const FProperty*, void*> UMDFastBindingValue_Function::GetValue_Internal(UObject* SourceObject)
+{
+	bNeedsUpdate = false;
 	return Function.CallFunction(SourceObject);
 }
 
@@ -44,7 +51,10 @@ FText UMDFastBindingValue_Function::GetDisplayName()
 
 UObject* UMDFastBindingValue_Function::GetFunctionOwner(UObject* SourceObject)
 {
-	const TTuple<const FProperty*, void*> FunctionOwner = GetBindingItemValue(SourceObject, MDFastBindingValue_Function_Private::FunctionOwnerName);
+	bool bDidUpdate = false;
+	const TTuple<const FProperty*, void*> FunctionOwner = GetBindingItemValue(SourceObject, MDFastBindingValue_Function_Private::FunctionOwnerName, bDidUpdate);
+	bNeedsUpdate |= bDidUpdate;
+	
 	if (FunctionOwner.Value != nullptr)
 	{
 		return *static_cast<UObject**>(FunctionOwner.Value);
@@ -69,9 +79,11 @@ void UMDFastBindingValue_Function::PopulateFunctionParam(UObject* SourceObject, 
 	{
 		return;
 	}
-	
-	const TTuple<const FProperty*, void*> ParamValue = GetBindingItemValue(SourceObject, Param->GetFName());
+
+	bool bDidUpdate = false;
+	const TTuple<const FProperty*, void*> ParamValue = GetBindingItemValue(SourceObject, Param->GetFName(), bDidUpdate);
 	FMDFastBindingModule::SetProperty(Param, ValuePtr, ParamValue.Key, ParamValue.Value);
+	bNeedsUpdate |= bDidUpdate;
 }
 
 bool UMDFastBindingValue_Function::IsFunctionValid(UFunction* Func, const FProperty* ReturnValue, const TArray<const FProperty*>& Params) const
@@ -133,8 +145,14 @@ void UMDFastBindingValue_Function::PostInitProperties()
 	Function.OwnerGetter.BindUObject(this, &UMDFastBindingValue_Function::GetFunctionOwner);
 	Function.ParamPopulator.BindUObject(this, &UMDFastBindingValue_Function::PopulateFunctionParam);
 	Function.FunctionFilter.BindUObject(this, &UMDFastBindingValue_Function::IsFunctionValid);
+	Function.ShouldCallFunction.BindUObject(this, &UMDFastBindingValue_Function::ShouldCallFunction);
 	
 	Super::PostInitProperties();
+}
+
+bool UMDFastBindingValue_Function::ShouldCallFunction()
+{
+	return UpdateType != EMDFastBindingUpdateType::IfUpdatesNeeded || bNeedsUpdate;
 }
 
 #if WITH_EDITOR

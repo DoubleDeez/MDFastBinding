@@ -15,8 +15,16 @@ class MDFASTBINDING_API UMDFastBindingValueBase : public UMDFastBindingObject
 	GENERATED_BODY()
 
 public:
-	virtual TTuple<const FProperty*, void*> GetValue(UObject* SourceObject) { PURE_VIRTUAL(UMDFastBindingValueBase::GetValue, return {};) }
+	TTuple<const FProperty*, void*> GetValue(UObject* SourceObject, bool& OutDidUpdate);
+	
+	virtual bool CheckNeedsUpdate() const override;
 
 	virtual const FProperty* GetOutputProperty() { PURE_VIRTUAL(UMDFastBindingValueBase::GetValue, return nullptr;) }
+
+protected:
+	virtual TTuple<const FProperty*, void*> GetValue_Internal(UObject* SourceObject) { PURE_VIRTUAL(UMDFastBindingValueBase::GetValue, return {};) }
+
+private:
+	TTuple<const FProperty*, void*> CachedValue;
 	
 };

@@ -39,4 +39,7 @@ protected:
 
 	UPROPERTY(Transient)
 	UObject* ObjectProperty = nullptr;
+
+	UPROPERTY(Transient)
+	bool bNeedsUpdate = false;
 };

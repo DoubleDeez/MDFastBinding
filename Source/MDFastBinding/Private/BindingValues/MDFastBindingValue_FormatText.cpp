@@ -2,7 +2,7 @@
 
 #include "MDFastBinding.h"
 
-TTuple<const FProperty*, void*> UMDFastBindingValue_FormatText::GetValue(UObject* SourceObject)
+TTuple<const FProperty*, void*> UMDFastBindingValue_FormatText::GetValue_Internal(UObject* SourceObject)
 {
 #if !WITH_EDITOR
 	if (!TextFormat.IsValid())
@@ -10,26 +10,33 @@ TTuple<const FProperty*, void*> UMDFastBindingValue_FormatText::GetValue(UObject
 	{
 		TextFormat = FormatText;
 	}
-	
-	Args.Empty(Arguments.Num());
 
+	bool bNeedsUpdate = false;
 	for (const FName& Arg : Arguments)
 	{
-		const TTuple<const FProperty*, void*> ArgValue = GetBindingItemValue(SourceObject, Arg);
-		if (ArgValue.Value != nullptr)
+		bool bDidUpdate = false;
+		const TTuple<const FProperty*, void*> ArgValue = GetBindingItemValue(SourceObject, Arg, bDidUpdate);
+		if (bDidUpdate || UpdateType != EMDFastBindingUpdateType::IfUpdatesNeeded)
 		{
-			FText ArgText;
-			FMDFastBindingModule::SetProperty(GetOutputProperty(), &ArgText, ArgValue.Key, ArgValue.Value);
+			bNeedsUpdate = true;
+			if (ArgValue.Value != nullptr)
+			{
+				FText ArgText;
+				FMDFastBindingModule::SetProperty(GetOutputProperty(), &ArgText, ArgValue.Key, ArgValue.Value);
 
-			Args.Add(Arg.ToString(), ArgText);
-		}
-		else
-		{
-			Args.Add(Arg.ToString(), FText::GetEmpty());
+				Args.FindOrAdd(Arg.ToString()) = ArgText;
+			}
+			else
+			{
+				Args.FindOrAdd(Arg.ToString()) = FText::GetEmpty();
+			}
 		}
 	}
 
-	OutputValue = FText::Format(TextFormat, Args);
+	if (bNeedsUpdate || UpdateType != EMDFastBindingUpdateType::IfUpdatesNeeded)
+	{
+		OutputValue = FText::Format(TextFormat, Args);
+	}
 	
 	return TTuple<const FProperty*, void*>{ GetOutputProperty(), &OutputValue };
 }

@@ -3,10 +3,24 @@
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
 #include "UObject/WeakFieldPtr.h"
+#include "Templates/SubclassOf.h"
 #include "MDFastBindingObject.generated.h"
 
 class UMDFastBindingValueBase;
 class UMDFastBindingInstance;
+
+
+UENUM()
+enum class EMDFastBindingUpdateType
+{
+	// Will always grab the latest value, regardless if inputs have changed
+	Always,
+	// Will only grab the latest value is any of the inputs have changed.
+	// Some values treat this as "Always" (eg. Value_Property) since the only way to know if it changed is to get the value.
+	IfUpdatesNeeded,
+	// Will grab the latest value until it's successful, then reuses that value in future updates
+	Once
+};
 
 // Represented as a pin in the binding editor graph
 USTRUCT()
@@ -55,10 +69,15 @@ public:
 		return Value != nullptr || DefaultObject != nullptr || !DefaultString.IsEmpty() || !DefaultText.IsEmpty();
 	}
 
-	TTuple<const FProperty*, void*> GetValue(UObject* SourceObject);
+	TTuple<const FProperty*, void*> GetValue(UObject* SourceObject, bool& OutDidUpdate);
+
+	bool HasRetrievedDefaultValue() const { return bHasRetrievedDefaultValue; }
 
 private:
 	void* AllocatedDefaultValue = nullptr;
+
+	UPROPERTY(Transient)
+	bool bHasRetrievedDefaultValue = false;
 };
 
 /**
@@ -77,6 +96,8 @@ public:
 	virtual bool DoesBindingItemDefaultToSelf(const FName& InItemName) const { return false; }
 
 	UMDFastBindingInstance* GetOuterBinding() const;
+
+	virtual bool CheckNeedsUpdate() const;
 
 // Editor only operations
 #if WITH_EDITORONLY_DATA
@@ -127,11 +148,15 @@ protected:
 	void EnsureBindingItemExists(const FName& ItemName, const FProperty* ItemProperty, const FText& ItemDescription, bool bIsOptional = false);
 	
 	const FProperty* GetBindingItemValueProperty(const FName& Name) const;
-	TTuple<const FProperty*, void*> GetBindingItemValue(UObject* SourceObject, const FName& Name);
-	TTuple<const FProperty*, void*> GetBindingItemValue(UObject* SourceObject, int32 Index);
+	TTuple<const FProperty*, void*> GetBindingItemValue(UObject* SourceObject, const FName& Name, bool& OutDidUpdate);
+	TTuple<const FProperty*, void*> GetBindingItemValue(UObject* SourceObject, int32 Index, bool& OutDidUpdate);
 
 	UPROPERTY()
 	TArray<FMDFastBindingItem> BindingItems;
+	
+	// Values are cached, this setting determines when to grab a new value or use the cached value
+	UPROPERTY(EditAnywhere, Category = "Performance")
+	EMDFastBindingUpdateType UpdateType = EMDFastBindingUpdateType::IfUpdatesNeeded;
 
 private:
 	mutable TWeakObjectPtr<UClass> BindingOuterClass;

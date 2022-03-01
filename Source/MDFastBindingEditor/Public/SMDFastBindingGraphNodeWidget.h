@@ -29,7 +29,7 @@ public:
 
 	void Construct(const FArguments& InArgs, UMDFastBindingGraphNode* InNode);
 
-#if ENGINE_MAJOR_VERSION <= 4
+#if ENGINE_MAJOR_VERSION <= 4 || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 1)
 	virtual void MoveTo( const FVector2D& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty = true ) override;
 #else
 	virtual void MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter) override;

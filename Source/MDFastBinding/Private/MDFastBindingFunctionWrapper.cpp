@@ -86,6 +86,11 @@ TTuple<const FProperty*, void*> FMDFastBindingFunctionWrapper::CallFunction(UObj
 
 	PopulateParams(SourceObject);
 
+	if (ShouldCallFunction.IsBound() && !ShouldCallFunction.Execute())
+	{
+		return {};
+	}
+	
 	FunctionOwner->ProcessEvent(FunctionPtr, FunctionMemory);
 
 	if (ReturnProp != nullptr)

@@ -6,19 +6,31 @@
 void UMDFastBindingDestinationBase::InitializeDestination(UObject* SourceObject)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE_STR(__FUNCTION__);
+	TRACE_CPUPROFILER_EVENT_SCOPE_TEXT(*GetName());
 	InitializeDestination_Internal(SourceObject);
 }
 
 void UMDFastBindingDestinationBase::UpdateDestination(UObject* SourceObject)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE_STR(__FUNCTION__);
-	UpdateDestination_Internal(SourceObject);
+	TRACE_CPUPROFILER_EVENT_SCOPE_TEXT(*GetName());
+	if (CheckNeedsUpdate())
+	{
+		UpdateDestination_Internal(SourceObject);
+		bHasEverUpdated = true;
+	}
 }
 
 void UMDFastBindingDestinationBase::TerminateDestination(UObject* SourceObject)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE_STR(__FUNCTION__);
+	TRACE_CPUPROFILER_EVENT_SCOPE_TEXT(*GetName());
 	TerminateDestination_Internal(SourceObject);
+}
+
+bool UMDFastBindingDestinationBase::CheckNeedsUpdate() const
+{
+	return !bHasEverUpdated || Super::CheckNeedsUpdate();
 }
 
 #if WITH_EDITOR

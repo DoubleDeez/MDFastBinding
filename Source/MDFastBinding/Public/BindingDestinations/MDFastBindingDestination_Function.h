@@ -32,12 +32,16 @@ protected:
 
 	virtual void PostInitProperties() override;
 
+	virtual bool ShouldCallFunction();
+
 protected:
 	UPROPERTY(EditAnywhere, Category = "Binding")
 	FMDFastBindingFunctionWrapper Function;
 
 private:
-
 	UPROPERTY(Transient)
 	UObject* ObjectProperty = nullptr;
+
+	UPROPERTY(Transient)
+	bool bNeedsUpdate = false;
 };

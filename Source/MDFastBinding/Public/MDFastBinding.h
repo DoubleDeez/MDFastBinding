@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Modules/ModuleInterface.h"
 #include "PropertySetters/IMDFastBindingPropertySetter.h"
 
 class MDFASTBINDING_API FMDFastBindingModule : public IModuleInterface
