@@ -95,18 +95,6 @@ namespace SMDFastBindingEditorWidget_Private
 	}
 }
 
-#pragma once
-
-#include "CoreMinimal.h"
-#include "Widgets/SCompoundWidget.h"
-
-class UMDFastBindingGraph;
-class UMDFastBindingInstance;
-class UMDFastBindingObject;
-class UMDFastBindingValueBase;
-class UMDFastBindingDestinationBase;
-class SGraphEditor;
-
 /**
  * 
  */
