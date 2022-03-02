@@ -143,4 +143,16 @@ EDataValidationResult UMDFastBindingDestination_Function::IsDataValid(TArray<FTe
 }
 #endif
 
+#if WITH_EDITORONLY_DATA
+FText UMDFastBindingDestination_Function::GetDisplayName()
+{
+	if (const UFunction* Func = Function.GetFunctionPtr())
+	{
+		return Func->GetDisplayNameText();
+	}
+	
+	return Super::GetDisplayName();
+}
+#endif
+
 #undef LOCTEXT_NAMESPACE

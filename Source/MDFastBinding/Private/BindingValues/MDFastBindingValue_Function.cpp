@@ -35,11 +35,6 @@ bool UMDFastBindingValue_Function::DoesBindingItemDefaultToSelf(const FName& InI
 #if WITH_EDITORONLY_DATA
 FText UMDFastBindingValue_Function::GetDisplayName()
 {
-	if (!DevName.IsEmptyOrWhitespace())
-	{
-		return DevName;
-	}
-
 	if (const UFunction* Func = Function.GetFunctionPtr())
 	{
 		return Func->GetDisplayNameText();

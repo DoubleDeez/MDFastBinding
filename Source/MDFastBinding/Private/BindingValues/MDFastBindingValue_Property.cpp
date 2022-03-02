@@ -31,14 +31,9 @@ bool UMDFastBindingValue_Property::DoesBindingItemDefaultToSelf(const FName& InI
 #if WITH_EDITORONLY_DATA
 FText UMDFastBindingValue_Property::GetDisplayName()
 {
-	if (!DevName.IsEmptyOrWhitespace())
+	if (PropertyPath.BuildPath())
 	{
-		return DevName;
-	}
-
-	if (const FProperty* LeafProp = PropertyPath.GetLeafProperty())
-	{
-		return LeafProp->GetDisplayNameText();
+		return FText::FromString(PropertyPath.ToString());
 	}
 	
 	return Super::GetDisplayName();

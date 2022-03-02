@@ -14,6 +14,10 @@ class MDFASTBINDING_API UMDFastBindingValue_FormatText : public UMDFastBindingVa
 
 public:
 	virtual const FProperty* GetOutputProperty() override;
+
+#if WITH_EDITORONLY_DATA
+	virtual FText GetDisplayName() override;
+#endif
 	
 protected:
 	virtual TTuple<const FProperty*, void*> GetValue_Internal(UObject* SourceObject) override;

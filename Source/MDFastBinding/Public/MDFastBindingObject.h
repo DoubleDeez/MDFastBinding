@@ -139,6 +139,8 @@ public:
 	virtual EDataValidationResult IsDataValid(TArray<FText>& ValidationErrors) override;
 
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+
+	TSharedRef<class SWidget> CreateNodeHeaderWidget();
 #endif
 
 protected:

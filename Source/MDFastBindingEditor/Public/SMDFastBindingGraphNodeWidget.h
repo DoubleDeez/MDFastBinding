@@ -6,6 +6,7 @@
 #include "KismetPins/SGraphPinObject.h"
 
 class UMDFastBindingGraphNode;
+class UMDFastBindingObject;
 
 class MDFASTBINDINGEDITOR_API SMDFastBindingSelfGraphPinWidget : public SGraphPinObject
 {
@@ -39,10 +40,14 @@ public:
 
 	UMDFastBindingGraphNode* GetGraphNode() const;
 
+	UMDFastBindingObject* GetBindingObject() const;
+
 protected:
 	virtual void UpdateErrorInfo() override;
 
 	virtual TSharedPtr<SGraphPin> CreatePinWidget(UEdGraphPin* Pin) const override;
+	
+	virtual void CreateBelowPinControls(TSharedPtr<SVerticalBox> MainBox) override;
 
 	bool IsSelfPin(UEdGraphPin& Pin) const;
 	

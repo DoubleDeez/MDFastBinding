@@ -105,4 +105,16 @@ EDataValidationResult UMDFastBindingDestination_Property::IsDataValid(TArray<FTe
 }
 #endif
 
+#if WITH_EDITORONLY_DATA
+FText UMDFastBindingDestination_Property::GetDisplayName()
+{
+	if (PropertyPath.BuildPath())
+	{
+		return FText::FromString(PropertyPath.ToString());
+	}
+	
+	return Super::GetDisplayName();
+}
+#endif
+
 #undef LOCTEXT_NAMESPACE

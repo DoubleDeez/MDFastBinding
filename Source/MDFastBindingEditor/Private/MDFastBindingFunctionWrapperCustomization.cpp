@@ -47,7 +47,14 @@ FText FMDFastBindingFunctionWrapperCustomization::GetComboButtonText()
 			return FText::Format(LOCTEXT("NoOptionsForFunction", "{0} has 0 valid functions"), OwnerClass->GetDisplayNameText());
 		}
 
-		return FText::FromString(FunctionWrapper->ToString());
+		FunctionWrapper->BuildFunctionData();
+		UFunction* FunctionPtr = FunctionWrapper->GetFunctionPtr();
+		if (FunctionPtr == nullptr)
+		{
+			return LOCTEXT("NullFunction", "None");
+		}
+
+		return FunctionPtr->GetDisplayNameText();
 	}
 
 	return FText::GetEmpty();
@@ -75,7 +82,9 @@ TSharedRef<SWidget> FMDFastBindingFunctionWrapperCustomization::GetPathSelectorC
 		return SNew(STableRow<UFunction*>, InOwnerTableView)
 			.Content()
 			[
-				SNew(STextBlock).Text(FText::FromString(FMDFastBindingFunctionWrapper::FunctionToString(Function)))
+				SNew(STextBlock)
+					.Text(Function->GetDisplayNameText())
+					.ToolTipText(FText::FromString(FMDFastBindingFunctionWrapper::FunctionToString(Function)))
 			];
 	};
 	

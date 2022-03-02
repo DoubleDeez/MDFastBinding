@@ -35,28 +35,35 @@ UMDFastBindingGraphNode* SMDFastBindingGraphNodeWidget::GetGraphNode() const
 	return Cast<UMDFastBindingGraphNode>(GraphNode);
 }
 
+UMDFastBindingObject* SMDFastBindingGraphNodeWidget::GetBindingObject() const
+{
+	if (const UMDFastBindingGraphNode* Node = GetGraphNode())
+	{
+		return Node->GetBindingObject();
+	}
+
+	return nullptr;
+}
+
 void SMDFastBindingGraphNodeWidget::UpdateErrorInfo()
 {
 	ErrorColor = FLinearColor(0,0,0);
 	ErrorMsg.Empty();
 	
-	if (const UMDFastBindingGraphNode* Node = GetGraphNode())
+	if (UMDFastBindingObject* BindingObject = GetBindingObject())
 	{
-		if (UMDFastBindingObject* BindingObject = Node->GetBindingObject())
+		TArray<FText> Errors;
+		if (BindingObject->IsDataValid(Errors) == EDataValidationResult::Invalid)
 		{
-			TArray<FText> Errors;
-			if (BindingObject->IsDataValid(Errors) == EDataValidationResult::Invalid)
+			ErrorColor = FEditorStyle::GetColor("ErrorReporting.BackgroundColor");
+			
+			if (Errors.Num() == 0)
 			{
-				ErrorColor = FEditorStyle::GetColor("ErrorReporting.BackgroundColor");
-				
-				if (Errors.Num() == 0)
-				{
-					ErrorMsg = LOCTEXT("InvalidWithoutErrors", "Unknown Error").ToString();
-				}
-				else
-				{
-					ErrorMsg = Errors.Last().ToString();
-				}
+				ErrorMsg = LOCTEXT("InvalidWithoutErrors", "Unknown Error").ToString();
+			}
+			else
+			{
+				ErrorMsg = Errors.Last().ToString();
 			}
 		}
 	}
@@ -76,14 +83,27 @@ TSharedPtr<SGraphPin> SMDFastBindingGraphNodeWidget::CreatePinWidget(UEdGraphPin
 	return SGraphNode::CreatePinWidget(Pin);
 }
 
+void SMDFastBindingGraphNodeWidget::CreateBelowPinControls(TSharedPtr<SVerticalBox> MainBox)
+{
+	if (UMDFastBindingObject* BindingObject = GetBindingObject())
+	{
+		// HACK - this function implies we should add below the pins, but inserting at Slot 1 puts this widget right below the title bar
+		MainBox->InsertSlot(1)
+		.AutoHeight()
+		.HAlign(HAlign_Fill)
+		.VAlign(VAlign_Center)
+		.Padding(10.f, 2.f)
+		[
+			BindingObject->CreateNodeHeaderWidget()
+		];
+	}
+}
+
 bool SMDFastBindingGraphNodeWidget::IsSelfPin(UEdGraphPin& Pin) const
 {
-	if (const UMDFastBindingGraphNode* Node = GetGraphNode())
+	if (const UMDFastBindingObject* BindingObject = GetBindingObject())
 	{
-		if (const UMDFastBindingObject* BindingObject = Node->GetBindingObject())
-		{
-			return BindingObject->DoesBindingItemDefaultToSelf(Pin.GetFName());
-		}
+		return BindingObject->DoesBindingItemDefaultToSelf(Pin.GetFName());
 	}
 
 	return false;

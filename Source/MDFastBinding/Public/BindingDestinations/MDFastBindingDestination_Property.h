@@ -22,6 +22,10 @@ public:
 	virtual EDataValidationResult IsDataValid(TArray<FText>& ValidationErrors) override;
 #endif
 
+#if WITH_EDITORONLY_DATA
+	virtual FText GetDisplayName() override;
+#endif
+
 protected:
 	virtual void InitializeDestination_Internal(UObject* SourceObject) override;
 	virtual void UpdateDestination_Internal(UObject* SourceObject) override;

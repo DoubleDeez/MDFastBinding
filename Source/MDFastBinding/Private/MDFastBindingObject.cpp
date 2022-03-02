@@ -7,6 +7,10 @@
 #include "BindingValues/MDFastBindingValueBase.h"
 #include "UObject/TextProperty.h"
 
+#if WITH_EDITOR
+#include "Widgets/Text/STextBlock.h"
+#endif
+
 #define LOCTEXT_NAMESPACE "MDFastBindingObject"
 
 FMDFastBindingItem::~FMDFastBindingItem()
@@ -259,12 +263,17 @@ void UMDFastBindingObject::PostEditChangeProperty(FPropertyChangedEvent& Propert
 
 	SetupBindingItems();
 }
+
+TSharedRef<SWidget> UMDFastBindingObject::CreateNodeHeaderWidget()
+{
+	return SNew(STextBlock).Text(TAttribute<FText>::Create(TAttribute<FText>::FGetter::CreateUObject(this, &UMDFastBindingObject::GetDisplayName)));
+}
 #endif
 
 #if WITH_EDITORONLY_DATA
 FText UMDFastBindingObject::GetDisplayName()
 {
-	return DevName.IsEmptyOrWhitespace() ? GetClass()->GetDisplayNameText() : DevName;
+	return GetClass()->GetDisplayNameText();
 }
 
 FText UMDFastBindingObject::GetToolTipText()

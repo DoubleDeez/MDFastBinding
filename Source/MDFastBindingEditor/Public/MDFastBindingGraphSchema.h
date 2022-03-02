@@ -64,5 +64,7 @@ public:
 	
 	virtual bool TryCreateConnection(UEdGraphPin* A, UEdGraphPin* B) const override;
 
+#if ENGINE_MAJOR_VERSION <= 4
 	virtual bool IsSelfPin(const UEdGraphPin& Pin) const override;
+#endif
 };

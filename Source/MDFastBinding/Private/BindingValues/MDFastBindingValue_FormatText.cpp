@@ -51,6 +51,13 @@ const FProperty* UMDFastBindingValue_FormatText::GetOutputProperty()
 	return TextProp;
 }
 
+#if WITH_EDITORONLY_DATA
+FText UMDFastBindingValue_FormatText::GetDisplayName()
+{
+	return FormatText;
+}
+#endif
+
 void UMDFastBindingValue_FormatText::SetupBindingItems()
 {
 	Arguments.Empty();
