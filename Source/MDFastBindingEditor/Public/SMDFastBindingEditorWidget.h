@@ -9,18 +9,6 @@ class FMenuBuilder;
 class IDetailsView;
 class SMDFastBindingEditorGraphWidget;
 
-class FMDBindingEditorContainerSelectMenuNode : public TSharedFromThis<FMDBindingEditorContainerSelectMenuNode>
-{
-public:
-	FText DisplayName;
-
-	TWeakObjectPtr<UStruct> NodeClass;
-	
-	TWeakObjectPtr<UMDFastBindingContainer> BindingContainer;
-
-	TArray<TSharedRef<FMDBindingEditorContainerSelectMenuNode>> Children;
-};
-
 class SMDFastBindingEditorWidget : public SCompoundWidget, public FSelfRegisteringEditorUndoClient
 {
 public:
@@ -30,8 +18,6 @@ public:
 
 	void Construct(const FArguments&, const TWeakPtr<FBlueprintEditor> InBlueprintEditor);
 	void AssignBindingData(UClass* BindingOwnerClass);
-	void SelectBindingContainer(UMDFastBindingContainer* BindingContainer);
-	void SelectBindingContainer(TWeakObjectPtr<UMDFastBindingContainer> BindingContainer);
 	void SelectBinding(UMDFastBindingInstance* InBinding);
 	UMDFastBindingContainer* GetSelectedBindingContainer() const;
 	UMDFastBindingInstance* GetSelectedBinding() const;
@@ -44,10 +30,6 @@ public:
 private:
 	void OnGraphSelectionChanged(const FGraphPanelSelectionSet& Selection);
 	
-	void FillSelectMenu_Root(FMenuBuilder& MenuBuilder);
-	void FillSelectMenu(FMenuBuilder& MenuBuilder, TSharedRef<FMDBindingEditorContainerSelectMenuNode> BindingNode);
-	
-	EVisibility GetContainerSelectorVisibility() const;
 	EVisibility GetBindingSelectorVisibility() const;
 	EVisibility GetBindingTreeVisibility() const;
 	
@@ -64,9 +46,7 @@ private:
 	FText GetBindingValidationTooltip(TWeakObjectPtr<UMDFastBindingInstance> Binding) const;
 	const FSlateBrush* GetBindingValidationBrush(TWeakObjectPtr<UMDFastBindingInstance> Binding) const;
 	
-	TWeakObjectPtr<UMDFastBindingContainer> SelectedBindingContainer;
-	TSharedPtr<FMDBindingEditorContainerSelectMenuNode> RootBindingNode;
-	TArray<TWeakObjectPtr<UMDFastBindingContainer>> BindingContainers;
+	TWeakObjectPtr<UMDFastBindingContainer> BindingContainer;
 	TWeakObjectPtr<UMDFastBindingInstance> SelectedBinding;
 	TWeakObjectPtr<UMDFastBindingInstance> NewBinding;
 	TArray<TWeakObjectPtr<UMDFastBindingInstance>> Bindings;

@@ -19,100 +19,6 @@ namespace SMDFastBindingEditorWidget_Private
 {
 	const int32 BindingListIndex = 0;
 	const int32 NodeDetailsIndex = 1;
-	
-	void GatherNodeChildren(const void* NodeValue, const UStruct* NodeStruct, TArray<TSharedRef<FMDBindingEditorContainerSelectMenuNode>>& OutChildren, TArray<TWeakObjectPtr<UMDFastBindingContainer>>& OutBindingContainers)
-	{
-		if (!FMDFastBindingEditorModule::DoesClassHaveFastBindings(NodeStruct))
-		{
-			return;
-		}
-
-		auto CheckProperty = [&](const void* ChildValuePtr, UStruct* ChildStruct)
-		{
-			if (ChildValuePtr != nullptr)
-			{
-				TArray<TSharedRef<FMDBindingEditorContainerSelectMenuNode>> Children;
-				GatherNodeChildren(ChildValuePtr, ChildStruct, Children, OutBindingContainers);
-				if (Children.Num() > 0)
-				{
-					TSharedRef<FMDBindingEditorContainerSelectMenuNode> Node = MakeShared<FMDBindingEditorContainerSelectMenuNode>();
-					Node->NodeClass = ChildStruct;
-					Node->Children = MoveTemp(Children);
-					OutChildren.Emplace(MoveTemp(Node));
-				}	
-			}
-		};
-
-		for (TFieldIterator<FProperty> It(NodeStruct); It; ++It)
-		{
-			if (const FObjectPropertyBase* ObjectProp = CastField<const FObjectPropertyBase>(*It))
-			{
-				if (ObjectProp->PropertyClass->IsChildOf(UMDFastBindingContainer::StaticClass()))
-				{
-					TSharedRef<FMDBindingEditorContainerSelectMenuNode> Node = MakeShared<FMDBindingEditorContainerSelectMenuNode>();
-					Node->NodeClass = ObjectProp->PropertyClass;
-					const bool bOuterIsUObject = Cast<const UClass>(NodeStruct) != nullptr;
-					UObject* NodeObject = *static_cast<UObject* const*>(NodeValue);
-					if (bOuterIsUObject)
-					{
-						if (NodeObject != nullptr)
-						{
-							Node->BindingContainer = Cast<UMDFastBindingContainer>(ObjectProp->GetObjectPropertyValue_InContainer(NodeObject));
-						}
-					}
-					else
-					{
-						Node->BindingContainer = Cast<UMDFastBindingContainer>(ObjectProp->GetObjectPropertyValue_InContainer(NodeValue));
-					}
-
-					if (Node->BindingContainer.IsValid())
-					{
-						Node->BindingContainer->SetFlags(RF_Transactional);
-					}
-					else if (bOuterIsUObject)
-					{
-						if (NodeObject != nullptr) {
-							UMDFastBindingContainer* NewContainer = NewObject<UMDFastBindingContainer>(NodeObject, NAME_None, RF_Public | RF_Transactional);
-							ObjectProp->SetObjectPropertyValue_InContainer(NodeObject, NewContainer);
-							Node->BindingContainer = NewContainer;
-						}
-					}
-					else
-					{
-						// TODO - Init container if outer is struct (we need the outer UObject)
-					}
-					
-					OutBindingContainers.Add(Node->BindingContainer);
-					OutChildren.Emplace(MoveTemp(Node));
-				}
-				else if (NodeStruct->IsA<UClass>())
-				{
-					if (UObject* NodeObject = *static_cast<UObject* const*>(NodeValue))
-					{
-						CheckProperty(ObjectProp->ContainerPtrToValuePtr<void>(NodeObject), ObjectProp->PropertyClass);
-					}
-				}
-				else
-				{
-					CheckProperty(ObjectProp->ContainerPtrToValuePtr<void>(NodeValue), ObjectProp->PropertyClass);
-				}
-			}
-			else if (const FStructProperty* StructProp = CastField<const FStructProperty>(*It))
-			{
-				if (NodeStruct->IsA<UClass>())
-				{
-					if (UObject* NodeObject = *static_cast<UObject* const*>(NodeValue))
-					{
-						CheckProperty(StructProp->ContainerPtrToValuePtr<void>(NodeObject), StructProp->Struct);
-					}
-				}
-				else
-				{
-					CheckProperty(StructProp->ContainerPtrToValuePtr<void>(NodeValue), StructProp->Struct);
-				}
-			}
-		}
-	}
 }
 
 /**
@@ -277,17 +183,7 @@ void SMDFastBindingEditorWidget::Construct(const FArguments&, const TWeakPtr<FBl
 	DetailsView = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor").CreateDetailView(DetailsViewArgs);
 	DetailsView->OnFinishedChangingProperties().AddSP(this, &SMDFastBindingEditorWidget::OnDetailsPanelPropertyChanged);
 	
-	FMenuBarBuilder MenuBuilder = FMenuBarBuilder(nullptr);
-	MenuBuilder.AddPullDownMenu(
-		LOCTEXT( "SelectMenu", "Select Binding container" ),
-		LOCTEXT( "SelectMenu_ToolTip", "Select which binding container to edit" ),
-		FNewMenuDelegate::CreateSP(this, &SMDFastBindingEditorWidget::FillSelectMenu_Root));
-	
-	const TSharedRef<SWidget> MenuBarWidget = MenuBuilder.MakeWidget();
-	MenuBarWidget->SetVisibility(TAttribute<EVisibility>(this, &SMDFastBindingEditorWidget::GetContainerSelectorVisibility));
-	
 	AssignBindingData(InBlueprintEditor.Pin()->GetBlueprintObj()->GeneratedClass);
-	SelectBindingContainer(nullptr);
 	
 	BindingListView = SNew(SListView<TWeakObjectPtr<UMDFastBindingInstance>>)
 		.ListItemsSource(&Bindings)
@@ -314,13 +210,6 @@ void SMDFastBindingEditorWidget::Construct(const FArguments&, const TWeakPtr<FBl
 			.Padding(4.f)
 			[
 				SNew(SVerticalBox)
-				+SVerticalBox::Slot()
-				.HAlign(HAlign_Fill)
-				.VAlign(VAlign_Top)
-				.AutoHeight()
-				[
-					MenuBarWidget
-				]
 				+SVerticalBox::Slot()
 				.HAlign(HAlign_Fill)
 				.VAlign(VAlign_Top)
@@ -390,26 +279,33 @@ void SMDFastBindingEditorWidget::RefreshGraph() const
 
 void SMDFastBindingEditorWidget::AssignBindingData(UClass* BindingOwnerClass)
 {
-	BindingContainers.Empty();
+	BindingContainer.Reset();
 
 	if (BindingOwnerClass != nullptr)
 	{
-		RootBindingNode = MakeShared<FMDBindingEditorContainerSelectMenuNode>();
-		RootBindingNode->NodeClass = BindingOwnerClass;
-		const UObject* BindingOwnerCDO = BindingOwnerClass->GetDefaultObject();
-		SMDFastBindingEditorWidget_Private::GatherNodeChildren(&BindingOwnerCDO, BindingOwnerClass, RootBindingNode->Children, BindingContainers);
+		for (TFieldIterator<FObjectPropertyBase> It(BindingOwnerClass); It; ++It)
+		{
+			if (It->PropertyClass->IsChildOf(UMDFastBindingContainer::StaticClass()))
+			{
+				if (UObject* BindingOwnerCDO = BindingOwnerClass->GetDefaultObject())
+				{
+					if (UMDFastBindingContainer* Container = Cast<UMDFastBindingContainer>(It->GetObjectPropertyValue_InContainer(BindingOwnerCDO)))
+					{
+						BindingContainer = Container;
+					}
+					else
+					{
+						UMDFastBindingContainer* NewContainer = NewObject<UMDFastBindingContainer>(BindingOwnerCDO, NAME_None, RF_Transactional | RF_Public);
+						It->SetObjectPropertyValue_InContainer(BindingOwnerCDO, NewContainer);
+						BindingOwnerCDO->Modify();
+						BindingContainer = NewContainer;
+					}
+				}
+			}
+		}
 	}
-}
-
-void SMDFastBindingEditorWidget::SelectBindingContainer(UMDFastBindingContainer* BindingContainer)
-{
-	SelectedBindingContainer = BindingContainer;
+	
 	PopulateBindingsList();
-}
-
-void SMDFastBindingEditorWidget::SelectBindingContainer(TWeakObjectPtr<UMDFastBindingContainer> BindingContainer)
-{
-	SelectBindingContainer(BindingContainer.Get());
 }
 
 void SMDFastBindingEditorWidget::SelectBinding(UMDFastBindingInstance* InBinding)
@@ -428,12 +324,7 @@ void SMDFastBindingEditorWidget::SelectBinding(UMDFastBindingInstance* InBinding
 
 UMDFastBindingContainer* SMDFastBindingEditorWidget::GetSelectedBindingContainer() const
 {
-	if (SelectedBindingContainer.IsValid())
-	{
-		return SelectedBindingContainer.Get();
-	}
-
-	return (BindingContainers.Num() > 0) ? BindingContainers[0].Get() : nullptr;
+	return BindingContainer.Get();
 }
 
 UMDFastBindingInstance* SMDFastBindingEditorWidget::GetSelectedBinding() const
@@ -456,49 +347,6 @@ void SMDFastBindingEditorWidget::PostRedo(bool bSuccess)
 {
 	PopulateBindingsList();
 	BindingListView->SetSelection(SelectedBinding);
-}
-
-void SMDFastBindingEditorWidget::FillSelectMenu_Root(FMenuBuilder& MenuBuilder)
-{
-	const FText DisplayText = RootBindingNode->DisplayName.IsEmpty()
-		? RootBindingNode->NodeClass->GetDisplayNameText()
-		: RootBindingNode->DisplayName;
-	MenuBuilder.AddSubMenu(
-		DisplayText,
-		FText::GetEmpty(),
-		FNewMenuDelegate::CreateSP(this, &SMDFastBindingEditorWidget::FillSelectMenu, RootBindingNode.ToSharedRef()));
-}
-
-void SMDFastBindingEditorWidget::FillSelectMenu(FMenuBuilder& MenuBuilder, TSharedRef<FMDBindingEditorContainerSelectMenuNode> BindingNode)
-{
-	for (const TSharedRef<FMDBindingEditorContainerSelectMenuNode>& ChildNode : BindingNode->Children)
-	{
-		const FText DisplayText = ChildNode->DisplayName.IsEmpty()
-			? ChildNode->NodeClass->GetDisplayNameText()
-			: ChildNode->DisplayName;
-		if (ChildNode->NodeClass->IsChildOf<UMDFastBindingContainer>())
-		{
-			const bool bIsSelectedContainer = GetSelectedBindingContainer() == ChildNode->BindingContainer.Get();
-			MenuBuilder.AddMenuEntry(
-				DisplayText,
-				FText::GetEmpty(),
-				bIsSelectedContainer ? FSlateIcon(FMDFastBindingEditorStyle::GetStyleSetName(), TEXT("Icon.Check")) : FSlateIcon(),
-				FUIAction(
-					FExecuteAction::CreateSP(this, &SMDFastBindingEditorWidget::SelectBindingContainer, ChildNode->BindingContainer),
-					FCanExecuteAction()
-				),
-				NAME_None,
-				EUserInterfaceActionType::Button
-			);
-		}
-		else
-		{
-			MenuBuilder.AddSubMenu(
-				DisplayText,
-				FText::GetEmpty(),
-				FNewMenuDelegate::CreateSP(this, &SMDFastBindingEditorWidget::FillSelectMenu, ChildNode));
-		}
-	}
 }
 
 void SMDFastBindingEditorWidget::OnGraphSelectionChanged(const FGraphPanelSelectionSet& Selection)
@@ -526,11 +374,6 @@ void SMDFastBindingEditorWidget::OnGraphSelectionChanged(const FGraphPanelSelect
 			DetailSwitcher->SetActiveWidgetIndex(SMDFastBindingEditorWidget_Private::NodeDetailsIndex);
 		}
 	}
-}
-
-EVisibility SMDFastBindingEditorWidget::GetContainerSelectorVisibility() const
-{
-	return (BindingContainers.Num() > 1) ? EVisibility::Visible : EVisibility::Collapsed;
 }
 
 EVisibility SMDFastBindingEditorWidget::GetBindingSelectorVisibility() const
