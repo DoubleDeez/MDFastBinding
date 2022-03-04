@@ -117,7 +117,14 @@ TTuple<const FProperty*, void*> FMDFastBindingFieldPath::ResolvePath(UObject* So
 
 				if (bIsOwnerAUObject)
 				{
-					Owner = Prop->ContainerPtrToValuePtr<void>(*static_cast<UObject**>(Owner));
+					if (UObject* OwnerObject = *static_cast<UObject**>(Owner))
+					{
+						Owner = Prop->ContainerPtrToValuePtr<void>(OwnerObject);
+					}
+					else
+					{
+						return {};
+					}
 				}
 				else
 				{
