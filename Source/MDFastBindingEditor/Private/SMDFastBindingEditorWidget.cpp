@@ -52,9 +52,18 @@ namespace SMDFastBindingEditorWidget_Private
 					TSharedRef<FMDBindingEditorContainerSelectMenuNode> Node = MakeShared<FMDBindingEditorContainerSelectMenuNode>();
 					Node->NodeClass = ObjectProp->PropertyClass;
 					const bool bOuterIsUObject = Cast<const UClass>(NodeStruct) != nullptr;
-					Node->BindingContainer = (bOuterIsUObject)
-						? Cast<UMDFastBindingContainer>(ObjectProp->GetObjectPropertyValue_InContainer(*static_cast<UObject* const*>(NodeValue)))
-						: Cast<UMDFastBindingContainer>(ObjectProp->GetObjectPropertyValue_InContainer(NodeValue));
+					UObject* NodeObject = *static_cast<UObject* const*>(NodeValue);
+					if (bOuterIsUObject)
+					{
+						if (NodeObject != nullptr)
+						{
+							Node->BindingContainer = Cast<UMDFastBindingContainer>(ObjectProp->GetObjectPropertyValue_InContainer(NodeObject));
+						}
+					}
+					else
+					{
+						Node->BindingContainer = Cast<UMDFastBindingContainer>(ObjectProp->GetObjectPropertyValue_InContainer(NodeValue));
+					}
 
 					if (Node->BindingContainer.IsValid())
 					{
@@ -62,9 +71,11 @@ namespace SMDFastBindingEditorWidget_Private
 					}
 					else if (bOuterIsUObject)
 					{
-						UMDFastBindingContainer* NewContainer = NewObject<UMDFastBindingContainer>(*static_cast<UObject* const*>(NodeValue), NAME_None, RF_Public | RF_Transactional);
-						ObjectProp->SetObjectPropertyValue_InContainer(*static_cast<UObject* const*>(NodeValue), NewContainer);
-						Node->BindingContainer = NewContainer;
+						if (NodeObject != nullptr) {
+							UMDFastBindingContainer* NewContainer = NewObject<UMDFastBindingContainer>(NodeObject, NAME_None, RF_Public | RF_Transactional);
+							ObjectProp->SetObjectPropertyValue_InContainer(NodeObject, NewContainer);
+							Node->BindingContainer = NewContainer;
+						}
 					}
 					else
 					{
@@ -74,22 +85,31 @@ namespace SMDFastBindingEditorWidget_Private
 					OutBindingContainers.Add(Node->BindingContainer);
 					OutChildren.Emplace(MoveTemp(Node));
 				}
+				else if (NodeStruct->IsA<UClass>())
+				{
+					if (UObject* NodeObject = *static_cast<UObject* const*>(NodeValue))
+					{
+						CheckProperty(ObjectProp->ContainerPtrToValuePtr<void>(NodeObject), ObjectProp->PropertyClass);
+					}
+				}
 				else
 				{
-					const void* ChildValuePtr = (Cast<const UClass>(NodeStruct) != nullptr)
-						? ObjectProp->ContainerPtrToValuePtr<void>(*static_cast<UObject* const*>(NodeValue))
-						: ObjectProp->ContainerPtrToValuePtr<void>(NodeValue);
-
-					CheckProperty(ChildValuePtr, ObjectProp->PropertyClass);
+					CheckProperty(ObjectProp->ContainerPtrToValuePtr<void>(NodeValue), ObjectProp->PropertyClass);
 				}
 			}
 			else if (const FStructProperty* StructProp = CastField<const FStructProperty>(*It))
 			{
-				const void* ChildValuePtr = (Cast<const UClass>(NodeStruct) != nullptr)
-					? StructProp->ContainerPtrToValuePtr<void>(*static_cast<UObject* const*>(NodeValue))
-					: StructProp->ContainerPtrToValuePtr<void>(NodeValue);
-
-				CheckProperty(ChildValuePtr, StructProp->Struct);
+				if (NodeStruct->IsA<UClass>())
+				{
+					if (UObject* NodeObject = *static_cast<UObject* const*>(NodeValue))
+					{
+						CheckProperty(StructProp->ContainerPtrToValuePtr<void>(NodeObject), StructProp->Struct);
+					}
+				}
+				else
+				{
+					CheckProperty(StructProp->ContainerPtrToValuePtr<void>(NodeValue), StructProp->Struct);
+				}
 			}
 		}
 	}
