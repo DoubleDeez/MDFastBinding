@@ -21,7 +21,7 @@ FMDFastBindingItem::~FMDFastBindingItem()
 	}
 }
 
-TTuple<const FProperty*, void*> FMDFastBindingItem::GetValue(UObject* SourceObject, bool& OutDidUpdate)
+TTuple<const FProperty*, void*> FMDFastBindingItem::GetValue(UObject* SourceObject, bool& OutDidUpdate, bool bAllowDefaults)
 {
 	OutDidUpdate = false;
 	
@@ -34,6 +34,9 @@ TTuple<const FProperty*, void*> FMDFastBindingItem::GetValue(UObject* SourceObje
 	if (Value != nullptr)
 	{
 		return Value->GetValue(SourceObject, OutDidUpdate);
+	}
+	else if (!bAllowDefaults) {
+		return {};
 	}
 	else if (AllocatedDefaultValue != nullptr)
 	{
@@ -195,7 +198,7 @@ TTuple<const FProperty*, void*> UMDFastBindingObject::GetBindingItemValue(UObjec
 {
 	if (FMDFastBindingItem* Item = BindingItems.FindByKey(Name))
 	{
-		return Item->GetValue(SourceObject, OutDidUpdate);
+		return Item->GetValue(SourceObject, OutDidUpdate, !DoesBindingItemDefaultToSelf(Name));
 	}
 	
 	return {};
@@ -205,7 +208,7 @@ TTuple<const FProperty*, void*> UMDFastBindingObject::GetBindingItemValue(UObjec
 {
 	if (BindingItems.IsValidIndex(Index))
 	{
-		return BindingItems[Index].GetValue(SourceObject, OutDidUpdate);
+		return BindingItems[Index].GetValue(SourceObject, OutDidUpdate, !DoesBindingItemDefaultToSelf(BindingItems[Index].ItemName));
 	}
 	
 	return {};

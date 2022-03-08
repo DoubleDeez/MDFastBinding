@@ -69,7 +69,7 @@ public:
 		return Value != nullptr || DefaultObject != nullptr || !DefaultString.IsEmpty() || !DefaultText.IsEmpty();
 	}
 
-	TTuple<const FProperty*, void*> GetValue(UObject* SourceObject, bool& OutDidUpdate);
+	TTuple<const FProperty*, void*> GetValue(UObject* SourceObject, bool& OutDidUpdate, bool bAllowDefaults);
 
 	bool HasRetrievedDefaultValue() const { return bHasRetrievedDefaultValue; }
 
