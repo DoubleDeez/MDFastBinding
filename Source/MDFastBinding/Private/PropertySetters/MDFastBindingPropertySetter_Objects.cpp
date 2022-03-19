@@ -1,11 +1,6 @@
 ﻿#include "PropertySetters/MDFastBindingPropertySetter_Objects.h"
-
-
-FMDFastBindingPropertySetter_Objects::FMDFastBindingPropertySetter_Objects()
-	: SupportedFieldTypes({ FObjectProperty::StaticClass(), FSoftObjectProperty::StaticClass()
-		, FWeakObjectProperty::StaticClass(), FLazyObjectProperty::StaticClass() })
-{
-}
+#include "UObject/Field.h"
+#include "UObject/UnrealType.h"
 
 void FMDFastBindingPropertySetter_Objects::SetProperty(const FProperty& DestinationProp, void* DestinationValuePtr, const FProperty& SourceProp, const void* SourceValuePtr) const
 {
@@ -30,11 +25,6 @@ void FMDFastBindingPropertySetter_Objects::SetProperty(const FProperty& Destinat
 
 bool FMDFastBindingPropertySetter_Objects::CanSetProperty(const FProperty& DestinationProp, const FProperty& SourceProp) const
 {
-	if (!IMDFastBindingPropertySetter::CanSetProperty(DestinationProp, SourceProp))
-	{
-		return false;
-	}
-
 	const FObjectPropertyBase* DestObjProp = CastField<const FObjectPropertyBase>(&DestinationProp);
 	const FObjectPropertyBase* SrcObjProp = CastField<const FObjectPropertyBase>(&SourceProp);
 	return DestObjProp != nullptr && SrcObjProp != nullptr;
