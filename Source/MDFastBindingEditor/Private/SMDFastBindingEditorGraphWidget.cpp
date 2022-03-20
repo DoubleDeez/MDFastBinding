@@ -192,12 +192,32 @@ FActionMenuContent SMDFastBindingEditorGraphWidget::OnCreateNodeOrPinMenu(UEdGra
 		MenuBuilder->AddMenuEntry(FGenericCommands::Get().Rename);
 		MenuBuilder->AddMenuEntry(FGenericCommands::Get().Delete);
 		
-		UMDFastBindingObject* BindingObject = GraphNode->GetBindingObject();
-		if (const UMDFastBindingDestinationBase* BindingDest = Cast<UMDFastBindingDestinationBase>(BindingObject))
+		if (UMDFastBindingObject* BindingObject = GraphNode->GetBindingObject())
 		{
-			if (!BindingDest->IsActive())
+			if (const UMDFastBindingDestinationBase* BindingDest = Cast<UMDFastBindingDestinationBase>(BindingObject))
 			{
-				MenuBuilder->AddMenuEntry(FMDFastBindingEditorCommands::Get().SetDestinationActive);
+				if (!BindingDest->IsActive())
+				{
+					MenuBuilder->AddMenuEntry(FMDFastBindingEditorCommands::Get().SetDestinationActive);
+				}
+			}
+
+			if (InGraphPin != nullptr)
+			{
+				if (const FMDFastBindingItem* PinItem = BindingObject->FindBindingItem(InGraphPin->GetFName()))
+				{
+					if (PinItem->ExtendablePinListIndex != INDEX_NONE)
+					{
+						MenuBuilder->AddMenuEntry(
+							LOCTEXT("RemovePin", "Remove pin"),
+							LOCTEXT("RemovePinTooltip", "Remove this input pin (and any accompanying pins with the same index)"),
+							FSlateIcon(),
+							FUIAction(
+								FExecuteAction::CreateSP(this, &SMDFastBindingEditorGraphWidget::RemoveExtendablePin, MakeWeakObjectPtr(BindingObject), PinItem->ExtendablePinListIndex)
+							)
+						);
+					}
+				}
 			}
 		}
 	}
@@ -456,6 +476,17 @@ void SMDFastBindingEditorGraphWidget::SetDestinationActive() const
 				RefreshGraph();
 			}
 		}
+	}
+}
+
+void SMDFastBindingEditorGraphWidget::RemoveExtendablePin(TWeakObjectPtr<UMDFastBindingObject> BindingObject, int32 ItemIndex) const
+{
+	if (UMDFastBindingObject* Object = BindingObject.Get())
+	{
+		FScopedTransaction Transaction(LOCTEXT("DeletePinTransactionName", "Delete Pin"));
+		Object->Modify();
+		Object->RemoveExtendablePinBindingItem(ItemIndex);
+		RefreshGraph();
 	}
 }
 

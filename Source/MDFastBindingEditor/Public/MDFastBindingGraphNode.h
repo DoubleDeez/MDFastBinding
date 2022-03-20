@@ -36,6 +36,8 @@ public:
 
 	void CleanUpCopying();
 
+	void RefreshGraph();
+
 	static const FName OutputPinName;
 
 protected:
@@ -52,8 +54,6 @@ protected:
 	virtual FLinearColor GetNodeTitleColor() const override;
 	
 	virtual FText GetTooltipText() const override;
-
-	void RefreshGraph();
 
 private:
 	TWeakObjectPtr<UMDFastBindingObject> BindingObject;

@@ -5,7 +5,7 @@
 
 void FMDFastBindingEditorCommands::RegisterCommands()
 {
-	UI_COMMAND(SetDestinationActive, "Set Active", "Set Destination Active", EUserInterfaceActionType::Button, FInputChord() )
+	UI_COMMAND(SetDestinationActive, "Set Active", "Set Destination Active", EUserInterfaceActionType::Button, FInputChord())
 }
 
 #undef LOCTEXT_NAMESPACE

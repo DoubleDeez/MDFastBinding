@@ -13,6 +13,7 @@
 
 #define LOCTEXT_NAMESPACE "MDFastBindingObject"
 
+
 FMDFastBindingItem::~FMDFastBindingItem()
 {
 	if (AllocatedDefaultValue != nullptr)
@@ -25,20 +26,20 @@ TTuple<const FProperty*, void*> FMDFastBindingItem::GetValue(UObject* SourceObje
 {
 	OutDidUpdate = false;
 	
+	if (Value != nullptr)
+	{
+		return Value->GetValue(SourceObject, OutDidUpdate);
+	}
+	if (!bAllowDefaults) {
+		return {};
+	}
+	
 	const FProperty* ItemProp = ItemProperty.Get();
 	if (ItemProp == nullptr)
 	{
 		return {};
 	}
-	
-	if (Value != nullptr)
-	{
-		return Value->GetValue(SourceObject, OutDidUpdate);
-	}
-	else if (!bAllowDefaults) {
-		return {};
-	}
-	else if (AllocatedDefaultValue != nullptr)
+	if (AllocatedDefaultValue != nullptr)
 	{
 		return TTuple<const FProperty*, void*>{ ItemProp, AllocatedDefaultValue };
 	}
@@ -71,6 +72,21 @@ TTuple<const FProperty*, void*> FMDFastBindingItem::GetValue(UObject* SourceObje
 	return {};
 }
 
+const FProperty* FMDFastBindingItem::ResolveOutputProperty() const
+{
+	if (const FProperty* Prop = ItemProperty.Get())
+	{
+		return Prop;
+	}
+
+	if (Value != nullptr)
+	{
+		return Value->GetOutputProperty();
+	}
+
+	return nullptr;
+}
+
 UClass* UMDFastBindingObject::GetBindingOuterClass() const
 {
 #if !WITH_EDITOR
@@ -96,6 +112,47 @@ UClass* UMDFastBindingObject::GetBindingOuterClass() const
 	return nullptr;
 }
 
+void UMDFastBindingObject::SetupBindingItems_Internal()
+{
+	SetupBindingItems();
+
+	if (HasUserExtendablePinList())
+	{
+		for (int32 i = 0; i < ExtendablePinListCount; ++i)
+		{
+			SetupExtendablePinBindingItem(i);
+		}
+		
+		// Remove items that go over ExtendablePinListCount
+		for (int32 i = BindingItems.Num() - 1; i >= 0; --i)
+		{
+			if (BindingItems[i].ExtendablePinListIndex >= ExtendablePinListCount)
+			{
+#if WITH_EDITORONLY_DATA
+				OrphanBindingItem(BindingItems[i].Value);
+#endif
+				BindingItems.RemoveAt(i);
+			}
+		}
+	}
+	else
+	{
+		// Remove items if we no longer have an extendable list
+		for (int32 i = BindingItems.Num() - 1; i >= 0; --i)
+		{
+			if (BindingItems[i].ExtendablePinListIndex != INDEX_NONE)
+			{
+	#if WITH_EDITORONLY_DATA
+				OrphanBindingItem(BindingItems[i].Value);
+	#endif
+				BindingItems.RemoveAt(i);
+			}
+		}
+
+		ExtendablePinListCount = 0;
+	}
+
+}
 
 UMDFastBindingInstance* UMDFastBindingObject::GetOuterBinding() const
 {
@@ -151,18 +208,76 @@ bool UMDFastBindingObject::CheckNeedsUpdate() const
 	return true;
 }
 
+void UMDFastBindingObject::RemoveExtendablePinBindingItem(int32 ItemIndex)
+{
+	bool bDidRemove = false;
+	const int32 OldCount = ExtendablePinListCount;
+	for (int32 i = BindingItems.Num() - 1; i >= 0; --i)
+	{
+		if (BindingItems[i].ExtendablePinListIndex == ItemIndex)
+		{
+#if WITH_EDITORONLY_DATA
+			OrphanBindingItem(BindingItems[i].Value);
+#endif
+			BindingItems.RemoveAt(i);
+			bDidRemove = true;
+		}
+	}
+
+	if (bDidRemove)
+	{
+		--ExtendablePinListCount;
+
+		// Rename items above ItemIndex
+		int32 AccumulatedGap = 0;
+		for (int32 i = 0; i < OldCount; ++i)
+		{
+			auto Pred = [i](const FMDFastBindingItem& Item) { return Item.ExtendablePinListIndex == i; };
+			if (BindingItems.ContainsByPredicate(Pred))
+			{
+				if (AccumulatedGap > 0)
+				{
+					// Offset all items at i by AccumulatedGap
+					while (FMDFastBindingItem* Item = BindingItems.FindByPredicate(Pred))
+					{
+						Item->ExtendablePinListIndex -= AccumulatedGap;
+						Item->ItemName = CreateExtendableItemName(Item->ExtendablePinListNameBase, Item->ExtendablePinListIndex);
+					}
+				}
+			}
+			else
+			{
+				++AccumulatedGap;
+			}
+		}
+	}
+}
+
+const FMDFastBindingItem* UMDFastBindingObject::FindBindingItemWithValue(const UMDFastBindingValueBase* Value) const
+{
+	for (const FMDFastBindingItem& Item : BindingItems)
+	{
+		if (Item.Value == Value)
+		{
+			return &Item;
+		}
+	}
+
+	return nullptr;
+}
+
 void UMDFastBindingObject::PostLoad()
 {
 	Super::PostLoad();
 
-	SetupBindingItems();
+	SetupBindingItems_Internal();
 }
 
 void UMDFastBindingObject::PostInitProperties()
 {
 	Super::PostInitProperties();
 
-	SetupBindingItems();
+	SetupBindingItems_Internal();
 }
 
 void UMDFastBindingObject::EnsureBindingItemExists(const FName& ItemName, const FProperty* ItemProperty, const FText& ItemDescription, bool bIsOptional)
@@ -175,10 +290,31 @@ void UMDFastBindingObject::EnsureBindingItemExists(const FName& ItemName, const 
 		BindingItems.Add(MoveTemp(Item));
 		BindingItem = BindingItems.FindByKey(ItemName);
 	}
-
+	
 	BindingItem->bAllowNullValue = bIsOptional;
 	BindingItem->ItemProperty = ItemProperty;
 	BindingItem->ToolTip = ItemDescription;
+}
+
+void UMDFastBindingObject::EnsureExtendableBindingItemExists(const FName& NameBase, const FProperty* ItemProperty, const FText& ItemDescription, int32 ItemIndex, bool bIsOptional)
+{
+	const FName ItemName = CreateExtendableItemName(NameBase, ItemIndex);
+	EnsureBindingItemExists(ItemName, ItemProperty, ItemDescription, bIsOptional);
+
+	FMDFastBindingItem* BindingItem = FindBindingItem(ItemName);
+	check(BindingItem);
+	BindingItem->ExtendablePinListIndex = ItemIndex;
+	BindingItem->ExtendablePinListNameBase = NameBase;
+}
+
+const FProperty* UMDFastBindingObject::ResolveBindingItemProperty(const FName& Name) const
+{
+	if (const FMDFastBindingItem* Item = BindingItems.FindByKey(Name))
+	{
+		return Item->ResolveOutputProperty();
+	}
+
+	return nullptr;
 }
 
 const FProperty* UMDFastBindingObject::GetBindingItemValueProperty(const FName& Name) const
@@ -217,20 +353,20 @@ TTuple<const FProperty*, void*> UMDFastBindingObject::GetBindingItemValue(UObjec
 #if WITH_EDITOR
 EDataValidationResult UMDFastBindingObject::IsDataValid(TArray<FText>& ValidationErrors)
 {
-	SetupBindingItems();
+	SetupBindingItems_Internal();
 	
 	for (const FMDFastBindingItem& BindingItem : BindingItems)
 	{
-		if (!BindingItem.ItemProperty.IsValid())
+		const FProperty* ItemProp = BindingItem.ResolveOutputProperty();
+		if (ItemProp == nullptr && !BindingItem.bAllowNullValue)
 		{
-			ValidationErrors.Add(FText::Format(LOCTEXT("BindingItemNullTypeError", "Pin '{0}' is missing an expected type"), FText::FromName(BindingItem.ItemName)));
+			ValidationErrors.Add(FText::Format(LOCTEXT("BindingItemNullTypeError", "Wildcard Pin '{0}' is not connected"), FText::FromName(BindingItem.ItemName)));
 			return EDataValidationResult::Invalid;
 		}
 
 		if (BindingItem.Value == nullptr && !BindingItem.bAllowNullValue)
 		{
-			const FProperty* ItemProp = BindingItem.ItemProperty.Get();
-			if (!ItemProp->IsA<FObjectPropertyBase>() && !ItemProp->IsA<FTextProperty>() && !ItemProp->IsA<FStrProperty>() && BindingItem.DefaultString.IsEmpty())
+			if (ItemProp != nullptr && !ItemProp->IsA<FObjectPropertyBase>() && !ItemProp->IsA<FTextProperty>() && !ItemProp->IsA<FStrProperty>() && BindingItem.DefaultString.IsEmpty())
 			{
 				ValidationErrors.Add(FText::Format(LOCTEXT("NullBindingItemValueError", "Pin '{0}' is empty"), FText::FromName(BindingItem.ItemName)));
 				return EDataValidationResult::Invalid;
@@ -245,11 +381,11 @@ EDataValidationResult UMDFastBindingObject::IsDataValid(TArray<FText>& Validatio
 				return EDataValidationResult::Invalid;
 			}
 
-			if (!FMDFastBindingModule::CanSetProperty(BindingItem.ItemProperty.Get(), OutputProp))
+			if (!FMDFastBindingModule::CanSetProperty(BindingItem.ResolveOutputProperty(), OutputProp))
 			{
 				ValidationErrors.Add(FText::Format(LOCTEXT("BindingItemTypeMismatchError", "Pin '{0}' expects type '{1}' but Value '{2}' has type '{3}'")
 					, FText::FromName(BindingItem.ItemName)
-					, FText::FromString(FMDFastBindingHelpers::PropertyToString(*BindingItem.ItemProperty.Get()))
+					, FText::FromString(FMDFastBindingHelpers::PropertyToString(*BindingItem.ResolveOutputProperty()))
 					, BindingItem.Value->GetDisplayName()
 					, FText::FromString(FMDFastBindingHelpers::PropertyToString(*OutputProp))));
 				return EDataValidationResult::Invalid;
@@ -264,7 +400,7 @@ void UMDFastBindingObject::PostEditChangeProperty(FPropertyChangedEvent& Propert
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 
-	SetupBindingItems();
+	SetupBindingItems_Internal();
 }
 
 TSharedRef<SWidget> UMDFastBindingObject::CreateNodeHeaderWidget()
@@ -292,6 +428,12 @@ const FMDFastBindingItem* UMDFastBindingObject::FindBindingItem(const FName& Ite
 FMDFastBindingItem* UMDFastBindingObject::FindBindingItem(const FName& ItemName)
 {
 	return BindingItems.FindByKey(ItemName);
+}
+
+void UMDFastBindingObject::RemoveBindingItem(const FName& ItemName)
+{
+	OrphanBindingItem(ItemName);
+	BindingItems.RemoveAll([ItemName](const FMDFastBindingItem& Item) { return Item.ItemName == ItemName; });
 }
 
 UMDFastBindingValueBase* UMDFastBindingObject::SetBindingItem(const FName& ItemName, TSubclassOf<UMDFastBindingValueBase> ValueClass)

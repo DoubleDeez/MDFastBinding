@@ -20,5 +20,5 @@ public:
 
 	virtual void RegisterCommands() override;	
 
-	TSharedPtr<FUICommandInfo> SetDestinationActive;	
+	TSharedPtr<FUICommandInfo> SetDestinationActive;
 };

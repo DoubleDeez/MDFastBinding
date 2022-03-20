@@ -63,6 +63,8 @@ private:
 	
 	bool CanSetDestinationActive() const;
 	void SetDestinationActive() const;
+
+	void RemoveExtendablePin(TWeakObjectPtr<UMDFastBindingObject> BindingObject, int32 ItemIndex) const;
 	
 	TSharedPtr<SGraphEditor> GraphEditor;
 

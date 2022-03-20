@@ -24,7 +24,7 @@ enum class EMDFastBindingUpdateType
 
 // Represented as a pin in the binding editor graph
 USTRUCT()
-struct FMDFastBindingItem
+struct MDFASTBINDING_API FMDFastBindingItem
 {
 	GENERATED_BODY()
 
@@ -45,6 +45,12 @@ public:
 
 	UPROPERTY()
 	UObject* DefaultObject = nullptr;
+
+	UPROPERTY()
+	int32 ExtendablePinListIndex = INDEX_NONE;
+
+	UPROPERTY()
+	FName ExtendablePinListNameBase = NAME_None;
 
 	FText ToolTip;
 
@@ -73,6 +79,9 @@ public:
 
 	bool HasRetrievedDefaultValue() const { return bHasRetrievedDefaultValue; }
 
+	// Resolves wildcard binding items (where ItemProperty is null, the output property of Value is used instead)
+	const FProperty* ResolveOutputProperty() const;
+
 private:
 	void* AllocatedDefaultValue = nullptr;
 
@@ -91,13 +100,21 @@ class MDFASTBINDING_API UMDFastBindingObject : public UObject
 public:
 	UClass* GetBindingOuterClass() const;
 	
-	virtual void SetupBindingItems() {}
+	void SetupBindingItems_Internal();
 
 	virtual bool DoesBindingItemDefaultToSelf(const FName& InItemName) const { return false; }
 
 	UMDFastBindingInstance* GetOuterBinding() const;
 
 	virtual bool CheckNeedsUpdate() const;
+
+	virtual bool HasUserExtendablePinList() const { return false; }
+
+	void IncrementExtendablePinCount() { ++ExtendablePinListCount; }
+
+	void RemoveExtendablePinBindingItem(int32 ItemIndex);
+	
+	const FMDFastBindingItem* FindBindingItemWithValue(const UMDFastBindingValueBase* Value) const;
 
 // Editor only operations
 #if WITH_EDITORONLY_DATA
@@ -120,6 +137,7 @@ public:
 	TArray<FMDFastBindingItem>& GetBindingItems() { return BindingItems; }
 	const FMDFastBindingItem* FindBindingItem(const FName& ItemName) const;
 	FMDFastBindingItem* FindBindingItem(const FName& ItemName);
+	void RemoveBindingItem(const FName& ItemName);
 	UMDFastBindingValueBase* SetBindingItem(const FName& ItemName, TSubclassOf<UMDFastBindingValueBase> ValueClass);
 	UMDFastBindingValueBase* SetBindingItem(const FName& ItemName, UMDFastBindingValueBase* InValue);
 	void ClearBindingItemValue(const FName& ItemName);
@@ -128,6 +146,12 @@ public:
 	void OrphanBindingItem(const FName& ItemName);
 	void OrphanBindingItem(UMDFastBindingValueBase* InValue);
 	void OrphanAllBindingItems(const TSet<UObject*>& OrphanExclusionSet);
+
+	
+	static FName CreateExtendableItemName(const FName& Base, int32 Index)
+	{
+		return *FString::Printf(TEXT("%s %d"), *Base.ToString(), Index);
+	}
 
 private:
 	UMDFastBindingValueBase* SetBindingItem_Internal(const FName& ItemName, UMDFastBindingValueBase* InValue);
@@ -140,21 +164,30 @@ public:
 
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 
-	TSharedRef<class SWidget> CreateNodeHeaderWidget();
+	virtual TSharedRef<class SWidget> CreateNodeHeaderWidget();
 #endif
 
 protected:
 	virtual void PostLoad() override;
 	virtual void PostInitProperties() override;
-
-	void EnsureBindingItemExists(const FName& ItemName, const FProperty* ItemProperty, const FText& ItemDescription, bool bIsOptional = false);
 	
+	virtual void SetupBindingItems() {}
+
+	virtual void SetupExtendablePinBindingItem(int32 ItemIndex) {}
+	
+	void EnsureBindingItemExists(const FName& ItemName, const FProperty* ItemProperty, const FText& ItemDescription, bool bIsOptional = false);
+	void EnsureExtendableBindingItemExists(const FName& ItemName, const FProperty* ItemProperty, const FText& ItemDescription, int32 ItemIndex, bool bIsOptional = false);
+	
+	const FProperty* ResolveBindingItemProperty(const FName& Name) const;
 	const FProperty* GetBindingItemValueProperty(const FName& Name) const;
 	TTuple<const FProperty*, void*> GetBindingItemValue(UObject* SourceObject, const FName& Name, bool& OutDidUpdate);
 	TTuple<const FProperty*, void*> GetBindingItemValue(UObject* SourceObject, int32 Index, bool& OutDidUpdate);
 
 	UPROPERTY()
 	TArray<FMDFastBindingItem> BindingItems;
+
+	UPROPERTY()
+	int32 ExtendablePinListCount = 0;
 	
 	// Values are cached, this setting determines when to grab a new value or use the cached value
 	UPROPERTY(EditAnywhere, Category = "Performance")

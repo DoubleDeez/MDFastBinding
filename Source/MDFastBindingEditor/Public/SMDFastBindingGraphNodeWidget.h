@@ -49,6 +49,10 @@ protected:
 	
 	virtual void CreateBelowPinControls(TSharedPtr<SVerticalBox> MainBox) override;
 
+	virtual void CreateInputSideAddButton(TSharedPtr<SVerticalBox> InputBox) override;
+
+	virtual FReply OnAddPin() override;
+
 	bool IsSelfPin(UEdGraphPin& Pin) const;
 	
 };

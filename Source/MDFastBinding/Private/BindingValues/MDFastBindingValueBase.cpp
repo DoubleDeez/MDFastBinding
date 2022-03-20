@@ -1,5 +1,18 @@
 ﻿#include "BindingValues/MDFastBindingValueBase.h"
 
+void UMDFastBindingValueBase::InitializeValue(UObject* SourceObject)
+{
+	SetupBindingItems_Internal();
+
+	for (const FMDFastBindingItem& BindingItem : BindingItems)
+	{
+		if (BindingItem.Value != nullptr)
+		{
+			BindingItem.Value->InitializeValue(SourceObject);
+		}
+	}
+}
+
 TTuple<const FProperty*, void*> UMDFastBindingValueBase::GetValue(UObject* SourceObject, bool& OutDidUpdate)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE_STR(__FUNCTION__);
@@ -31,4 +44,14 @@ TTuple<const FProperty*, void*> UMDFastBindingValueBase::GetValue(UObject* Sourc
 bool UMDFastBindingValueBase::CheckNeedsUpdate() const
 {
 	return CachedValue.Value == nullptr || Super::CheckNeedsUpdate();
+}
+
+const FMDFastBindingItem* UMDFastBindingValueBase::GetOwningBindingItem() const
+{
+	if (const UMDFastBindingObject* OuterObject = Cast<UMDFastBindingObject>(GetOuter()))
+	{
+		return OuterObject->FindBindingItemWithValue(this);
+	}
+
+	return nullptr;
 }

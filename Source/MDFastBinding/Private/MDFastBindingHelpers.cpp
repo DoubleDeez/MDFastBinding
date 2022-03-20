@@ -2,6 +2,9 @@
 
 
 #include "MDFastBindingHelpers.h"
+#include "UObject/UnrealType.h"
+
+#include "MDFastBinding.h"
 
 void FMDFastBindingHelpers::GetFunctionParamProps(const UFunction* Func, TArray<const FProperty*>& OutParams)
 {
@@ -70,4 +73,36 @@ FString FMDFastBindingHelpers::PropertyToString(const FProperty& Prop)
 	}
 
 	return Prop.GetCPPType();
+}
+
+bool FMDFastBindingHelpers::ArePropertyValuesEqual(const FProperty* PropA, const void* ValuePtrA, const FProperty* PropB, const void* ValuePtrB)
+{
+	if (PropA == nullptr || ValuePtrA == nullptr || PropB == nullptr || ValuePtrB == nullptr)
+	{
+		return false;
+	}
+
+	bool bResult = false;
+	if (PropA->GetClass() == PropB->GetClass())
+	{
+		return PropA->Identical(ValuePtrA, ValuePtrB);
+	}
+	else if (FMDFastBindingModule::CanSetProperty(PropA, PropB))
+	{
+		void* AllocatedValue = FMemory::Malloc(PropA->GetSize(), PropA->GetMinAlignment());
+		PropA->InitializeValue(AllocatedValue);
+		FMDFastBindingModule::SetProperty(PropA, AllocatedValue, PropB, ValuePtrB);
+		bResult = PropA->Identical(ValuePtrA, AllocatedValue);
+		FMemory::Free(AllocatedValue);
+	}
+	else if (FMDFastBindingModule::CanSetProperty(PropB, PropA))
+	{
+		void* AllocatedValue = FMemory::Malloc(PropB->GetSize(), PropB->GetMinAlignment());
+		PropB->InitializeValue(AllocatedValue);
+		FMDFastBindingModule::SetProperty(PropB, AllocatedValue, PropA, ValuePtrA);
+		bResult = PropB->Identical(AllocatedValue, ValuePtrB);
+		FMemory::Free(AllocatedValue);
+	}
+
+	return bResult;
 }

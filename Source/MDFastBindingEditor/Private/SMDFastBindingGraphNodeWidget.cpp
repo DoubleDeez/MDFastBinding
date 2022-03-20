@@ -1,5 +1,6 @@
 ﻿#include "SMDFastBindingGraphNodeWidget.h"
 
+#include "GraphEditorSettings.h"
 #include "MDFastBindingGraphNode.h"
 #include "MDFastBindingObject.h"
 #include "NodeFactory.h"
@@ -97,6 +98,43 @@ void SMDFastBindingGraphNodeWidget::CreateBelowPinControls(TSharedPtr<SVerticalB
 			BindingObject->CreateNodeHeaderWidget()
 		];
 	}
+}
+
+void SMDFastBindingGraphNodeWidget::CreateInputSideAddButton(TSharedPtr<SVerticalBox> InputBox)
+{
+	if (const UMDFastBindingObject* BindingObject = GetBindingObject())
+	{
+		if (BindingObject->HasUserExtendablePinList())
+		{
+			const TSharedRef<SWidget> AddPinButton = AddPinButtonContent(LOCTEXT("AddPinLabel", "Add Pin"), LOCTEXT("AddPinTooltip", "Add another input to this node"));
+
+			FMargin AddPinPadding = Settings->GetOutputPinPadding();
+			AddPinPadding.Top += 6.0f;
+
+			InputBox->AddSlot()
+				.AutoHeight()
+				.VAlign(VAlign_Center)
+				.Padding(AddPinPadding)
+				[
+					AddPinButton
+				];
+		}
+	}
+}
+
+FReply SMDFastBindingGraphNodeWidget::OnAddPin()
+{
+	if (UMDFastBindingObject* BindingObject = GetBindingObject())
+	{
+		BindingObject->IncrementExtendablePinCount();
+		if (UMDFastBindingGraphNode* Node = GetGraphNode())
+		{
+			Node->RefreshGraph();
+		}
+		return FReply::Handled();
+	}
+	
+	return SGraphNode::OnAddPin();
 }
 
 bool SMDFastBindingGraphNodeWidget::IsSelfPin(UEdGraphPin& Pin) const
