@@ -341,12 +341,14 @@ void SMDFastBindingEditorWidget::PostUndo(bool bSuccess)
 {
 	PopulateBindingsList();
 	BindingListView->SetSelection(SelectedBinding);
+	BindingGraphWidget->SetBinding(GetSelectedBinding());
 }
 
 void SMDFastBindingEditorWidget::PostRedo(bool bSuccess)
 {
 	PopulateBindingsList();
 	BindingListView->SetSelection(SelectedBinding);
+	BindingGraphWidget->SetBinding(GetSelectedBinding());
 }
 
 void SMDFastBindingEditorWidget::OnGraphSelectionChanged(const FGraphPanelSelectionSet& Selection)
