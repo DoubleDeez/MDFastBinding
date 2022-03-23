@@ -101,8 +101,10 @@ void UMDFastBindingValue_Select::SetupBindingItems()
 		UEnum* Enum = EnumProp->GetEnum();
 		for (int32 EnumIndex = 0; EnumIndex < Enum->NumEnums() - 1; ++EnumIndex)
 		{
+#if WITH_EDITOR
 			bool const bShouldBeHidden = Enum->HasMetaData(TEXT("Hidden"), EnumIndex) || Enum->HasMetaData(TEXT("Spacer"), EnumIndex);
 			if (!bShouldBeHidden)
+#endif
 			{
 				const int64 EnumValue = Enum->GetValueByIndex(EnumIndex);
 				const FName EnumFriendlyName = *Enum->GetDisplayNameTextByIndex(EnumIndex).ToString();

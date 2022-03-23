@@ -115,6 +115,13 @@ public:
 	void RemoveExtendablePinBindingItem(int32 ItemIndex);
 	
 	const FMDFastBindingItem* FindBindingItemWithValue(const UMDFastBindingValueBase* Value) const;
+	const FMDFastBindingItem* FindBindingItem(const FName& ItemName) const;
+	FMDFastBindingItem* FindBindingItem(const FName& ItemName);
+	
+	static FName CreateExtendableItemName(const FName& Base, int32 Index)
+	{
+		return *FString::Printf(TEXT("%s %d"), *Base.ToString(), Index);
+	}
 
 // Editor only operations
 #if WITH_EDITORONLY_DATA
@@ -135,8 +142,6 @@ public:
 
 	const TArray<FMDFastBindingItem>& GetBindingItems() const { return BindingItems; }
 	TArray<FMDFastBindingItem>& GetBindingItems() { return BindingItems; }
-	const FMDFastBindingItem* FindBindingItem(const FName& ItemName) const;
-	FMDFastBindingItem* FindBindingItem(const FName& ItemName);
 	void RemoveBindingItem(const FName& ItemName);
 	UMDFastBindingValueBase* SetBindingItem(const FName& ItemName, TSubclassOf<UMDFastBindingValueBase> ValueClass);
 	UMDFastBindingValueBase* SetBindingItem(const FName& ItemName, UMDFastBindingValueBase* InValue);
@@ -146,12 +151,6 @@ public:
 	void OrphanBindingItem(const FName& ItemName);
 	void OrphanBindingItem(UMDFastBindingValueBase* InValue);
 	void OrphanAllBindingItems(const TSet<UObject*>& OrphanExclusionSet);
-
-	
-	static FName CreateExtendableItemName(const FName& Base, int32 Index)
-	{
-		return *FString::Printf(TEXT("%s %d"), *Base.ToString(), Index);
-	}
 
 private:
 	UMDFastBindingValueBase* SetBindingItem_Internal(const FName& ItemName, UMDFastBindingValueBase* InValue);

@@ -266,6 +266,16 @@ const FMDFastBindingItem* UMDFastBindingObject::FindBindingItemWithValue(const U
 	return nullptr;
 }
 
+const FMDFastBindingItem* UMDFastBindingObject::FindBindingItem(const FName& ItemName) const
+{
+	return BindingItems.FindByKey(ItemName);
+}
+
+FMDFastBindingItem* UMDFastBindingObject::FindBindingItem(const FName& ItemName)
+{
+	return BindingItems.FindByKey(ItemName);
+}
+
 void UMDFastBindingObject::PostLoad()
 {
 	Super::PostLoad();
@@ -418,16 +428,6 @@ FText UMDFastBindingObject::GetDisplayName()
 FText UMDFastBindingObject::GetToolTipText()
 {
 	return GetClass()->GetToolTipText();
-}
-
-const FMDFastBindingItem* UMDFastBindingObject::FindBindingItem(const FName& ItemName) const
-{
-	return BindingItems.FindByKey(ItemName);
-}
-
-FMDFastBindingItem* UMDFastBindingObject::FindBindingItem(const FName& ItemName)
-{
-	return BindingItems.FindByKey(ItemName);
 }
 
 void UMDFastBindingObject::RemoveBindingItem(const FName& ItemName)
