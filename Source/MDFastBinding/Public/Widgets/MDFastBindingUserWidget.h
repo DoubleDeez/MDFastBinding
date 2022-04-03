@@ -21,7 +21,7 @@ public:
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 	
 protected:
-	UPROPERTY(Instanced)
+	UPROPERTY(Instanced, DuplicateTransient)
 	UMDFastBindingContainer* Bindings = nullptr;
 	
 };

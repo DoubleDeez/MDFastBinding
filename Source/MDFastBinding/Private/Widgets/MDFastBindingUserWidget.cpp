@@ -9,6 +9,18 @@ void UMDFastBindingUserWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
+	if (Bindings == nullptr)
+	{
+		// Widget instances tend to not get changes to "Instance" UObject properties, so we copy them from the CDO directly
+		if (UMDFastBindingUserWidget* CDO = GetClass()->GetDefaultObject<UMDFastBindingUserWidget>())
+		{
+			if (CDO->Bindings != nullptr)
+			{
+				Bindings = DuplicateObject<UMDFastBindingContainer>(CDO->Bindings, this);
+			}
+		}
+	}
+
 	if (Bindings != nullptr)
 	{
 		Bindings->InitializeBindings(this);
