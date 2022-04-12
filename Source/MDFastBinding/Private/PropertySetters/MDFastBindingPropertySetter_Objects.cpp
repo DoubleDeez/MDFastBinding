@@ -15,7 +15,17 @@ void FMDFastBindingPropertySetter_Objects::SetProperty(const FProperty& Destinat
 	
 	if (bCanAssign)
 	{
-		DestObjProp->SetObjectPropertyValue(DestinationValuePtr, ObjectValue);
+		// Special case for soft object ptrs since we want them to stay soft object ptrs
+		const FSoftObjectProperty* SoftDestObjProp = CastField<const FSoftObjectProperty>(&DestinationProp);
+		const FSoftObjectProperty* SoftSrcObjProp = CastField<const FSoftObjectProperty>(&SourceProp);
+		if (SoftDestObjProp != nullptr && SoftSrcObjProp != nullptr)
+		{
+			SoftDestObjProp->CopyCompleteValue(DestinationValuePtr, SourceValuePtr);
+		}
+		else
+		{
+			DestObjProp->SetObjectPropertyValue(DestinationValuePtr, ObjectValue);
+		}
 	}
 	else
 	{
