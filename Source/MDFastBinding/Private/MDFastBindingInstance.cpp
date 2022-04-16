@@ -83,9 +83,16 @@ UMDFastBindingDestinationBase* UMDFastBindingInstance::SetDestination(TSubclassO
 
 UMDFastBindingDestinationBase* UMDFastBindingInstance::SetDestination(UMDFastBindingDestinationBase* InDestination)
 {
-	if (BindingDestination == InDestination || InDestination->GetOuter() != this)
+	if (InDestination == nullptr || BindingDestination == InDestination)
 	{
 		return BindingDestination;
+	}
+
+	Modify();
+	UMDFastBindingDestinationBase* Destination = InDestination;
+	if (Destination->GetOuter() != this)
+	{
+		Destination = DuplicateObject<UMDFastBindingDestinationBase>(Destination, this);
 	}
 	
 	if (BindingDestination != nullptr)
@@ -94,8 +101,8 @@ UMDFastBindingDestinationBase* UMDFastBindingInstance::SetDestination(UMDFastBin
 		BindingDestination = nullptr;
 	}
 
-	InactiveDestinations.Remove(InDestination);
-	BindingDestination = InDestination;
+	InactiveDestinations.Remove(Destination);
+	BindingDestination = Destination;
 
 	return BindingDestination;
 }
