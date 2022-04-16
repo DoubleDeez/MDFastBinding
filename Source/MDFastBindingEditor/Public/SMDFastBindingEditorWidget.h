@@ -45,6 +45,8 @@ private:
 
 	FText GetBindingValidationTooltip(TWeakObjectPtr<UMDFastBindingInstance> Binding) const;
 	const FSlateBrush* GetBindingValidationBrush(TWeakObjectPtr<UMDFastBindingInstance> Binding) const;
+
+	void OnBlueprintCompiled(UBlueprint* Blueprint);
 	
 	TWeakObjectPtr<UMDFastBindingContainer> BindingContainer;
 	TWeakObjectPtr<UMDFastBindingInstance> SelectedBinding;

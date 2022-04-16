@@ -182,8 +182,10 @@ void SMDFastBindingEditorWidget::Construct(const FArguments&, const TWeakPtr<FBl
 	DetailsViewArgs.bHideSelectionTip = true;
 	DetailsView = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor").CreateDetailView(DetailsViewArgs);
 	DetailsView->OnFinishedChangingProperties().AddSP(this, &SMDFastBindingEditorWidget::OnDetailsPanelPropertyChanged);
-	
-	AssignBindingData(InBlueprintEditor.Pin()->GetBlueprintObj()->GeneratedClass);
+
+	UBlueprint* Blueprint = InBlueprintEditor.Pin()->GetBlueprintObj();
+	AssignBindingData(Blueprint->GeneratedClass);
+	Blueprint->OnCompiled().AddSP(this, &SMDFastBindingEditorWidget::OnBlueprintCompiled);
 	
 	BindingListView = SNew(SListView<TWeakObjectPtr<UMDFastBindingInstance>>)
 		.ListItemsSource(&Bindings)
@@ -534,6 +536,14 @@ const FSlateBrush* SMDFastBindingEditorWidget::GetBindingValidationBrush(TWeakOb
 	}
 
 	return nullptr;
+}
+
+void SMDFastBindingEditorWidget::OnBlueprintCompiled(UBlueprint* Blueprint) {
+	const int32 SelectedIndex = Bindings.IndexOfByKey(SelectedBinding);
+	AssignBindingData(Blueprint != nullptr ? Blueprint->GeneratedClass : nullptr);
+	if (Bindings.IsValidIndex(SelectedIndex)) {
+		SelectBinding(Bindings[SelectedIndex].Get());
+	}
 }
 
 const FName FMDFastBindingEditorSummoner::TabId = TEXT("MDFastBindingID");
