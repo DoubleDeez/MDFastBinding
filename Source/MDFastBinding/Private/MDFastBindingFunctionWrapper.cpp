@@ -142,7 +142,7 @@ FString FMDFastBindingFunctionWrapper::FunctionToString_Internal(UFunction* Func
 
 	const FString ReturnString = ReturnProp != nullptr ? FMDFastBindingHelpers::PropertyToString(*ReturnProp) : TEXT("void"); 
 
-	return FString::Printf(TEXT("%s %s(%s)"), *ReturnString, *Func->GetDisplayNameText().ToString(), *ParamString);
+	return FString::Printf(TEXT("%s %s(%s)"), *ReturnString, *Func->GetFName().ToString(), *ParamString);
 }
 #endif
 

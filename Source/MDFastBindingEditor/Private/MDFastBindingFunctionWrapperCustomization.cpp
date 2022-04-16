@@ -31,33 +31,33 @@ void FMDFastBindingFunctionWrapperCustomization::CustomizeHeader(TSharedRef<IPro
 	UpdateComboButton();
 }
 
-FText FMDFastBindingFunctionWrapperCustomization::GetComboButtonText()
+TSharedRef<SWidget> FMDFastBindingFunctionWrapperCustomization::GetComboButtonContent()
 {
 	if (FMDFastBindingFunctionWrapper* FunctionWrapper = ResolveFunctionWrapper())
 	{
 		UClass* OwnerClass = FunctionWrapper->GetFunctionOwnerClass();
 		if (OwnerClass == nullptr)
 		{
-			return LOCTEXT("InvalidFunctionOwner", "The function owner is invalid");
+			return SNew(STextBlock).Text(LOCTEXT("InvalidFunctionOwner", "The function owner is invalid"));
 		}
 
 		GatherPossibleFunctions();
 		if (Functions.Num() == 0)
 		{
-			return FText::Format(LOCTEXT("NoOptionsForFunction", "{0} has 0 valid functions"), OwnerClass->GetDisplayNameText());
+			return SNew(STextBlock).Text(FText::Format(LOCTEXT("NoOptionsForFunction", "{0} has 0 valid functions"), OwnerClass->GetDisplayNameText()));
 		}
 
 		FunctionWrapper->BuildFunctionData();
 		UFunction* FunctionPtr = FunctionWrapper->GetFunctionPtr();
 		if (FunctionPtr == nullptr)
 		{
-			return LOCTEXT("NullFunction", "None");
+			return SNew(STextBlock).Text(LOCTEXT("NullFunction", "None"));
 		}
 
-		return FunctionPtr->GetDisplayNameText();
+		return BuildFunctionWidget(FunctionPtr);
 	}
 
-	return FText::GetEmpty();
+	return SNullWidget::NullWidget;
 }
 
 FMDFastBindingFunctionWrapper* FMDFastBindingFunctionWrapperCustomization::ResolveFunctionWrapper() const
@@ -77,25 +77,60 @@ FMDFastBindingFunctionWrapper* FMDFastBindingFunctionWrapperCustomization::Resol
 TSharedRef<SWidget> FMDFastBindingFunctionWrapperCustomization::GetPathSelectorContent()
 {
 	GatherPossibleFunctions();
-	auto HandleGenerateRow = [this](UFunction* Function, const TSharedRef<STableViewBase>& InOwnerTableView) -> TSharedRef<ITableRow>
-	{
-		return SNew(STableRow<UFunction*>, InOwnerTableView)
-			.Content()
-			[
-				SNew(STextBlock)
-					.Text(Function->GetDisplayNameText())
-					.ToolTipText(FText::FromString(FMDFastBindingFunctionWrapper::FunctionToString(Function)))
-			];
-	};
 	
-	return SNew(SBorder)
-	[
-		SNew(SListView<UFunction*>)
-		.ListItemsSource(&Functions)
-		.SelectionMode(ESelectionMode::Single)
-		.OnGenerateRow_Lambda(HandleGenerateRow)
-		.OnSelectionChanged(this, &FMDFastBindingFunctionWrapperCustomization::OnFunctionSelected)
-	];
+	FMenuBuilder MenuBuilder(true, nullptr);
+	for (UFunction* Func : Functions)
+	{
+		FUIAction OnFunctionSelected = FUIAction(FExecuteAction::CreateSP(this, &FMDFastBindingFunctionWrapperCustomization::OnFunctionSelected, Func));
+		MenuBuilder.AddMenuEntry(OnFunctionSelected, BuildFunctionWidget(Func));
+	}
+
+	return MenuBuilder.MakeWidget();
+}
+
+TSharedRef<SWidget> FMDFastBindingFunctionWrapperCustomization::BuildFunctionWidget(UFunction* Function) const
+{
+	if (Function == nullptr)
+	{
+		// Something's wrong, the text might have info
+		return SNew(STextBlock)
+			.Text(LOCTEXT("NullFunctionName", "None"))
+			.ToolTipText(LOCTEXT("NullFunctionTooltip", "Clear the selection"));
+	}
+	
+	const FProperty* ReturnProp = nullptr;
+	TArray<const FProperty*> Params;
+	FMDFastBindingHelpers::SplitFunctionParamsAndReturnProp(Function, Params, ReturnProp);
+	
+	const UEdGraphSchema_K2* Schema = GetDefault<UEdGraphSchema_K2>();
+	FEdGraphPinType PinType;
+	Schema->ConvertPropertyToPinType(ReturnProp, PinType);
+
+	return SNew(SHorizontalBox)
+		+SHorizontalBox::Slot()
+		.AutoWidth()
+		.HAlign(HAlign_Center)
+		.VAlign(VAlign_Center)
+		.Padding(1.f, 0.f)
+		[
+			SNew(SImage)
+			.Image(FEditorStyle::Get().GetBrush(TEXT("GraphEditor.Function_16x")))
+			.ColorAndOpacity(ReturnProp == nullptr
+				? FLinearColor::White
+				: Schema->GetPinTypeColor(PinType))
+			.ToolTipText(ReturnProp == nullptr
+				? FText::FromString(TEXT("void"))
+				: FText::FromString(FMDFastBindingHelpers::PropertyToString(*ReturnProp)))
+		]
+		+SHorizontalBox::Slot()
+		.HAlign(HAlign_Left)
+		.VAlign(VAlign_Center)
+		.Padding(4.f, 0.f)
+		[
+			SNew(STextBlock)
+			.Text(Function->GetDisplayNameText())
+			.ToolTipText(FText::FromString(FMDFastBindingFunctionWrapper::FunctionToString(Function)))
+		];
 }
 
 void FMDFastBindingFunctionWrapperCustomization::GatherPossibleFunctions()
@@ -139,11 +174,11 @@ void FMDFastBindingFunctionWrapperCustomization::UpdateComboButton()
 {
 	if (ComboButtonContent.IsValid())
 	{
-		ComboButtonContent->SetContent(SNew(STextBlock).Text(GetComboButtonText()));
+		ComboButtonContent->SetContent(GetComboButtonContent());
 	}
 }
 
-void FMDFastBindingFunctionWrapperCustomization::OnFunctionSelected(UFunction* Function, ESelectInfo::Type SelectType)
+void FMDFastBindingFunctionWrapperCustomization::OnFunctionSelected(UFunction* Function)
 {
 	if (FunctionWrapperNameHandle.IsValid())
 	{

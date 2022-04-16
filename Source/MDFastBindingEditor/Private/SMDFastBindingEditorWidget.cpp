@@ -538,10 +538,12 @@ const FSlateBrush* SMDFastBindingEditorWidget::GetBindingValidationBrush(TWeakOb
 	return nullptr;
 }
 
-void SMDFastBindingEditorWidget::OnBlueprintCompiled(UBlueprint* Blueprint) {
+void SMDFastBindingEditorWidget::OnBlueprintCompiled(UBlueprint* Blueprint)
+{
 	const int32 SelectedIndex = Bindings.IndexOfByKey(SelectedBinding);
 	AssignBindingData(Blueprint != nullptr ? Blueprint->GeneratedClass : nullptr);
-	if (Bindings.IsValidIndex(SelectedIndex)) {
+	if (Bindings.IsValidIndex(SelectedIndex))
+	{
 		SelectBinding(Bindings[SelectedIndex].Get());
 	}
 }

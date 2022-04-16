@@ -16,17 +16,19 @@ public:
 	virtual void CustomizeChildren(TSharedRef<IPropertyHandle> PropertyHandle, IDetailChildrenBuilder& ChildBuilder, IPropertyTypeCustomizationUtils& CustomizationUtils) override {}
 
 private:
-	FText GetComboButtonText();
+	TSharedRef<SWidget> GetComboButtonContent();
 
 	FMDFastBindingFunctionWrapper* ResolveFunctionWrapper() const;
 
 	TSharedRef<SWidget> GetPathSelectorContent();
+	
+	TSharedRef<SWidget> BuildFunctionWidget(UFunction* Function) const;
 
 	void GatherPossibleFunctions();
 
 	void UpdateComboButton();
 
-	void OnFunctionSelected(UFunction* Function, ESelectInfo::Type SelectType);
+	void OnFunctionSelected(UFunction* Function);
 	
 	TSharedPtr<IPropertyHandle> FunctionWrapperHandle;
 	TSharedPtr<IPropertyHandle> FunctionWrapperNameHandle;
