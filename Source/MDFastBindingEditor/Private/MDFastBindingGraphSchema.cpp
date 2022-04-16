@@ -328,13 +328,13 @@ bool UMDFastBindingGraphSchema::CanVariableBeDropped(UEdGraph* InGraph, FPropert
 
 bool UMDFastBindingGraphSchema::RequestVariableDropOnPanel(UEdGraph* InGraph, FProperty* InVariableToDrop, const FVector2D& InDropPosition, const FVector2D& InScreenPosition)
 {
-	return Super::RequestVariableDropOnPin(InGraph, InVariableToDrop, nullptr, InDropPosition, InScreenPosition);
+	return RequestVariableDropOnPin(InGraph, InVariableToDrop, nullptr, InDropPosition, InScreenPosition);
 }
 
 bool UMDFastBindingGraphSchema::RequestVariableDropOnNode(UEdGraph* InGraph, FProperty* InVariableToDrop, UEdGraphNode* InNode, const FVector2D& InDropPosition, const FVector2D& InScreenPosition)
 {
 	// Treat dropping on node the same as dropping on panel
-	return Super::RequestVariableDropOnPanel(InGraph, InVariableToDrop, InDropPosition, InScreenPosition);
+	return RequestVariableDropOnPanel(InGraph, InVariableToDrop, InDropPosition, InScreenPosition);
 }
 
 bool UMDFastBindingGraphSchema::RequestVariableDropOnPin(UEdGraph* InGraph, FProperty* InVariableToDrop, UEdGraphPin* InPin, const FVector2D& InDropPosition, const FVector2D& InScreenPosition)
