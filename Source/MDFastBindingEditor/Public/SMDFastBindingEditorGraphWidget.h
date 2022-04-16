@@ -25,7 +25,7 @@ public:
 
 	virtual ~SMDFastBindingEditorGraphWidget() override;
 
-	void Construct(const FArguments& InArgs);
+	void Construct(const FArguments& InArgs, UBlueprint* Blueprint);
 
 	void SetBinding(UMDFastBindingInstance* InBinding);
 

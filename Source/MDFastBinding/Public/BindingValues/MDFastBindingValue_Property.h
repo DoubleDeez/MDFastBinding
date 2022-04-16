@@ -24,6 +24,8 @@ public:
 #endif
 #if WITH_EDITOR
 	virtual EDataValidationResult IsDataValid(TArray<FText>& ValidationErrors) override;
+
+	void SetFieldPath(const TArray<FName>& Path);
 #endif
 
 protected:

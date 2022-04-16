@@ -7,6 +7,7 @@
 #include "MDFastBindingInstance.h"
 #include "BindingDestinations/MDFastBindingDestinationBase.h"
 #include "BindingValues/MDFastBindingValueBase.h"
+#include "BindingValues/MDFastBindingValue_Property.h"
 
 #define LOCTEXT_NAMESPACE "MDFastBindingGraphSchema"
 
@@ -300,6 +301,70 @@ bool UMDFastBindingGraphSchema::TryCreateConnection(UEdGraphPin* A, UEdGraphPin*
 	}
 
 	return false;
+}
+
+bool UMDFastBindingGraphSchema::CanVariableBeDropped(UEdGraph* InGraph, FProperty* InVariableToDrop) const
+{
+	if (UMDFastBindingGraph* Graph = Cast<UMDFastBindingGraph>(InGraph))
+	{
+		if (UMDFastBindingInstance* Binding = Graph->GetBinding())
+		{
+			if (UClass* OwnerClass = Binding->GetBindingOuterClass())
+			{
+				for (TFieldIterator<FProperty> It(OwnerClass); It; ++It)
+				{
+					const FProperty* Prop = *It;
+					if (Prop->GetFName() == InVariableToDrop->GetFName())
+					{
+						return true;
+					}
+				}
+			}
+		}
+	}
+	
+	return Super::CanVariableBeDropped(InGraph, InVariableToDrop);
+}
+
+bool UMDFastBindingGraphSchema::RequestVariableDropOnPanel(UEdGraph* InGraph, FProperty* InVariableToDrop, const FVector2D& InDropPosition, const FVector2D& InScreenPosition)
+{
+	return Super::RequestVariableDropOnPin(InGraph, InVariableToDrop, nullptr, InDropPosition, InScreenPosition);
+}
+
+bool UMDFastBindingGraphSchema::RequestVariableDropOnNode(UEdGraph* InGraph, FProperty* InVariableToDrop, UEdGraphNode* InNode, const FVector2D& InDropPosition, const FVector2D& InScreenPosition)
+{
+	// Treat dropping on node the same as dropping on panel
+	return Super::RequestVariableDropOnPanel(InGraph, InVariableToDrop, InDropPosition, InScreenPosition);
+}
+
+bool UMDFastBindingGraphSchema::RequestVariableDropOnPin(UEdGraph* InGraph, FProperty* InVariableToDrop, UEdGraphPin* InPin, const FVector2D& InDropPosition, const FVector2D& InScreenPosition)
+{
+	const FVector2D NodeOffset = [&]()
+	{
+		if (InPin == nullptr)
+		{
+			return FVector2D::ZeroVector;
+		}
+
+		return InPin->Direction == EGPD_Input ? FVector2D(-200, 0) : FVector2D(200, 0);
+	}();
+	FMDFastBindingSchemaAction_CreateValue CreateAction = FMDFastBindingSchemaAction_CreateValue(UMDFastBindingValue_Property::StaticClass());
+	if (UMDFastBindingGraphNode* Node = Cast<UMDFastBindingGraphNode>(CreateAction.PerformAction(InGraph, InPin, InDropPosition + NodeOffset)))
+	{
+		if (UMDFastBindingValue_Property* PropertyValue = Cast<UMDFastBindingValue_Property>(Node->GetBindingObject()))
+		{
+			PropertyValue->SetFieldPath({ InVariableToDrop->GetFName() });
+			
+			if (UMDFastBindingGraph* Graph = Cast<UMDFastBindingGraph>(InGraph))
+			{
+				Graph->RefreshGraph();
+				Graph->SelectNodeWithBindingObject(PropertyValue);
+			}
+			return true;
+		}
+	}
+	
+	return Super::RequestVariableDropOnPin(InGraph, InVariableToDrop, InPin, InDropPosition, InScreenPosition);
 }
 
 #if ENGINE_MAJOR_VERSION <= 4

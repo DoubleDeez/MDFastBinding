@@ -1,6 +1,24 @@
 ﻿#include "MDFastBindingInstance.h"
 
+#include "MDFastBindingContainer.h"
 #include "BindingDestinations/MDFastBindingDestinationBase.h"
+#include "BindingValues/MDFastBindingValueBase.h"
+
+UClass* UMDFastBindingInstance::GetBindingOuterClass() const
+{
+	const UObject* Object = this;
+	while (Object != nullptr)
+	{
+		if (Object->IsA<UMDFastBindingContainer>() && Object->GetOuter() != nullptr)
+		{
+			return Object->GetOuter()->GetClass();
+		}
+
+		Object = Object->GetOuter();
+	}
+
+	return nullptr;
+}
 
 void UMDFastBindingInstance::InitializeBinding(UObject* SourceObject)
 {

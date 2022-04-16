@@ -194,7 +194,7 @@ void SMDFastBindingEditorWidget::Construct(const FArguments&, const TWeakPtr<FBl
 
 	BindingListView->SetSelection(GetSelectedBinding());
 
-	BindingGraphWidget = SNew(SMDFastBindingEditorGraphWidget)
+	BindingGraphWidget = SNew(SMDFastBindingEditorGraphWidget, Blueprint)
 		.OnSelectionChanged(this, &SMDFastBindingEditorWidget::OnGraphSelectionChanged);
 	BindingGraphWidget->SetBinding(GetSelectedBinding());
 	

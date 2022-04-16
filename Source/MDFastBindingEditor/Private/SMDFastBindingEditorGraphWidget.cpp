@@ -22,9 +22,9 @@ SMDFastBindingEditorGraphWidget::~SMDFastBindingEditorGraphWidget()
 	GraphObj->RemoveFromRoot();
 }
 
-void SMDFastBindingEditorGraphWidget::Construct(const FArguments& InArgs)
+void SMDFastBindingEditorGraphWidget::Construct(const FArguments& InArgs, UBlueprint* Blueprint)
 {
-	GraphObj = NewObject<UMDFastBindingGraph>();
+	GraphObj = NewObject<UMDFastBindingGraph>(Blueprint);
 	GraphObj->AddToRoot();
 	GraphObj->Schema = UMDFastBindingGraphSchema::StaticClass();
 	GraphObj->SetGraphWidget(SharedThis(this));

@@ -96,6 +96,12 @@ EDataValidationResult UMDFastBindingValue_Property::IsDataValid(TArray<FText>& V
 
 	return Result;
 }
+
+void UMDFastBindingValue_Property::SetFieldPath(const TArray<FName>& Path)
+{
+	PropertyPath.FieldPath = Path;
+	PropertyPath.BuildPath();
+}
 #endif
 
 #undef LOCTEXT_NAMESPACE
