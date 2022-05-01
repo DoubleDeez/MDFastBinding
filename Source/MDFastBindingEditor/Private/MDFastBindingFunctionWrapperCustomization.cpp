@@ -129,7 +129,7 @@ TSharedRef<SWidget> FMDFastBindingFunctionWrapperCustomization::BuildFunctionWid
 		[
 			SNew(STextBlock)
 			.Text(Function->GetDisplayNameText())
-			.ToolTipText(FText::FromString(FMDFastBindingFunctionWrapper::FunctionToString(Function)))
+			.ToolTipText(FText::Format(INVTEXT("{0}\n{1}"), FText::FromString(FMDFastBindingFunctionWrapper::FunctionToString(Function)), Function->GetToolTipText()))
 		];
 }
 
