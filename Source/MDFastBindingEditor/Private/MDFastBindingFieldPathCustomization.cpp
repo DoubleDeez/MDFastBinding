@@ -182,8 +182,8 @@ void FMDFastBindingFieldPathCustomization::BuildFieldPathMenu(FMenuBuilder& Menu
 			FMDFastBindingHelpers::SplitFunctionParamsAndReturnProp(Func, Params, FieldProp);
 			
 			Path.Add(Func->GetFName());
-			DisplayName = FText::FromName(Func->GetFName());
-			ToolTip = FText::Format(FuncToolTipFormat, Func->GetDisplayNameText(), FText::FromString(FMDFastBindingHelpers::PropertyToString(*FieldProp)), Func->GetToolTipText());
+			DisplayName = Func->GetDisplayNameText();
+			ToolTip = FText::Format(FuncToolTipFormat, FText::FromName(Func->GetFName()), FText::FromString(FMDFastBindingHelpers::PropertyToString(*FieldProp)), Func->GetToolTipText());
 			bIsFunction = true;
 		}
 		else
