@@ -353,7 +353,7 @@ bool UMDFastBindingGraphSchema::RequestVariableDropOnPin(UEdGraph* InGraph, FPro
 	{
 		if (UMDFastBindingValue_Property* PropertyValue = Cast<UMDFastBindingValue_Property>(Node->GetBindingObject()))
 		{
-			PropertyValue->SetFieldPath({ InVariableToDrop->GetFName() });
+			PropertyValue->SetFieldPath({ InVariableToDrop });
 			
 			if (UMDFastBindingGraph* Graph = Cast<UMDFastBindingGraph>(InGraph))
 			{

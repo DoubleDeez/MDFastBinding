@@ -10,7 +10,7 @@ void FMDFastBindingFieldPathCustomization::CustomizeHeader(TSharedRef<IPropertyH
                                                            FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& CustomizationUtils)
 {
 	FieldPathHandle = PropertyHandle;
-	FieldPathNamesHandle = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FMDFastBindingFieldPath, FieldPath))->AsArray();
+	FieldPathMembersHandle = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FMDFastBindingFieldPath, FieldPathMembers))->AsArray();
 	
 	HeaderRow.NameContent()
 	[
@@ -165,12 +165,12 @@ TArray<FFieldVariant> FMDFastBindingFieldPathCustomization::GatherPossibleFields
 	return Fields;
 }
 
-void FMDFastBindingFieldPathCustomization::BuildFieldPathMenu(FMenuBuilder& MenuBuilder, UStruct* InStruct, TArray<FName> ParentPath) const
+void FMDFastBindingFieldPathCustomization::BuildFieldPathMenu(FMenuBuilder& MenuBuilder, UStruct* InStruct, TArray<FFieldVariant> ParentPath) const
 {
 	TArray<FFieldVariant> Fields = GatherPossibleFields(InStruct);
 	for (const FFieldVariant& Field : Fields)
 	{
-		TArray<FName> Path = ParentPath;
+		TArray<FFieldVariant> Path = ParentPath;
 		const FProperty* FieldProp = nullptr;
 		FText DisplayName;
 		FText ToolTip;
@@ -181,7 +181,7 @@ void FMDFastBindingFieldPathCustomization::BuildFieldPathMenu(FMenuBuilder& Menu
 			TArray<const FProperty*> Params;
 			FMDFastBindingHelpers::SplitFunctionParamsAndReturnProp(Func, Params, FieldProp);
 			
-			Path.Add(Func->GetFName());
+			Path.Add(Func);
 			DisplayName = Func->GetDisplayNameText();
 			ToolTip = FText::Format(FuncToolTipFormat, FText::FromName(Func->GetFName()), FText::FromString(FMDFastBindingHelpers::PropertyToString(*FieldProp)), Func->GetToolTipText());
 			bIsFunction = true;
@@ -191,7 +191,7 @@ void FMDFastBindingFieldPathCustomization::BuildFieldPathMenu(FMenuBuilder& Menu
 			static const FText PropToolTipFormat = LOCTEXT("PropertyMenuItemToolTipFormat", "{0} ({1}) \n{2}");
 			
 			FieldProp = CastField<const FProperty>(Field.ToField());
-			Path.Add(FieldProp->GetFName());
+			Path.Add(FieldProp);
 			DisplayName = FText::FromName(FieldProp->GetFName());
 			ToolTip = FText::Format(PropToolTipFormat, FieldProp->GetDisplayNameText(), FText::FromString(FMDFastBindingHelpers::PropertyToString(*FieldProp)), FieldProp->GetToolTipText());
 		}
@@ -217,17 +217,33 @@ void FMDFastBindingFieldPathCustomization::BuildFieldPathMenu(FMenuBuilder& Menu
 	}
 }
 
-void FMDFastBindingFieldPathCustomization::SetFieldPath(TArray<FName> Path) const
+void FMDFastBindingFieldPathCustomization::SetFieldPath(TArray<FFieldVariant> Path) const
 {
-	if (FieldPathNamesHandle.IsValid())
+	if (FieldPathMembersHandle.IsValid())
 	{
-		FieldPathNamesHandle->EmptyArray();
-		for (const FName& PathElement : Path)
+		FieldPathMembersHandle->EmptyArray();
+		for (const FFieldVariant& PathElement : Path)
 		{
-			FieldPathNamesHandle->AddItem();
+			FieldPathMembersHandle->AddItem();
 			uint32 NewIdx = 0;
-			FieldPathNamesHandle->GetNumElements(NewIdx);
-			FieldPathNamesHandle->GetElement(NewIdx - 1)->SetValue(PathElement);
+			FieldPathMembersHandle->GetNumElements(NewIdx);
+			void* ValueData = nullptr;
+			if (FieldPathMembersHandle->GetElement(NewIdx - 1)->GetValueData(ValueData) == FPropertyAccess::Success)
+			{
+				if (FMDFastBindingMemberReference* MemberRef = static_cast<FMDFastBindingMemberReference*>(ValueData))
+				{
+					if (PathElement.IsA<UFunction>())
+					{
+						MemberRef->SetFromField<UFunction>(PathElement.Get<UFunction>(), false);
+						MemberRef->bIsFunction = true;
+					}
+					else
+					{
+						MemberRef->SetFromField<FProperty>(PathElement.Get<FProperty>(), false);
+						MemberRef->bIsFunction = false;
+					}
+				}
+			}
 		}
 
 		UpdateComboButton();

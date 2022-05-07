@@ -54,6 +54,30 @@ EDataValidationResult UMDFastBindingInstance::IsDataValid(TArray<FText>& Validat
 	
 	return UObject::IsDataValid(ValidationErrors);
 }
+
+void UMDFastBindingInstance::OnVariableRenamed(UClass* VariableClass, const FName& OldVariableName, const FName& NewVariableName)
+{
+	if (BindingDestination != nullptr)
+	{
+		BindingDestination->OnVariableRenamed(VariableClass, OldVariableName, NewVariableName);
+	}
+	
+	for (UMDFastBindingValueBase* Orphan : OrphanedValues)
+	{
+		if (Orphan != nullptr)
+		{
+			Orphan->OnVariableRenamed(VariableClass, OldVariableName, NewVariableName);
+		}
+	}
+	
+	for (UMDFastBindingDestinationBase* Destination : InactiveDestinations)
+	{
+		if (Destination != nullptr)
+		{
+			Destination->OnVariableRenamed(VariableClass, OldVariableName, NewVariableName);
+		}
+	}
+}
 #endif
 
 #if WITH_EDITORONLY_DATA

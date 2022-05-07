@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 
+class UMDFastBindingContainer;
 class FTabManager;
 class FBlueprintEditor;
 class FWorkflowAllowedTabSet;
@@ -37,9 +38,15 @@ public:
 	static bool DoesObjectHaveFastBindings(const UObject& Object);
 	static bool DoesClassHaveFastBindings(const UStruct* Class);
 
+	static UMDFastBindingContainer* FindBindingContainerCDOInClass(UClass* Class);
+
 private:
 	TSharedRef<FExtender> CheckAddBindingEditorToolbarButton(const TSharedRef<FUICommandList> Commands, const TArray<UObject*> Objects) const;
 	void AddBindingEditorToolbarButton(FToolBarBuilder& ToolBarBuilder, TWeakObjectPtr<UObject> EditorObject) const;
 	
+	void OnRenameVariable(UBlueprint* Blueprint, UClass* VariableClass, const FName& OldVariableName, const FName& NewVariableName);
+	
 	TSharedPtr<FMDFastBindingEditorTabBinding> TabBinding;
+
+	FDelegateHandle RenameHandle;
 };

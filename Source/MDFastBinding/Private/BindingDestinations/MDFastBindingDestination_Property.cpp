@@ -103,6 +103,13 @@ EDataValidationResult UMDFastBindingDestination_Property::IsDataValid(TArray<FTe
 
 	return Result;
 }
+
+void UMDFastBindingDestination_Property::OnVariableRenamed(UClass* VariableClass, const FName& OldVariableName, const FName& NewVariableName)
+{
+	Super::OnVariableRenamed(VariableClass, OldVariableName, NewVariableName);
+
+	PropertyPath.OnVariableRenamed(VariableClass, OldVariableName, NewVariableName);
+}
 #endif
 
 #if WITH_EDITORONLY_DATA

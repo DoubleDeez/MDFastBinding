@@ -24,8 +24,10 @@ public:
 #endif
 #if WITH_EDITOR
 	virtual EDataValidationResult IsDataValid(TArray<FText>& ValidationErrors) override;
+	
+	virtual void OnVariableRenamed(UClass* VariableClass, const FName& OldVariableName, const FName& NewVariableName) override;
 
-	void SetFieldPath(const TArray<FName>& Path);
+	void SetFieldPath(const TArray<FFieldVariant>& Path);
 #endif
 
 protected:

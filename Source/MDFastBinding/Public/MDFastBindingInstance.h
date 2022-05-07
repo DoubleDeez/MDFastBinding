@@ -25,6 +25,8 @@ public:
 
 #if WITH_EDITOR
 	virtual EDataValidationResult IsDataValid(TArray<FText>& ValidationErrors) override;
+
+	void OnVariableRenamed(UClass* VariableClass, const FName& OldVariableName, const FName& NewVariableName);
 #endif
 	
 #if WITH_EDITORONLY_DATA

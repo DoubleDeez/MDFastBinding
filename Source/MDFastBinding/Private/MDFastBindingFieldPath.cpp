@@ -9,61 +9,23 @@ FMDFastBindingFieldPath::~FMDFastBindingFieldPath()
 
 bool FMDFastBindingFieldPath::BuildPath()
 {
-	CachedPath.Empty(FieldPath.Num());
+	FixupFieldPath();
 	
-	if (const UStruct* OwnerStruct = GetPathOwnerClass())
+	CachedPath.Empty(FieldPathMembers.Num());
+
+	for (const FMDFastBindingMemberReference& FieldPathMember : FieldPathMembers)
 	{
-		for (int32 i = 0; i < FieldPath.Num() && OwnerStruct != nullptr; ++i)
+		if (FieldPathMember.bIsFunction)
 		{
-			const FName& FieldName = FieldPath[i];
-
-			const FProperty* NextProp = nullptr;
-			if (const FProperty* Prop = OwnerStruct->FindPropertyByName(FieldName))
-			{
-				if (IsPropertyValidForPath(*Prop))
-				{
-					CachedPath.Add(Prop);
-					NextProp = Prop;
-				}
-				else
-				{
-					CachedPath.Empty();
-					return false;
-				}
-			}
-			else if (const UClass* OwnerClass = Cast<const UClass>(OwnerStruct))
-			{
-				if (const UFunction* Func = OwnerClass->FindFunctionByName(FieldName))
-				{
-					if (IsFunctionValidForPath(*Func))
-					{
-						CachedPath.Add(Func);
-						NextProp = Func->GetReturnProperty();
-					}
-					else
-					{
-						CachedPath.Empty();
-						return false;
-					}
-				}
-			}
-
-			if (const FObjectPropertyBase* ObjectProp = CastField<const FObjectPropertyBase>(NextProp))
-			{
-				OwnerStruct = ObjectProp->PropertyClass;
-			}
-			else if (const FStructProperty* StructProp = CastField<const FStructProperty>(NextProp))
-			{
-				OwnerStruct = StructProp->Struct;
-			}
-			else
-			{
-				OwnerStruct = nullptr;
-			}
+			CachedPath.Add(FieldPathMember.ResolveMember<UFunction>());
+		}
+		else
+		{
+			CachedPath.Add(FieldPathMember.ResolveMember<FProperty>());
 		}
 	}
-
-	return CachedPath.Num() > 0 && CachedPath.Num() == FieldPath.Num();
+	
+	return CachedPath.Num() > 0 && CachedPath.Num() == FieldPathMembers.Num();
 }
 
 const TArray<FFieldVariant>& FMDFastBindingFieldPath::GetFieldPath()
@@ -136,7 +98,7 @@ TTuple<const FProperty*, void*> FMDFastBindingFieldPath::ResolvePath(UObject* So
 				return {};
 			}
 			
-			const bool bIsEndOfPath = i == (FieldPath.Num() - 1);
+			const bool bIsEndOfPath = i == (FieldPathMembers.Num() - 1);
 			if (bIsEndOfPath)
 			{
 				return TTuple<const FProperty*, void*>{ OwnerProp, Owner };
@@ -209,19 +171,49 @@ bool FMDFastBindingFieldPath::IsFunctionValidForPath(const UFunction& Func)
 
 FString FMDFastBindingFieldPath::ToString() const
 {
-	if (FieldPath.Num() == 0)
+	if (FieldPathMembers.Num() == 0)
 	{
 		return {};
 	}
-	
-	FString Result = FieldPath[0].ToString();
-	for (int32 i = 1; i < FieldPath.Num(); ++i)
+
+	// Resolving members will fixup any renamed properties
+	for (const FMDFastBindingMemberReference& FieldPathMember : FieldPathMembers)
 	{
-		Result += FString::Printf(TEXT(".%s"), *(FieldPath[i].ToString()));
+		if (FieldPathMember.bIsFunction)
+		{
+			FieldPathMember.ResolveMember<UFunction>();
+		}
+		else
+		{
+			FieldPathMember.ResolveMember<FProperty>();
+		}
+	}
+	
+	FString Result = FieldPathMembers[0].GetMemberName().ToString();
+	for (int32 i = 1; i < FieldPathMembers.Num(); ++i)
+	{
+		Result += FString::Printf(TEXT(".%s"), *(FieldPathMembers[i].GetMemberName().ToString()));
 	}
 
 	return Result;
 }
+
+#if WITH_EDITOR
+void FMDFastBindingFieldPath::OnVariableRenamed(UClass* VariableClass, const FName& OldVariableName, const FName& NewVariableName)
+{
+	// Since we're only notified for renames of our own variables, we only need to check the first item in the path
+	if (FieldPathMembers.Num() > 0 && FieldPathMembers[0].GetMemberName() == OldVariableName)
+	{
+		const UClass* OwnerClass = GetPathOwnerClass();
+		if (OwnerClass != nullptr && OwnerClass == VariableClass)
+		{
+			FieldPathMembers[0].SetMemberName(NewVariableName);
+		}
+
+		BuildPath();
+	}
+}
+#endif
 
 UClass* FMDFastBindingFieldPath::GetPathOwnerClass() const
 {
@@ -272,4 +264,71 @@ void FMDFastBindingFieldPath::CleanupFunctionMemory()
 	}
 
 	FunctionMemory.Empty();
+}
+
+void FMDFastBindingFieldPath::FixupFieldPath()
+{
+	// Check if we need to convert to the Member Reference path
+	if (FieldPathMembers.Num() == 0 && FieldPath.Num() != 0)
+	{
+		if (const UStruct* OwnerStruct = GetPathOwnerClass())
+		{
+			for (int32 i = 0; i < FieldPath.Num() && OwnerStruct != nullptr; ++i)
+			{
+				const FName& FieldName = FieldPath[i];
+
+				const FProperty* NextProp = nullptr;
+				if (const FProperty* Prop = OwnerStruct->FindPropertyByName(FieldName))
+				{
+					if (IsPropertyValidForPath(*Prop))
+					{
+						FMDFastBindingMemberReference& MemberRef = FieldPathMembers.AddDefaulted_GetRef();
+						MemberRef.bIsFunction = false;
+						MemberRef.SetFromField<FProperty>(Prop, false);
+						NextProp = Prop;
+					}
+					else
+					{
+						FieldPathMembers.Empty();
+						return;
+					}
+				}
+				else if (const UClass* OwnerClass = Cast<const UClass>(OwnerStruct))
+				{
+					if (const UFunction* Func = OwnerClass->FindFunctionByName(FieldName))
+					{
+						if (IsFunctionValidForPath(*Func))
+						{
+							FMDFastBindingMemberReference& MemberRef = FieldPathMembers.AddDefaulted_GetRef();
+							MemberRef.bIsFunction = true;
+							MemberRef.SetFromField<UFunction>(Func, false);
+							NextProp = Func->GetReturnProperty();
+						}
+						else
+						{
+							FieldPathMembers.Empty();
+							return;
+						}
+					}
+				}
+
+				if (const FObjectPropertyBase* ObjectProp = CastField<const FObjectPropertyBase>(NextProp))
+				{
+					OwnerStruct = ObjectProp->PropertyClass;
+				}
+				else if (const FStructProperty* StructProp = CastField<const FStructProperty>(NextProp))
+				{
+					OwnerStruct = StructProp->Struct;
+				}
+				else
+				{
+					OwnerStruct = nullptr;
+				}
+			}
+		}
+
+		FieldPath.Empty();
+	}
+
+	
 }

@@ -9,10 +9,12 @@
 #include "MDFastBindingFieldPathCustomization.h"
 #include "MDFastBindingFunctionWrapper.h"
 #include "MDFastBindingFunctionWrapperCustomization.h"
+#include "MDFastBindingInstance.h"
 #include "SMDFastBindingEditorWidget.h"
 #include "PropertyEditorDelegates.h"
 #include "PropertyEditorModule.h"
 #include "Framework/Docking/LayoutExtender.h"
+#include "Kismet2/BlueprintEditorUtils.h"
 #include "Modules/ModuleManager.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "WorkflowOrientedApp/WorkflowTabManager.h"
@@ -58,10 +60,14 @@ void FMDFastBindingEditorModule::StartupModule()
 	
 	FBlueprintEditorModule& BlueprintEditorModule = FModuleManager::LoadModuleChecked<FBlueprintEditorModule>("Kismet");
 	BlueprintEditorModule.GetMenuExtensibilityManager()->GetExtenderDelegates().Add(FAssetEditorExtender::CreateRaw(this, &FMDFastBindingEditorModule::CheckAddBindingEditorToolbarButton));
+
+	RenameHandle = FBlueprintEditorUtils::OnRenameVariableReferencesEvent.AddRaw(this, &FMDFastBindingEditorModule::OnRenameVariable);
 }
 
 void FMDFastBindingEditorModule::ShutdownModule()
 {
+	FBlueprintEditorUtils::OnRenameVariableReferencesEvent.Remove(RenameHandle);
+	
 	if (FPropertyEditorModule* PropertyModule = FModuleManager::GetModulePtr<FPropertyEditorModule>("PropertyEditor"))
 	{
 		PropertyModule->UnregisterCustomPropertyTypeLayout(FMDFastBindingFieldPath::StaticStruct()->GetFName());
@@ -148,6 +154,28 @@ bool FMDFastBindingEditorModule::DoesClassHaveFastBindings(const UStruct* Class)
 	return false;
 }
 
+UMDFastBindingContainer* FMDFastBindingEditorModule::FindBindingContainerCDOInClass(UClass* Class)
+{
+	if (Class != nullptr)
+	{
+		for (TFieldIterator<FObjectPropertyBase> It(Class); It; ++It)
+		{
+			if (It->PropertyClass->IsChildOf(UMDFastBindingContainer::StaticClass()))
+			{
+				if (UObject* BindingOwnerCDO = Class->GetDefaultObject())
+				{
+					if (UMDFastBindingContainer* Container = Cast<UMDFastBindingContainer>(It->GetObjectPropertyValue_InContainer(BindingOwnerCDO)))
+					{
+						return Container;
+					}
+				}
+			}
+		}
+	}
+
+	return nullptr;
+}
+
 void FMDFastBindingEditorModule::OpenBindingEditor(TWeakObjectPtr<UObject> EditorObject) const
 {
 	UObject* Object = EditorObject.Get();
@@ -178,6 +206,23 @@ void FMDFastBindingEditorModule::OpenBindingEditor(TWeakObjectPtr<UObject> Edito
 			{
 				const TSharedPtr<SMDFastBindingEditorWidget> BindingWidget = StaticCastSharedRef<SMDFastBindingEditorWidget>(Tab->GetContent());
 				BindingWidget->AssignBindingData(BP->GeneratedClass);
+			}
+		}
+	}
+}
+
+void FMDFastBindingEditorModule::OnRenameVariable(UBlueprint* Blueprint, UClass* VariableClass, const FName& OldVariableName, const FName& NewVariableName)
+{
+	if (Blueprint != nullptr && DoesClassHaveFastBindings(Blueprint->GeneratedClass))
+	{
+		if (UMDFastBindingContainer* BindingContainer = FindBindingContainerCDOInClass(Blueprint->GeneratedClass))
+		{
+			for (UMDFastBindingInstance* Binding : BindingContainer->GetBindings())
+			{
+				if (Binding != nullptr)
+				{
+					Binding->OnVariableRenamed(VariableClass, OldVariableName, NewVariableName);
+				}
 			}
 		}
 	}

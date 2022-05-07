@@ -417,6 +417,17 @@ TSharedRef<SWidget> UMDFastBindingObject::CreateNodeHeaderWidget()
 {
 	return SNew(STextBlock).Text(TAttribute<FText>::Create(TAttribute<FText>::FGetter::CreateUObject(this, &UMDFastBindingObject::GetDisplayName)));
 }
+
+void UMDFastBindingObject::OnVariableRenamed(UClass* VariableClass, const FName& OldVariableName, const FName& NewVariableName)
+{
+	for (const FMDFastBindingItem& BindingItem : BindingItems)
+	{
+		if (BindingItem.Value != nullptr)
+		{
+			BindingItem.Value->OnVariableRenamed(VariableClass, OldVariableName, NewVariableName);
+		}
+	}
+}
 #endif
 
 #if WITH_EDITORONLY_DATA

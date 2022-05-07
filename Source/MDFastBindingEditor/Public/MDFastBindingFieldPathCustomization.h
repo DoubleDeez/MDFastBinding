@@ -25,14 +25,14 @@ private:
 
 	TArray<FFieldVariant> GatherPossibleFields(UStruct* InStruct) const;
 
-	void BuildFieldPathMenu(FMenuBuilder& MenuBuilder, UStruct* InStruct, TArray<FName> ParentPath) const;
+	void BuildFieldPathMenu(FMenuBuilder& MenuBuilder, UStruct* InStruct, TArray<FFieldVariant> ParentPath) const;
 
-	void SetFieldPath(TArray<FName> Path) const;
+	void SetFieldPath(TArray<FFieldVariant> Path) const;
 
 	void UpdateComboButton() const;
 	
 	TSharedPtr<IPropertyHandle> FieldPathHandle;
-	TSharedPtr<IPropertyHandleArray> FieldPathNamesHandle;
+	TSharedPtr<IPropertyHandleArray> FieldPathMembersHandle;
 	TSharedPtr<SBox> ComboButtonContent;
 };
 

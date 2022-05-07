@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
+#include "MDFastBindingMemberReference.h"
 #include "MDFastBindingFieldPath.generated.h"
 
 DECLARE_DELEGATE_RetVal_OneParam(UObject*, FMDGetFieldPathOwner, UObject*);
@@ -32,6 +33,10 @@ public:
 	UClass* GetPathOwnerClass() const;
 
 	FString ToString() const;
+
+#if WITH_EDITOR
+	void OnVariableRenamed(UClass* VariableClass, const FName& OldVariableName, const FName& NewVariableName);
+#endif
 	
 	FMDGetFieldPathOwner OwnerGetter;
 	FMDGetFieldPathOwnerClass OwnerClassGetter;
@@ -39,14 +44,18 @@ public:
 	// Set to true if you're going to be setting the value of the property
 	bool bOnlyAllowBlueprintReadWriteProperties = false;
 
-	// TODO - store GUIDs so we can check for renames
-	UPROPERTY(EditAnywhere, Category = "Bindings")
+	UPROPERTY(meta = (DeprecatedProperty))
 	TArray<FName> FieldPath;
+
+	UPROPERTY(EditAnywhere, Category = "Bindings")
+	TArray<FMDFastBindingMemberReference> FieldPathMembers;
 
 private:
 	void* GetPathOwner(UObject* SourceObject) const;
 	void InitFunctionMemory(const UFunction* Func);
 	void CleanupFunctionMemory();
+
+	void FixupFieldPath();
 	
 	TArray<FFieldVariant> CachedPath;
 	TMap<TWeakObjectPtr<const UFunction>, void*> FunctionMemory;

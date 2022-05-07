@@ -164,6 +164,8 @@ public:
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 
 	virtual TSharedRef<class SWidget> CreateNodeHeaderWidget();
+
+	virtual void OnVariableRenamed(UClass* VariableClass, const FName& OldVariableName, const FName& NewVariableName);
 #endif
 
 protected:

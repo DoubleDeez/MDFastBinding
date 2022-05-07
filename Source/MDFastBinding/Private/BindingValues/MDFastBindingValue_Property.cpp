@@ -97,9 +97,31 @@ EDataValidationResult UMDFastBindingValue_Property::IsDataValid(TArray<FText>& V
 	return Result;
 }
 
-void UMDFastBindingValue_Property::SetFieldPath(const TArray<FName>& Path)
+void UMDFastBindingValue_Property::OnVariableRenamed(UClass* VariableClass, const FName& OldVariableName, const FName& NewVariableName)
 {
-	PropertyPath.FieldPath = Path;
+	Super::OnVariableRenamed(VariableClass, OldVariableName, NewVariableName);
+
+	PropertyPath.OnVariableRenamed(VariableClass, OldVariableName, NewVariableName);
+}
+
+void UMDFastBindingValue_Property::SetFieldPath(const TArray<FFieldVariant>& Path)
+{
+	PropertyPath.FieldPathMembers.Empty();
+	for (const FFieldVariant& Field : Path)
+	{
+		FMDFastBindingMemberReference& MemberRef = PropertyPath.FieldPathMembers.AddDefaulted_GetRef();
+		if (Field.IsA<UFunction>())
+		{
+			MemberRef.SetFromField<UFunction>(Field.Get<UFunction>(), false);
+			MemberRef.bIsFunction = true;
+		}
+		else
+		{
+			MemberRef.SetFromField<FProperty>(Field.Get<FProperty>(), false);
+			MemberRef.bIsFunction = false;
+		}
+	}
+
 	PropertyPath.BuildPath();
 }
 #endif
