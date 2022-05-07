@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
+#include "MDFastBindingMemberReference.h"
 #include "MDFastBindingFunctionWrapper.generated.h"
 
 DECLARE_DELEGATE_RetVal_OneParam(UObject*, FMDGetFunctionOwner, UObject*);
@@ -32,7 +33,7 @@ public:
 
 	TTuple<const FProperty*, void*> CallFunction(UObject* SourceObject);
 
-	const FName& GetFunctionName() const { return FunctionName; }
+	FName GetFunctionName() const { return FunctionMember.GetMemberName(); }
 
 #if WITH_EDITORONLY_DATA
 	FString ToString();
@@ -40,6 +41,10 @@ public:
 	static FString FunctionToString(UFunction* Func);
 	
 	static FString FunctionToString_Internal(UFunction* Func, const FProperty* ReturnProp, const TArray<const FProperty*>& Params);
+#endif
+
+#if WITH_EDITOR
+	void OnVariableRenamed(UClass* VariableClass, const FName& OldVariableName, const FName& NewVariableName);
 #endif
 
 	static bool IsFunctionValidForWrapper(const UFunction* Func);
@@ -52,9 +57,11 @@ public:
 	// Last chance to opt-out of calling the function (ie, if none of the params updated)
 	FMDShouldCallFunction ShouldCallFunction;
 
-	// TODO - store GUID so we can check for renames
-	UPROPERTY(EditAnywhere, Category = "Bindings")
+	UPROPERTY(meta = (DeprecatedProperty))
 	FName FunctionName = NAME_None;
+
+	UPROPERTY(EditAnywhere, Category = "Bindings")
+	FMDFastBindingMemberReference FunctionMember;
 
 private:
 	UPROPERTY(Transient)
@@ -68,4 +75,6 @@ private:
 	UObject* GetFunctionOwner(UObject* SourceObject) const;
 	void InitFunctionMemory();
 	void PopulateParams(UObject* SourceObject);
+
+	void FixupFunctionMember();
 };

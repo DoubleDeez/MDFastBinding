@@ -173,6 +173,13 @@ EDataValidationResult UMDFastBindingValue_Function::IsDataValid(TArray<FText>& V
 
 	return Result;
 }
+
+void UMDFastBindingValue_Function::OnVariableRenamed(UClass* VariableClass, const FName& OldVariableName, const FName& NewVariableName)
+{
+	Super::OnVariableRenamed(VariableClass, OldVariableName, NewVariableName);
+
+	Function.OnVariableRenamed(VariableClass, OldVariableName, NewVariableName);
+}
 #endif
 
 #undef LOCTEXT_NAMESPACE

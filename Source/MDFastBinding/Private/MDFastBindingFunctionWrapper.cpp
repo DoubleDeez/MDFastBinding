@@ -14,13 +14,12 @@ FMDFastBindingFunctionWrapper::~FMDFastBindingFunctionWrapper()
 
 bool FMDFastBindingFunctionWrapper::BuildFunctionData()
 {
-	if (const UClass* OwnerClass = GetFunctionOwnerClass())
+	FixupFunctionMember();
+	
+	FunctionPtr = FunctionMember.ResolveMember<UFunction>();
+	if (FunctionPtr != nullptr)
 	{
-		FunctionPtr = OwnerClass->FindFunctionByName(FunctionName);
-		if (FunctionPtr != nullptr)
-		{
-			FMDFastBindingHelpers::SplitFunctionParamsAndReturnProp(FunctionPtr, Params, ReturnProp);
-		}
+		FMDFastBindingHelpers::SplitFunctionParamsAndReturnProp(FunctionPtr, Params, ReturnProp);
 	}
 
 	return FunctionPtr != nullptr;
@@ -146,6 +145,22 @@ FString FMDFastBindingFunctionWrapper::FunctionToString_Internal(UFunction* Func
 }
 #endif
 
+#if WITH_EDITOR
+void FMDFastBindingFunctionWrapper::OnVariableRenamed(UClass* VariableClass, const FName& OldVariableName, const FName& NewVariableName)
+{
+	if (FunctionMember.GetMemberName() == OldVariableName)
+	{
+		const UClass* OwnerClass = GetFunctionOwnerClass();
+		if (OwnerClass != nullptr && OwnerClass == VariableClass)
+		{
+			FunctionMember.SetMemberName(NewVariableName);
+		}
+
+		BuildFunctionData();
+	}
+}
+#endif
+
 bool FMDFastBindingFunctionWrapper::IsFunctionValidForWrapper(const UFunction* Func)
 {
 	return Func != nullptr && Func->HasAnyFunctionFlags(FUNC_BlueprintCallable);
@@ -182,6 +197,22 @@ void FMDFastBindingFunctionWrapper::PopulateParams(UObject* SourceObject)
 		for (const FProperty* Param : GetParams())
 		{
 			ParamPopulator.Execute(SourceObject, Param, static_cast<uint8*>(FunctionMemory) + Param->GetOffset_ForUFunction());
+		}
+	}
+}
+
+void FMDFastBindingFunctionWrapper::FixupFunctionMember()
+{
+	if (FunctionMember.GetMemberName() == NAME_None && FunctionName != NAME_None)
+	{
+		if (const UClass* OwnerClass = GetFunctionOwnerClass())
+		{
+			if (UFunction* Func = OwnerClass->FindFunctionByName(FunctionName))
+			{
+				FunctionName = NAME_None;
+				FunctionMember.SetFromField<UFunction>(Func, false);
+				FunctionMember.bIsFunction = true;
+			}
 		}
 	}
 }

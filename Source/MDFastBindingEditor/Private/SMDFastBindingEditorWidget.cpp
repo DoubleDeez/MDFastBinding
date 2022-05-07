@@ -360,6 +360,10 @@ void SMDFastBindingEditorWidget::OnGraphSelectionChanged(const FGraphPanelSelect
 		if (Selection.Num() == 0)
 		{
 			DetailSwitcher->SetActiveWidgetIndex(SMDFastBindingEditorWidget_Private::BindingListIndex);
+			if (DetailsView.IsValid())
+			{
+				DetailsView->SetObject(nullptr);
+			}
 		}
 		else if (DetailsView.IsValid())
 		{

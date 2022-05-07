@@ -10,7 +10,7 @@ void FMDFastBindingFunctionWrapperCustomization::CustomizeHeader(TSharedRef<IPro
                                                            FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& CustomizationUtils)
 {
 	FunctionWrapperHandle = PropertyHandle;
-	FunctionWrapperNameHandle = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FMDFastBindingFunctionWrapper, FunctionName));
+	FunctionWrapperMemberHandle = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FMDFastBindingFunctionWrapper, FunctionMember));
 	
 	HeaderRow.NameContent()
 	[
@@ -180,15 +180,26 @@ void FMDFastBindingFunctionWrapperCustomization::UpdateComboButton()
 
 void FMDFastBindingFunctionWrapperCustomization::OnFunctionSelected(UFunction* Function)
 {
-	if (FunctionWrapperNameHandle.IsValid())
+	if (FunctionWrapperMemberHandle.IsValid())
 	{
-		if (Function != nullptr)
+		void* ValueData = nullptr;
+		if (FunctionWrapperMemberHandle->GetValueData(ValueData) == FPropertyAccess::Success)
 		{
-			FunctionWrapperNameHandle->SetValue(Function->GetFName());
-		}
-		else
-		{
-			FunctionWrapperNameHandle->SetValue(NAME_None);
+			if (FMDFastBindingMemberReference* MemberRef = static_cast<FMDFastBindingMemberReference*>(ValueData))
+			{
+				if (Function != nullptr)
+				{
+					MemberRef->SetFromField<UFunction>(Function, false);
+				}
+				else
+				{
+					*MemberRef = {};
+				}
+				
+				MemberRef->bIsFunction = true;
+
+				FunctionWrapperHandle->NotifyPostChange(EPropertyChangeType::ValueSet);
+			}
 		}
 
 		UpdateComboButton();

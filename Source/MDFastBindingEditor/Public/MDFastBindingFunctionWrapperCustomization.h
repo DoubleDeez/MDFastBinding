@@ -31,7 +31,7 @@ private:
 	void OnFunctionSelected(UFunction* Function);
 	
 	TSharedPtr<IPropertyHandle> FunctionWrapperHandle;
-	TSharedPtr<IPropertyHandle> FunctionWrapperNameHandle;
+	TSharedPtr<IPropertyHandle> FunctionWrapperMemberHandle;
 	TSharedPtr<SBox> ComboButtonContent;
 	TSharedPtr<SComboButton> ComboButton;
 

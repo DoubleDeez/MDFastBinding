@@ -141,6 +141,13 @@ EDataValidationResult UMDFastBindingDestination_Function::IsDataValid(TArray<FTe
 
 	return Result;
 }
+
+void UMDFastBindingDestination_Function::OnVariableRenamed(UClass* VariableClass, const FName& OldVariableName, const FName& NewVariableName)
+{
+	Super::OnVariableRenamed(VariableClass, OldVariableName, NewVariableName);
+
+	Function.OnVariableRenamed(VariableClass, OldVariableName, NewVariableName);
+}
 #endif
 
 #if WITH_EDITORONLY_DATA
