@@ -35,6 +35,7 @@ FText UMDFastBindingValue_CastObject::GetDisplayName()
 	
 	return Super::GetDisplayName();
 }
+#endif
 
 TTuple<const FProperty*, void*> UMDFastBindingValue_CastObject::GetValue_Internal(UObject* SourceObject)
 {
@@ -65,4 +66,3 @@ void UMDFastBindingValue_CastObject::SetupBindingItems()
 			, GetClass()->FindPropertyByName(GET_MEMBER_NAME_CHECKED(UMDFastBindingValue_CastObject, ResultObject))
 			, NSLOCTEXT("MDFastBindingValue_CastObject", "ObjectToolTip", "The object to cast to the selected class."));
 }
-#endif
