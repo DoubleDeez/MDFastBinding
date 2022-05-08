@@ -55,7 +55,7 @@ TTuple<const FProperty*, void*> UMDFastBindingValue_CastObject::GetValue_Interna
 		}
 	}
 
-	return { GetOutputProperty(), &ResultObject };
+	return TTuple<const FProperty*, void*>{ GetOutputProperty(), &ResultObject };
 }
 
 void UMDFastBindingValue_CastObject::SetupBindingItems()
