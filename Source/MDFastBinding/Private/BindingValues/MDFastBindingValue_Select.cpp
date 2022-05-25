@@ -87,6 +87,11 @@ void UMDFastBindingValue_Select::SetupBindingItems()
 
 	TSet<FName> ExpectedNames = { MDFastBindingValue_Select_Private::SelectValueInputName };
 
+#if WITH_EDITOR
+	// Names that have a display name that don't match the enum name string for backwards compatibility
+	TMap<FName, FName> EnumDisplayNamesForFixUp;
+#endif
+
 	const FProperty* SelectValueProp = ResolveBindingItemProperty(MDFastBindingValue_Select_Private::SelectValueInputName);
 	const FProperty* OutputProp = ResolveOutputProperty();
 	if (SelectValueProp != nullptr && SelectValueProp->IsA<FBoolProperty>())
@@ -107,10 +112,19 @@ void UMDFastBindingValue_Select::SetupBindingItems()
 #endif
 			{
 				const int64 EnumValue = Enum->GetValueByIndex(EnumIndex);
+				const FName EnumNameString = *Enum->GetNameStringByIndex(EnumIndex);
+				EnumValueToPinNameMap.Add(EnumValue, EnumNameString);
+
+#if WITH_EDITOR
 				const FName EnumFriendlyName = *Enum->GetDisplayNameTextByIndex(EnumIndex).ToString();
-				EnumValueToPinNameMap.Add(EnumValue, EnumFriendlyName);
-				ExpectedNames.Add(EnumFriendlyName);
-				EnsureBindingItemExists(EnumFriendlyName, OutputProp, FText::GetEmpty(), true);
+				if (EnumFriendlyName != EnumNameString)
+				{
+					EnumDisplayNamesForFixUp.Add(EnumFriendlyName, EnumNameString);
+				}
+#endif
+				
+				ExpectedNames.Add(EnumNameString);
+				EnsureBindingItemExists(EnumNameString, OutputProp, FText::GetEmpty(), true);
 			}
 		}
 	}
@@ -127,6 +141,26 @@ void UMDFastBindingValue_Select::SetupBindingItems()
 	{
 		if (It->ExtendablePinListIndex == INDEX_NONE && !ExpectedNames.Contains(It->ItemName))
 		{
+#if WITH_EDITOR
+			// Does this item have a corresponding display name that may need a fixup?
+			if (EnumDisplayNamesForFixUp.Contains(It->ItemName))
+			{
+				// Copy the old data over if we have an item from before the fix
+				if (FMDFastBindingItem* NewItem = BindingItems.FindByKey(EnumDisplayNamesForFixUp[It->ItemName]))
+				{
+					NewItem->Value = It->Value;
+					It->Value = nullptr;
+					
+					NewItem->DefaultObject = It->DefaultObject;
+					NewItem->DefaultString = It->DefaultString;
+					NewItem->DefaultText = It->DefaultText;
+					NewItem->ExtendablePinListIndex = It->ExtendablePinListIndex;
+					NewItem->ExtendablePinListNameBase = It->ExtendablePinListNameBase;
+					It.RemoveCurrent();
+					continue;
+				}
+			}
+#endif
 #if WITH_EDITORONLY_DATA
 			OrphanBindingItem(It->Value);
 #endif

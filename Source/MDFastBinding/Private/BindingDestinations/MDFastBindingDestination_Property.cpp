@@ -41,7 +41,7 @@ void UMDFastBindingDestination_Property::UpdateDestination_Internal(UObject* Sou
 
 void UMDFastBindingDestination_Property::PostInitProperties()
 {
-	PropertyPath.OwnerClassGetter.BindUObject(this, &UMDFastBindingDestination_Property::GetPropertyOwnerClass);
+	PropertyPath.OwnerStructGetter.BindUObject(this, &UMDFastBindingDestination_Property::GetPropertyOwnerStruct);
 	PropertyPath.OwnerGetter.BindUObject(this, &UMDFastBindingDestination_Property::GetPropertyOwner);
 	
 	Super::PostInitProperties();
@@ -61,11 +61,15 @@ UObject* UMDFastBindingDestination_Property::GetPropertyOwner(UObject* SourceObj
 	return SourceObject;
 }
 
-UClass* UMDFastBindingDestination_Property::GetPropertyOwnerClass()
+UStruct* UMDFastBindingDestination_Property::GetPropertyOwnerStruct()
 {
 	if (const FObjectPropertyBase* ObjectProp = CastField<const FObjectPropertyBase>(GetBindingItemValueProperty(MDFastBindingDestination_Property_Private::PathRootName)))
 	{
 		return ObjectProp->PropertyClass;
+	}
+	else if (const FStructProperty* StructProp = CastField<const FStructProperty>(GetBindingItemValueProperty(MDFastBindingDestination_Property_Private::PathRootName)))
+	{
+		return StructProp->Struct;
 	}
 	
 	return GetBindingOuterClass();
@@ -76,7 +80,7 @@ void UMDFastBindingDestination_Property::SetupBindingItems()
 	Super::SetupBindingItems();
 
 	EnsureBindingItemExists(MDFastBindingDestination_Property_Private::PathRootName
-		, GetClass()->FindPropertyByName(GET_MEMBER_NAME_CHECKED(UMDFastBindingDestination_Property, ObjectProperty))
+		, nullptr
 		, LOCTEXT("PathRootToolTip", "The root object that has the property to set the value of. (Defaults to 'Self').")
 		, true);
 	EnsureBindingItemExists(MDFastBindingDestination_Property_Private::ValueSourceName
@@ -89,6 +93,13 @@ EDataValidationResult UMDFastBindingDestination_Property::IsDataValid(TArray<FTe
 {
 	EDataValidationResult Result = Super::IsDataValid(ValidationErrors);
 	
+	const FProperty* RootProp = GetBindingItemValueProperty(MDFastBindingDestination_Property_Private::PathRootName);
+	if (RootProp != nullptr && !RootProp->IsA<FObjectPropertyBase>() && !RootProp->IsA<FStructProperty>())
+	{
+		ValidationErrors.Add(LOCTEXT("InvalidRootProperty", "Path root must be a UObject or struct type property"));
+		Result = EDataValidationResult::Invalid;
+	}
+
 	if (!PropertyPath.BuildPath())
 	{
 		ValidationErrors.Add(LOCTEXT("FailedToBuildPath", "Could not build path to property, please select a valid property path"));

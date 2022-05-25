@@ -46,20 +46,22 @@ UObject* UMDFastBindingValue_Property::GetPropertyOwner(UObject* SourceObject)
 	const TTuple<const FProperty*, void*> PathRoot = GetBindingItemValue(SourceObject, MDFastBindingValue_Property_Private::PathRootName, bDidUpdate);
 	if (PathRoot.Value != nullptr)
 	{
-		if (UObject* Owner = *static_cast<UObject**>(PathRoot.Value))
-		{
-			return Owner;
-		}
+		return *static_cast<UObject**>(PathRoot.Value);
 	}
 	
 	return SourceObject;
 }
 
-UClass* UMDFastBindingValue_Property::GetPropertyOwnerClass()
+UStruct* UMDFastBindingValue_Property::GetPropertyOwnerStruct()
 {
-	if (const FObjectPropertyBase* ObjectProp = CastField<const FObjectPropertyBase>(GetBindingItemValueProperty(MDFastBindingValue_Property_Private::PathRootName)))
+	const FProperty* RootProp = GetBindingItemValueProperty(MDFastBindingValue_Property_Private::PathRootName);
+	if (const FObjectPropertyBase* ObjectProp = CastField<const FObjectPropertyBase>(RootProp))
 	{
 		return ObjectProp->PropertyClass;
+	}
+	else if (const FStructProperty* StructProp = CastField<const FStructProperty>(RootProp))
+	{
+		return StructProp->Struct;
 	}
 	
 	return GetBindingOuterClass();
@@ -70,14 +72,14 @@ void UMDFastBindingValue_Property::SetupBindingItems()
 	Super::SetupBindingItems();
 
 	EnsureBindingItemExists(MDFastBindingValue_Property_Private::PathRootName
-		, GetClass()->FindPropertyByName(GET_MEMBER_NAME_CHECKED(UMDFastBindingValue_Property, ObjectProperty))
+		, nullptr
 		, LOCTEXT("PathRootToolTip", "The root object that has the property to get the value of. (Defaults to 'Self').")
 		, true);
 }
 
 void UMDFastBindingValue_Property::PostInitProperties()
 {
-	PropertyPath.OwnerClassGetter.BindUObject(this, &UMDFastBindingValue_Property::GetPropertyOwnerClass);
+	PropertyPath.OwnerStructGetter.BindUObject(this, &UMDFastBindingValue_Property::GetPropertyOwnerStruct);
 	PropertyPath.OwnerGetter.BindUObject(this, &UMDFastBindingValue_Property::GetPropertyOwner);
 	
 	Super::PostInitProperties();
@@ -87,7 +89,14 @@ void UMDFastBindingValue_Property::PostInitProperties()
 EDataValidationResult UMDFastBindingValue_Property::IsDataValid(TArray<FText>& ValidationErrors)
 {
 	EDataValidationResult Result = Super::IsDataValid(ValidationErrors);
-	
+
+	const FProperty* RootProp = GetBindingItemValueProperty(MDFastBindingValue_Property_Private::PathRootName);
+	if (RootProp != nullptr && !RootProp->IsA<FObjectPropertyBase>() && !RootProp->IsA<FStructProperty>())
+	{
+		ValidationErrors.Add(LOCTEXT("InvalidRootProperty", "Path root must be a UObject or struct type property"));
+		Result = EDataValidationResult::Invalid;
+	}
+
 	if (!PropertyPath.BuildPath())
 	{
 		ValidationErrors.Add(LOCTEXT("FailedToBuildPath", "Could not build path to property, please select a valid property path"));

@@ -5,7 +5,7 @@
 #include "MDFastBindingFieldPath.generated.h"
 
 DECLARE_DELEGATE_RetVal_OneParam(UObject*, FMDGetFieldPathOwner, UObject*);
-DECLARE_DELEGATE_RetVal(UClass*, FMDGetFieldPathOwnerClass);
+DECLARE_DELEGATE_RetVal(UStruct*, FMDGetFieldPathOwnerStruct);
 
 /**
  * 
@@ -30,7 +30,7 @@ public:
 	bool IsPropertyValidForPath(const FProperty& Prop) const;
 	static bool IsFunctionValidForPath(const UFunction& Func);
 	
-	UClass* GetPathOwnerClass() const;
+	UStruct* GetPathOwnerStruct() const;
 
 	FString ToString() const;
 
@@ -39,7 +39,7 @@ public:
 #endif
 	
 	FMDGetFieldPathOwner OwnerGetter;
-	FMDGetFieldPathOwnerClass OwnerClassGetter;
+	FMDGetFieldPathOwnerStruct OwnerStructGetter;
 
 	// Set to true if you're going to be setting the value of the property
 	bool bOnlyAllowBlueprintReadWriteProperties = false;

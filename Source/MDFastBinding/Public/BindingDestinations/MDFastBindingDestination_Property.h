@@ -35,7 +35,7 @@ protected:
 	virtual void PostInitProperties() override;
 
 	virtual UObject* GetPropertyOwner(UObject* SourceObject);
-	virtual UClass* GetPropertyOwnerClass();
+	virtual UStruct* GetPropertyOwnerStruct();
 	
 	virtual void SetupBindingItems() override;
 	

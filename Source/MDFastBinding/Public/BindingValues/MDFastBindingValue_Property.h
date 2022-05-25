@@ -33,7 +33,7 @@ public:
 protected:
 	virtual TTuple<const FProperty*, void*> GetValue_Internal(UObject* SourceObject) override;
 	virtual UObject* GetPropertyOwner(UObject* SourceObject);
-	virtual UClass* GetPropertyOwnerClass();
+	virtual UStruct* GetPropertyOwnerStruct();
 	
 	virtual void SetupBindingItems() override;
 

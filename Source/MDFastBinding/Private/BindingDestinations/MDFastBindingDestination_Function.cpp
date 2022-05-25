@@ -29,10 +29,7 @@ UObject* UMDFastBindingDestination_Function::GetFunctionOwner(UObject* SourceObj
 	bNeedsUpdate |= bDidUpdate;
 	if (FunctionOwner.Value != nullptr)
 	{
-		if (UObject* Owner = *static_cast<UObject**>(FunctionOwner.Value))
-		{
-			return Owner;
-		}
+		return *static_cast<UObject**>(FunctionOwner.Value);
 	}
 
 	return SourceObject;

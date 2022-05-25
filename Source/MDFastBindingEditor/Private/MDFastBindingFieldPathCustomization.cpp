@@ -35,15 +35,15 @@ FText FMDFastBindingFieldPathCustomization::GetComboButtonText() const
 {
 	if (FMDFastBindingFieldPath* FieldPath = ResolveFieldPath())
 	{
-		UClass* OwnerClass = FieldPath->GetPathOwnerClass();
-		if (OwnerClass == nullptr)
+		UStruct* OwnerStruct = FieldPath->GetPathOwnerStruct();
+		if (OwnerStruct == nullptr)
 		{
 			return LOCTEXT("InvalidPathOwner", "The path owner is invalid");
 		}
 		
-		if (GatherPossibleFields(OwnerClass).Num() == 0)
+		if (GatherPossibleFields(OwnerStruct).Num() == 0)
 		{
-			return FText::Format(LOCTEXT("NoOptionsForPath", "{0} has 0 valid options"), OwnerClass->GetDisplayNameText());
+			return FText::Format(LOCTEXT("NoOptionsForPath", "{0} has 0 valid options"), OwnerStruct->GetDisplayNameText());
 		}
 		
 		if (FieldPath->GetLeafProperty() == nullptr)
@@ -77,7 +77,7 @@ TSharedRef<SWidget> FMDFastBindingFieldPathCustomization::GetPathSelectorContent
 
 	if (const FMDFastBindingFieldPath* FieldPath = ResolveFieldPath())
 	{
-		BuildFieldPathMenu(MenuBuilder, FieldPath->GetPathOwnerClass(), {});
+		BuildFieldPathMenu(MenuBuilder, FieldPath->GetPathOwnerStruct(), {});
 	}
 
 	return MenuBuilder.MakeWidget();

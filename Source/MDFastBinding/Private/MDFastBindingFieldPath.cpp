@@ -13,15 +13,43 @@ bool FMDFastBindingFieldPath::BuildPath()
 	
 	CachedPath.Empty(FieldPathMembers.Num());
 
-	for (const FMDFastBindingMemberReference& FieldPathMember : FieldPathMembers)
+	if (UStruct* OwnerStruct = GetPathOwnerStruct())
 	{
-		if (FieldPathMember.bIsFunction)
+		for (const FMDFastBindingMemberReference& FieldPathMember : FieldPathMembers)
 		{
-			CachedPath.Add(FieldPathMember.ResolveMember<UFunction>());
-		}
-		else
-		{
-			CachedPath.Add(FieldPathMember.ResolveMember<FProperty>());
+			const FProperty* NextProp = nullptr;
+			if (FieldPathMember.bIsFunction)
+			{
+				const UFunction* Func = FieldPathMember.ResolveMember<UFunction>();
+				CachedPath.Add(Func);
+				
+				TArray<const FProperty*> Params;
+				FMDFastBindingHelpers::SplitFunctionParamsAndReturnProp(Func, Params, NextProp);
+			}
+			else if (const FProperty* Prop = FieldPathMember.ResolveMember<FProperty>())
+			{
+				NextProp = Prop;
+				CachedPath.Add(Prop);
+			}
+			else if (OwnerStruct != nullptr)
+			{
+				// FMemberReference only supports members of UObjects, so we have to manually handle UStruct members
+				NextProp = OwnerStruct->FindPropertyByName(FieldPathMember.GetMemberName());
+				CachedPath.Add(NextProp);
+			}
+
+			if (const FObjectPropertyBase* ObjectProp = CastField<const FObjectPropertyBase>(NextProp))
+			{
+				OwnerStruct = ObjectProp->PropertyClass;
+			}
+			else if (const FStructProperty* StructProp = CastField<const FStructProperty>(NextProp))
+			{
+				OwnerStruct = StructProp->Struct;
+			}
+			else
+			{
+				OwnerStruct = nullptr;
+			}
 		}
 	}
 	
@@ -204,7 +232,7 @@ void FMDFastBindingFieldPath::OnVariableRenamed(UClass* VariableClass, const FNa
 	// Since we're only notified for renames of our own variables, we only need to check the first item in the path
 	if (FieldPathMembers.Num() > 0 && FieldPathMembers[0].GetMemberName() == OldVariableName)
 	{
-		const UClass* OwnerClass = GetPathOwnerClass();
+		const UStruct* OwnerClass = GetPathOwnerStruct();
 		if (OwnerClass != nullptr && OwnerClass == VariableClass)
 		{
 			FieldPathMembers[0].SetMemberName(NewVariableName);
@@ -215,9 +243,9 @@ void FMDFastBindingFieldPath::OnVariableRenamed(UClass* VariableClass, const FNa
 }
 #endif
 
-UClass* FMDFastBindingFieldPath::GetPathOwnerClass() const
+UStruct* FMDFastBindingFieldPath::GetPathOwnerStruct() const
 {
-	return OwnerClassGetter.IsBound() ? OwnerClassGetter.Execute() : nullptr;
+	return OwnerStructGetter.IsBound() ? OwnerStructGetter.Execute() : nullptr;
 }
 
 void* FMDFastBindingFieldPath::GetPathOwner(UObject* SourceObject) const
@@ -271,7 +299,7 @@ void FMDFastBindingFieldPath::FixupFieldPath()
 	// Check if we need to convert to the Member Reference path
 	if (FieldPathMembers.Num() == 0 && FieldPath.Num() != 0)
 	{
-		if (const UStruct* OwnerStruct = GetPathOwnerClass())
+		if (const UStruct* OwnerStruct = GetPathOwnerStruct())
 		{
 			for (int32 i = 0; i < FieldPath.Num() && OwnerStruct != nullptr; ++i)
 			{
