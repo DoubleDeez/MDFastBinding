@@ -5,7 +5,7 @@
 TTuple<const FProperty*, void*> UMDFastBindingValue_FormatText::GetValue_Internal(UObject* SourceObject)
 {
 #if !WITH_EDITOR
-	if (!TextFormat.IsValid())
+	if (!TextFormat.GetSourceText().IdenticalTo(FormatText))
 #endif
 	{
 		TextFormat = FormatText;
