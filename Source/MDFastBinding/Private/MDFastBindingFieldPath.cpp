@@ -82,15 +82,25 @@ TTuple<const FProperty*, void*> FMDFastBindingFieldPath::ResolvePath(UObject* So
 
 			if (UFunction* Func = Cast<UFunction>(FieldVariant.ToUObject()))
 			{
-				InitFunctionMemory(Func);
-				void* FuncMemory = FunctionMemory.FindRef(Func);
-				if (!bIsOwnerAUObject || FuncMemory == nullptr)
+				UObject* OwnerUObject = *static_cast<UObject**>(Owner);
+				if (!bIsOwnerAUObject || OwnerUObject == nullptr)
 				{
 					return {};
 				}
-
-				UObject* OwnerUObject = *static_cast<UObject**>(Owner);
-				if (OwnerUObject == nullptr)
+				
+				if (!OwnerUObject->IsA(Func->GetOwnerClass()))
+				{
+					// Func needs fixup, likely due to a reparented BP
+					Func = OwnerUObject->GetClass()->FindFunctionByName(Func->GetFName());
+					if (Func == nullptr)
+					{
+						return {};
+					}
+				}
+				
+				InitFunctionMemory(Func);
+				void* FuncMemory = FunctionMemory.FindRef(Func);
+				if (FuncMemory == nullptr)
 				{
 					return {};
 				}
@@ -109,6 +119,16 @@ TTuple<const FProperty*, void*> FMDFastBindingFieldPath::ResolvePath(UObject* So
 				{
 					if (UObject* OwnerObject = *static_cast<UObject**>(Owner))
 					{
+						if (!OwnerObject->IsA(Prop->GetOwnerClass()))
+						{
+							// Prop needs fixup, likely due to a reparented BP
+							Prop = OwnerObject->GetClass()->FindPropertyByName(Prop->GetFName());
+							if (Prop == nullptr)
+							{
+								return {};
+							}
+						}
+						
 						Owner = Prop->ContainerPtrToValuePtr<void>(OwnerObject);
 					}
 					else

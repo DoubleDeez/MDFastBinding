@@ -82,6 +82,16 @@ TTuple<const FProperty*, void*> FMDFastBindingFunctionWrapper::CallFunction(UObj
 	{
 		return {};
 	}
+	
+	if (!FunctionOwner->IsA(FunctionPtr->GetOwnerClass()))
+	{
+		// Function needs fixup, likely due to a reparented BP
+		FunctionPtr = FunctionOwner->GetClass()->FindFunctionByName(FunctionPtr->GetFName());
+		if (FunctionPtr == nullptr)
+		{
+			return {};
+		}
+	}
 
 	PopulateParams(SourceObject);
 
