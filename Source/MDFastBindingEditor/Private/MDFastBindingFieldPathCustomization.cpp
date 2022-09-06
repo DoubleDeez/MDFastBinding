@@ -1,8 +1,13 @@
 ﻿#include "MDFastBindingFieldPathCustomization.h"
 
 #include "DetailWidgetRow.h"
-#include "MDFastBindingHelpers.h"
+#include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "Kismet2/BlueprintEditorUtils.h"
+#include "MDFastBindingHelpers.h"
+#include "Widgets/Images/SImage.h"
+#include "Widgets/Input/SComboButton.h"
+#include "Widgets/Layout/SBox.h"
+#include "Widgets/Text/STextBlock.h"
 
 #define LOCTEXT_NAMESPACE "MDFastBindingFieldPathCustomization"
 
@@ -221,6 +226,11 @@ void FMDFastBindingFieldPathCustomization::SetFieldPath(TArray<FFieldVariant> Pa
 {
 	if (FieldPathMembersHandle.IsValid())
 	{
+		if (FieldPathHandle.IsValid())
+		{
+			FieldPathHandle->NotifyPreChange();
+		}
+		
 		FieldPathMembersHandle->EmptyArray();
 		for (const FFieldVariant& PathElement : Path)
 		{
@@ -245,8 +255,14 @@ void FMDFastBindingFieldPathCustomization::SetFieldPath(TArray<FFieldVariant> Pa
 				}
 			}
 		}
-
+		
 		UpdateComboButton();
+
+		if (FieldPathHandle.IsValid())
+		{
+			FieldPathHandle->NotifyPostChange(EPropertyChangeType::ValueSet);
+			FieldPathHandle->NotifyFinishedChangingProperties();
+		}
 	}
 }
 

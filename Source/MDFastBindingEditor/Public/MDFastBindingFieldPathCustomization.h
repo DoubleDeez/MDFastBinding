@@ -5,7 +5,11 @@
 #include "IPropertyTypeCustomization.h"
 #include "MDFastBindingFieldPath.h"
 
+class FMenuBuilder;
 class UMDFastBindingContainer;
+class IPropertyHandle;
+class IPropertyHandleArray;
+class SBox;
 
 class FMDFastBindingFieldPathCustomization : public IPropertyTypeCustomization
 {

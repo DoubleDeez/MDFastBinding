@@ -1,8 +1,13 @@
 ﻿#include "MDFastBindingFunctionWrapperCustomization.h"
 
 #include "DetailWidgetRow.h"
-#include "MDFastBindingHelpers.h"
+#include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "Kismet2/BlueprintEditorUtils.h"
+#include "MDFastBindingHelpers.h"
+#include "Widgets/Images/SImage.h"
+#include "Widgets/Input/SComboButton.h"
+#include "Widgets/Layout/SBox.h"
+#include "Widgets/Text/STextBlock.h"
 
 #define LOCTEXT_NAMESPACE "MDFastBindingFunctionWrapperCustomization"
 
@@ -182,6 +187,11 @@ void FMDFastBindingFunctionWrapperCustomization::OnFunctionSelected(UFunction* F
 {
 	if (FunctionWrapperMemberHandle.IsValid())
 	{
+		if (FunctionWrapperHandle.IsValid())
+		{
+			FunctionWrapperHandle->NotifyPreChange();
+		}
+		
 		void* ValueData = nullptr;
 		if (FunctionWrapperMemberHandle->GetValueData(ValueData) == FPropertyAccess::Success)
 		{
@@ -197,8 +207,6 @@ void FMDFastBindingFunctionWrapperCustomization::OnFunctionSelected(UFunction* F
 				}
 				
 				MemberRef->bIsFunction = true;
-
-				FunctionWrapperHandle->NotifyPostChange(EPropertyChangeType::ValueSet);
 			}
 		}
 
@@ -207,6 +215,12 @@ void FMDFastBindingFunctionWrapperCustomization::OnFunctionSelected(UFunction* F
 		if (ComboButton.IsValid())
 		{
 			ComboButton->SetIsOpen(false);
+		}
+
+		if (FunctionWrapperHandle.IsValid())
+		{
+			FunctionWrapperHandle->NotifyPostChange(EPropertyChangeType::ValueSet);
+			FunctionWrapperHandle->NotifyFinishedChangingProperties();
 		}
 	}
 }

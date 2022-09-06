@@ -6,6 +6,8 @@
 #include "MDFastBindingFunctionWrapper.h"
 
 class UMDFastBindingContainer;
+class SBox;
+class SComboButton;
 
 class FMDFastBindingFunctionWrapperCustomization : public IPropertyTypeCustomization
 {
