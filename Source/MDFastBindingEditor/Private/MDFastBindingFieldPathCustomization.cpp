@@ -78,7 +78,8 @@ FMDFastBindingFieldPath* FMDFastBindingFieldPathCustomization::ResolveFieldPath(
 
 TSharedRef<SWidget> FMDFastBindingFieldPathCustomization::GetPathSelectorContent() const
 {
-	FMenuBuilder MenuBuilder(true, nullptr);
+	constexpr bool bIsRecursivelySearchable = false;
+	FMenuBuilder MenuBuilder(true, nullptr, TSharedPtr<FExtender>(), false, &FCoreStyle::Get(), true, NAME_None, bIsRecursivelySearchable);
 
 	if (const FMDFastBindingFieldPath* FieldPath = ResolveFieldPath())
 	{
@@ -174,7 +175,7 @@ void FMDFastBindingFieldPathCustomization::BuildFieldPathMenu(FMenuBuilder& Menu
 {
 	TArray<FFieldVariant> Fields = GatherPossibleFields(InStruct);
 	for (const FFieldVariant& Field : Fields)
-	{
+	{		
 		TArray<FFieldVariant> Path = ParentPath;
 		const FProperty* FieldProp = nullptr;
 		FText DisplayName;

@@ -82,8 +82,9 @@ FMDFastBindingFunctionWrapper* FMDFastBindingFunctionWrapperCustomization::Resol
 TSharedRef<SWidget> FMDFastBindingFunctionWrapperCustomization::GetPathSelectorContent()
 {
 	GatherPossibleFunctions();
-	
-	FMenuBuilder MenuBuilder(true, nullptr);
+
+	constexpr bool bIsRecursivelySearchable = false;
+	FMenuBuilder MenuBuilder(true, nullptr, TSharedPtr<FExtender>(), false, &FCoreStyle::Get(), true, NAME_None, bIsRecursivelySearchable);
 	for (UFunction* Func : Functions)
 	{
 		FUIAction OnFunctionSelected = FUIAction(FExecuteAction::CreateSP(this, &FMDFastBindingFunctionWrapperCustomization::OnFunctionSelected, Func));
