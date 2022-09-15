@@ -172,7 +172,7 @@ FActionMenuContent SMDFastBindingEditorGraphWidget::OnCreateActionMenu(UEdGraph*
 	
 	return FActionMenuContent(
 		SNew(SBorder)
-		.BorderImage(FEditorStyle::GetBrush("Menu.Background"))
+		.BorderImage(FAppStyle::GetBrush("Menu.Background"))
 		[
 			SNew(SBox)
 			.MinDesiredWidth(300.f)

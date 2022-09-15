@@ -111,7 +111,7 @@ TSharedRef<SWidget> FMDFastBindingFieldPathCustomization::BuildPropertyWidget(co
 		.Padding(1.f, 0.f)
 		[
 			SNew(SImage)
-			.Image(bIsFunction ? FEditorStyle::Get().GetBrush(TEXT("GraphEditor.Function_16x")) : FBlueprintEditorUtils::GetIconFromPin(PinType, true))
+			.Image(bIsFunction ? FAppStyle::Get().GetBrush(TEXT("GraphEditor.Function_16x")) : FBlueprintEditorUtils::GetIconFromPin(PinType, true))
 			.ColorAndOpacity(Schema->GetPinTypeColor(PinType))
 			.ToolTipText(FText::FromString(FMDFastBindingHelpers::PropertyToString(*InProperty)))
 		]

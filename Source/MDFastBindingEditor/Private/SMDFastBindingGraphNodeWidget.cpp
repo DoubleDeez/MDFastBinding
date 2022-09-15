@@ -48,7 +48,7 @@ void SMDFastBindingGraphNodeWidget::UpdateErrorInfo()
 		TArray<FText> Errors;
 		if (BindingObject->IsDataValid(Errors) == EDataValidationResult::Invalid)
 		{
-			ErrorColor = FEditorStyle::GetColor("ErrorReporting.BackgroundColor");
+			ErrorColor = FAppStyle::GetColor("ErrorReporting.BackgroundColor");
 			
 			if (Errors.Num() == 0)
 			{

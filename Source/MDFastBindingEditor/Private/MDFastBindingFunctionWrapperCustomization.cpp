@@ -120,7 +120,7 @@ TSharedRef<SWidget> FMDFastBindingFunctionWrapperCustomization::BuildFunctionWid
 		.Padding(1.f, 0.f)
 		[
 			SNew(SImage)
-			.Image(FEditorStyle::Get().GetBrush(TEXT("GraphEditor.Function_16x")))
+			.Image(FAppStyle::Get().GetBrush(TEXT("GraphEditor.Function_16x")))
 			.ColorAndOpacity(ReturnProp == nullptr
 				? FLinearColor::White
 				: Schema->GetPinTypeColor(PinType))
