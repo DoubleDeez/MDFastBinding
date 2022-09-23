@@ -99,11 +99,7 @@ public:
 						.ToolTipText(LOCTEXT("DuplicateBindingTooltip", "Create a duplicate of this binding"))
 						[
 							SNew(SImage)
-#if ENGINE_MAJOR_VERSION <= 4
-							.Image(FCoreStyle::Get().GetBrush(TEXT("GenericCommands.Duplicate")))
-#else
 							.Image(FAppStyle::Get().GetBrush(TEXT("GenericCommands.Duplicate")))
-#endif
 						]
 					]
 					+SHorizontalBox::Slot()
@@ -119,11 +115,7 @@ public:
 						.ToolTipText(LOCTEXT("DeleteBindingTooltip", "Delete this binding"))
 						[
 							SNew(SImage)
-#if ENGINE_MAJOR_VERSION <= 4
-							.Image(FCoreStyle::Get().GetBrush(TEXT("GenericCommands.Delete")))
-#else
 							.Image(FAppStyle::Get().GetBrush(TEXT("GenericCommands.Delete")))
-#endif
 						]
 					]
 				]
@@ -215,9 +207,7 @@ void SMDFastBindingEditorWidget::Construct(const FArguments&, const TWeakPtr<FBl
 	[
 		SNew(SSplitter)
 		+SSplitter::Slot()
-#if ENGINE_MAJOR_VERSION > 4
 		.MinSize(350.f)
-#endif
 		.Value(0.15f)
 		[
 			SAssignNew(DetailSwitcher, SWidgetSwitcher)
@@ -256,12 +246,8 @@ void SMDFastBindingEditorWidget::Construct(const FArguments&, const TWeakPtr<FBl
 						.AutoWidth()
 						.Padding(0, 0, 4.f, 0)
 						[
-						SNew(SImage)
-#if ENGINE_MAJOR_VERSION <= 4
-						.Image(FCoreStyle::Get().GetBrush(TEXT("EditableComboBox.Add")))
-#else
-						.Image(FAppStyle::Get().GetBrush(TEXT("EditableComboBox.Add")))
-#endif
+							SNew(SImage)
+							.Image(FAppStyle::Get().GetBrush(TEXT("EditableComboBox.Add")))
 						]
 						+SHorizontalBox::Slot()
 						.HAlign(HAlign_Left)
@@ -536,19 +522,11 @@ const FSlateBrush* SMDFastBindingEditorWidget::GetBindingValidationBrush(TWeakOb
 		const EDataValidationResult Result = BindingPtr->IsDataValid(Errors);
 		if (Result == EDataValidationResult::Valid)
 		{
-#if ENGINE_MAJOR_VERSION <= 4
-			return FEditorStyle::GetBrush("Symbols.Check");
-#else
 			return FAppStyle::Get().GetBrush("Icons.SuccessWithColor");
-#endif
 		}
 		else if (Result == EDataValidationResult::Invalid)
 		{
-#if ENGINE_MAJOR_VERSION <= 4
-			return FCoreStyle::Get().GetBrush("Icons.Error");
-#else
 			return FAppStyle::Get().GetBrush("Icons.ErrorWithColor");
-#endif
 		}
 	}
 
