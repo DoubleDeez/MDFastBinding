@@ -11,6 +11,13 @@ void UMDFastBindingValueBase::InitializeValue(UObject* SourceObject)
 			BindingItem.Value->InitializeValue(SourceObject);
 		}
 	}
+
+	InitializeValue_Internal(SourceObject);
+}
+
+void UMDFastBindingValueBase::TerminateValue(UObject* SourceObject)
+{
+	TerminateValue_Internal(SourceObject);
 }
 
 TTuple<const FProperty*, void*> UMDFastBindingValueBase::GetValue(UObject* SourceObject, bool& OutDidUpdate)
@@ -44,6 +51,11 @@ TTuple<const FProperty*, void*> UMDFastBindingValueBase::GetValue(UObject* Sourc
 bool UMDFastBindingValueBase::CheckNeedsUpdate() const
 {
 	return CachedValue.Value == nullptr || Super::CheckNeedsUpdate();
+}
+
+bool UMDFastBindingValueBase::DoesObjectRequireTick() const
+{
+	return CachedValue.Value == nullptr || Super::DoesObjectRequireTick();
 }
 
 const FMDFastBindingItem* UMDFastBindingValueBase::GetOwningBindingItem() const

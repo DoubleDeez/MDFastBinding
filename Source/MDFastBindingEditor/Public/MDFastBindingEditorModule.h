@@ -4,10 +4,14 @@
 #include "Modules/ModuleManager.h"
 
 class UMDFastBindingContainer;
-class FTabManager;
+class UBlueprint;
 class FBlueprintEditor;
-class FWorkflowAllowedTabSet;
+class FExtender;
 class FLayoutExtender;
+class FTabManager;
+class FToolBarBuilder;
+class FUICommandList;
+class FWorkflowAllowedTabSet;
 
 class FMDFastBindingEditorTabBinding : public TSharedFromThis<FMDFastBindingEditorTabBinding>
 {

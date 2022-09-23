@@ -4,21 +4,32 @@
 
 void UMDFastBindingContainer::InitializeBindings(UObject* SourceObject)
 {
-	for (UMDFastBindingInstance* Binding : Bindings)
+	for (int32 i = 0; i < Bindings.Num(); ++i)
 	{
-		Binding->InitializeBinding(SourceObject);
+		if (UMDFastBindingInstance* Binding = Bindings[i])
+		{
+			Binding->InitializeBinding(SourceObject);
+			Binding->UpdateBinding(SourceObject);
+		
+			BindingTickPolicyLookUpMap.Add(i, Binding->ShouldBindingTick());
+		}
 	}
-
-	UpdateBindings(SourceObject);
 }
 
 void UMDFastBindingContainer::UpdateBindings(UObject* SourceObject)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE_STR(__FUNCTION__);
 	TRACE_CPUPROFILER_EVENT_SCOPE_TEXT(*GetNameSafe(SourceObject));
-	for (UMDFastBindingInstance* Binding : Bindings)
+	for (int32 i = 0; i < Bindings.Num(); ++i)
 	{
-		Binding->UpdateBinding(SourceObject);
+		if (bool& bShouldBindingUpdate = BindingTickPolicyLookUpMap.FindOrAdd(i))
+		{
+			if (UMDFastBindingInstance* Binding = Bindings[i])
+			{
+				Binding->UpdateBinding(SourceObject);
+				bShouldBindingUpdate = Binding->ShouldBindingTick();
+			}
+		}
 	}
 }
 
@@ -27,6 +38,18 @@ void UMDFastBindingContainer::TerminateBindings(UObject* SourceObject)
 	for (UMDFastBindingInstance* Binding : Bindings)
 	{
 		Binding->TerminateBinding(SourceObject);
+	}
+
+	BindingTickPolicyLookUpMap.Empty();
+}
+
+void UMDFastBindingContainer::SetBindingTickPolicy(UMDFastBindingInstance* Binding, bool bShouldTick)
+{
+	const int32 BindingIndex = Bindings.IndexOfByKey(Binding);
+
+	if (BindingIndex != INDEX_NONE)
+	{
+		BindingTickPolicyLookUpMap.FindOrAdd(BindingIndex, bShouldTick);
 	}
 }
 

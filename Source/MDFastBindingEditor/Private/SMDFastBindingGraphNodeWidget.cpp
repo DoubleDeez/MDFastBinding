@@ -4,6 +4,7 @@
 #include "MDFastBindingGraphNode.h"
 #include "MDFastBindingObject.h"
 #include "NodeFactory.h"
+#include "Widgets/SBoxPanel.h"
 
 #define LOCTEXT_NAMESPACE "MDFastBindingGraphNodeWidget"
 

@@ -21,6 +21,8 @@ public:
 	
 	virtual bool CheckNeedsUpdate() const override;
 
+	virtual bool DoesObjectRequireTick() const override;
+
 #if WITH_EDITOR
 	bool IsActive() const;
 #endif

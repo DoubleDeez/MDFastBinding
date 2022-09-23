@@ -13,9 +13,7 @@ class MDFASTBINDINGEDITOR_API SMDFastBindingSelfGraphPinWidget : public SGraphPi
 public:
 	using SGraphPinObject::Construct;
 	
-#if ENGINE_MAJOR_VERSION >= 5
 	virtual bool ShouldDisplayAsSelfPin() const override { return true; }
-#endif
 };
 
 /**

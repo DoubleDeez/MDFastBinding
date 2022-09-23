@@ -29,12 +29,12 @@ void UMDFastBindingUserWidget::NativeConstruct()
 
 void UMDFastBindingUserWidget::NativeDestruct()
 {
-	Super::NativeDestruct();
-	
 	if (Bindings != nullptr)
 	{
 		Bindings->TerminateBindings(this);
 	}
+	
+	Super::NativeDestruct();
 }
 
 void UMDFastBindingUserWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)

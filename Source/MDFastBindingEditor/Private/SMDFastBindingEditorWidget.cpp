@@ -1,16 +1,19 @@
 ﻿#include "SMDFastBindingEditorWidget.h"
+#include "BindingDestinations/MDFastBindingDestinationBase.h"
 #include "BlueprintEditor.h"
 #include "ClassViewerFilter.h"
 #include "ClassViewerModule.h"
+#include "Kismet2/SClassPickerDialog.h"
 #include "MDFastBindingContainer.h"
 #include "MDFastBindingEditorModule.h"
 #include "MDFastBindingEditorStyle.h"
 #include "MDFastBindingGraphNode.h"
 #include "MDFastBindingInstance.h"
+#include "Misc/MessageDialog.h"
+#include "ScopedTransaction.h"
 #include "SMDFastBindingEditorGraphWidget.h"
-#include "BindingDestinations/MDFastBindingDestinationBase.h"
-#include "Kismet2/SClassPickerDialog.h"
 #include "Widgets/Layout/SWidgetSwitcher.h"
+#include "Widgets/Input/SButton.h"
 #include "Widgets/Text/SInlineEditableTextBlock.h"
 
 #define LOCTEXT_NAMESPACE "MDFastBindingEdtiorWidget"
@@ -63,6 +66,16 @@ public:
 						SNew(SImage)
 						.ToolTipText(EditorWidget, &SMDFastBindingEditorWidget::GetBindingValidationTooltip, BindingPtr)
 						.Image(EditorWidget, &SMDFastBindingEditorWidget::GetBindingValidationBrush, BindingPtr)
+					]
+					+SHorizontalBox::Slot()
+					.VAlign(VAlign_Center)
+					.HAlign(HAlign_Fill)
+					.AutoWidth()
+					.Padding(4.f, 0.f)
+					[
+						SNew(SImage)
+						.ToolTipText(EditorWidget, &SMDFastBindingEditorWidget::GetBindingPerformanceTooltip, BindingPtr)
+						.Image(EditorWidget, &SMDFastBindingEditorWidget::GetBindingPerformanceBrush, BindingPtr)
 					]
 					+SHorizontalBox::Slot()
 					.VAlign(VAlign_Center)
@@ -539,6 +552,40 @@ const FSlateBrush* SMDFastBindingEditorWidget::GetBindingValidationBrush(TWeakOb
 		}
 	}
 
+	return nullptr;
+}
+
+FText SMDFastBindingEditorWidget::GetBindingPerformanceTooltip(TWeakObjectPtr<UMDFastBindingInstance> Binding) const
+{
+	if (const UMDFastBindingInstance* BindingPtr = Binding.Get())
+	{
+		if (BindingPtr->IsBindingPerformant())
+		{
+			return LOCTEXT("PerformantBindingTooltip", "This binding does not run every tick");
+		}
+		else
+		{
+			return LOCTEXT("PerformantBindingTooltip", "This binding is evaluated every tick");
+		}
+	}
+	
+	return FText::GetEmpty();
+}
+
+const FSlateBrush* SMDFastBindingEditorWidget::GetBindingPerformanceBrush(TWeakObjectPtr<UMDFastBindingInstance> Binding) const
+{
+	if (const UMDFastBindingInstance* BindingPtr = Binding.Get())
+	{
+		if (BindingPtr->IsBindingPerformant())
+		{
+			return FMDFastBindingEditorStyle::Get().GetBrush("Icon.Flame");
+		}
+		else
+		{
+			return FMDFastBindingEditorStyle::Get().GetBrush("Icon.Clock");
+		}
+	}
+	
 	return nullptr;
 }
 

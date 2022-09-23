@@ -30,7 +30,9 @@ TTuple<const FProperty*, void*> FMDFastBindingItem::GetValue(UObject* SourceObje
 	{
 		return Value->GetValue(SourceObject, OutDidUpdate);
 	}
-	if (!bAllowDefaults) {
+	
+	if (!bAllowDefaults)
+	{
 		return {};
 	}
 	
@@ -39,6 +41,7 @@ TTuple<const FProperty*, void*> FMDFastBindingItem::GetValue(UObject* SourceObje
 	{
 		return {};
 	}
+	
 	if (AllocatedDefaultValue != nullptr)
 	{
 		return TTuple<const FProperty*, void*>{ ItemProp, AllocatedDefaultValue };
@@ -55,7 +58,7 @@ TTuple<const FProperty*, void*> FMDFastBindingItem::GetValue(UObject* SourceObje
 		bHasRetrievedDefaultValue = true;
 		AllocatedDefaultValue = FMemory::Malloc(ItemProp->GetSize(), ItemProp->GetMinAlignment());
 		ItemProp->InitializeValue(AllocatedDefaultValue);
-		ItemProp->ImportText(*DefaultString, AllocatedDefaultValue, PPF_None, nullptr);
+		ItemProp->ImportText_Direct(*DefaultString, AllocatedDefaultValue, nullptr, PPF_None);
 		return TTuple<const FProperty*, void*>{ ItemProp, AllocatedDefaultValue };
 	}
 	else if (ItemProp->IsA<FObjectPropertyBase>())
@@ -180,6 +183,7 @@ UMDFastBindingInstance* UMDFastBindingObject::GetOuterBinding() const
 
 bool UMDFastBindingObject::CheckNeedsUpdate() const
 {
+	
 	if (UpdateType != EMDFastBindingUpdateType::Always)
 	{
 		if (UpdateType == EMDFastBindingUpdateType::Once)
@@ -187,8 +191,14 @@ bool UMDFastBindingObject::CheckNeedsUpdate() const
 			// Assume the child classes check for this
 			return false;
 		}
-		else if (UpdateType == EMDFastBindingUpdateType::IfUpdatesNeeded)
+		else if (UpdateType == EMDFastBindingUpdateType::EventBased && bIsObjectDirty)
 		{
+			// If dirty and event based, then we must update
+			return true;
+		}
+		else if (UpdateType == EMDFastBindingUpdateType::IfUpdatesNeeded || UpdateType == EMDFastBindingUpdateType::EventBased)
+		{
+			// Event based when not dirty acts as `IfUpdatesNeeded` to keep their binding items up to date
 			for (const FMDFastBindingItem& Item : BindingItems)
 			{
 				if (Item.Value != nullptr && Item.Value->CheckNeedsUpdate())
@@ -251,6 +261,41 @@ void UMDFastBindingObject::RemoveExtendablePinBindingItem(int32 ItemIndex)
 			}
 		}
 	}
+}
+
+void UMDFastBindingObject::MarkObjectDirty()
+{
+	check(UpdateType == EMDFastBindingUpdateType::EventBased);
+
+	bIsObjectDirty = true;
+
+	if (UMDFastBindingInstance* BindingInstance = GetOuterBinding())
+	{
+		BindingInstance->MarkBindingDirty();
+	}
+}
+
+bool UMDFastBindingObject::DoesObjectRequireTick() const
+{
+	if (UpdateType == EMDFastBindingUpdateType::Always)
+	{
+		return true;
+	}
+
+	if (UpdateType == EMDFastBindingUpdateType::EventBased && bIsObjectDirty)
+	{
+		return true;
+	}
+	
+	for (const FMDFastBindingItem& Item : BindingItems)
+	{
+		if (Item.Value != nullptr && Item.Value->DoesObjectRequireTick())
+		{
+			return true;
+		}
+	}
+	
+	return false;
 }
 
 const FMDFastBindingItem* UMDFastBindingObject::FindBindingItemWithValue(const UMDFastBindingValueBase* Value) const

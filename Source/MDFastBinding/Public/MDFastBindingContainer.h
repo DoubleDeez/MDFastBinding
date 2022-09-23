@@ -21,6 +21,8 @@ public:
 
 	void TerminateBindings(UObject* SourceObject);
 
+	void SetBindingTickPolicy(UMDFastBindingInstance* Binding, bool bShouldTick);
+
 // Editor only operations
 #if WITH_EDITORONLY_DATA
 	const TArray<UMDFastBindingInstance*>& GetBindings() const { return Bindings; }
@@ -37,4 +39,8 @@ public:
 protected:
 	UPROPERTY(Instanced)
 	TArray<UMDFastBindingInstance*> Bindings;
+
+	// Map binding indices to whether or not they should tick
+	UPROPERTY(Transient)
+	TMap<int32, bool> BindingTickPolicyLookUpMap;
 };

@@ -34,11 +34,24 @@ void UMDFastBindingDestinationBase::TerminateDestination(UObject* SourceObject)
 	TRACE_CPUPROFILER_EVENT_SCOPE_STR(__FUNCTION__);
 	TRACE_CPUPROFILER_EVENT_SCOPE_TEXT(*GetName());
 	TerminateDestination_Internal(SourceObject);
+
+	for (const FMDFastBindingItem& BindingItem : BindingItems)
+	{
+		if (BindingItem.Value != nullptr)
+		{
+			BindingItem.Value->TerminateValue(SourceObject);
+		}
+	}
 }
 
 bool UMDFastBindingDestinationBase::CheckNeedsUpdate() const
 {
 	return !bHasEverUpdated || Super::CheckNeedsUpdate();
+}
+
+bool UMDFastBindingDestinationBase::DoesObjectRequireTick() const
+{
+	return !bHasEverUpdated || Super::DoesObjectRequireTick();
 }
 
 #if WITH_EDITOR

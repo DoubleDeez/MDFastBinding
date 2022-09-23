@@ -200,12 +200,14 @@ bool FMDFastBindingFieldPath::IsLeafFunction()
 
 bool FMDFastBindingFieldPath::IsPropertyValidForPath(const FProperty& Prop) const
 {
-	return Prop.HasAnyPropertyFlags(CPF_BlueprintVisible) && (!bOnlyAllowBlueprintReadWriteProperties || !Prop.HasAnyPropertyFlags(CPF_BlueprintReadOnly));
+	return Prop.HasAnyPropertyFlags(CPF_BlueprintVisible)
+		&& (!bOnlyAllowBlueprintReadWriteProperties || !Prop.HasAnyPropertyFlags(CPF_BlueprintReadOnly))
+		&& (!FieldFilter.IsBound() || FieldFilter.Execute(&Prop));
 }
 
-bool FMDFastBindingFieldPath::IsFunctionValidForPath(const UFunction& Func)
+bool FMDFastBindingFieldPath::IsFunctionValidForPath(const UFunction& Func) const
 {
-	if (!Func.HasAnyFunctionFlags(FUNC_Const | FUNC_BlueprintPure))
+	if (!bAllowGetterFunctions || !Func.HasAnyFunctionFlags(FUNC_Const | FUNC_BlueprintPure) || (FieldFilter.IsBound() && !FieldFilter.Execute(&Func)))
 	{
 		return false;
 	}

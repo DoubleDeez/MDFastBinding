@@ -34,6 +34,8 @@ protected:
 	virtual TTuple<const FProperty*, void*> GetValue_Internal(UObject* SourceObject) override;
 	virtual UObject* GetPropertyOwner(UObject* SourceObject);
 	virtual UStruct* GetPropertyOwnerStruct();
+
+	virtual const FProperty* GetPathRootProperty() const { return nullptr; }
 	
 	virtual void SetupBindingItems() override;
 
@@ -42,7 +44,4 @@ protected:
 	// Path to the property you want to get
 	UPROPERTY(EditDefaultsOnly, Category = "Binding")
 	FMDFastBindingFieldPath PropertyPath;
-
-	UPROPERTY(Transient)
-	UObject* ObjectProperty = nullptr;
 };

@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "EdGraph/EdGraphSchema.h"
+#include "Templates/SubclassOf.h"
 #include "MDFastBindingGraphSchema.generated.h"
 
 class UMDFastBindingValueBase;
@@ -71,8 +72,4 @@ public:
 	virtual bool RequestVariableDropOnNode(UEdGraph* InGraph, FProperty* InVariableToDrop, UEdGraphNode* InNode, const FVector2D& InDropPosition, const FVector2D& InScreenPosition) override;
 	
 	virtual bool RequestVariableDropOnPin(UEdGraph* InGraph, FProperty* InVariableToDrop, UEdGraphPin* InPin, const FVector2D& InDropPosition, const FVector2D& InScreenPosition) override;
-
-#if ENGINE_MAJOR_VERSION <= 4
-	virtual bool IsSelfPin(const UEdGraphPin& Pin) const override;
-#endif
 };

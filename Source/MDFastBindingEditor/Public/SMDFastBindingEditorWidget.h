@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "WorkflowOrientedApp/WorkflowTabFactory.h"
+#include "EditorUndoClient.h"
 
 class UMDFastBindingContainer;
 class UMDFastBindingInstance;
@@ -8,6 +9,8 @@ class FBlueprintEditor;
 class FMenuBuilder;
 class IDetailsView;
 class SMDFastBindingEditorGraphWidget;
+
+typedef TSet<class UObject*> FGraphPanelSelectionSet;
 
 class SMDFastBindingEditorWidget : public SCompoundWidget, public FSelfRegisteringEditorUndoClient
 {
@@ -45,6 +48,9 @@ private:
 
 	FText GetBindingValidationTooltip(TWeakObjectPtr<UMDFastBindingInstance> Binding) const;
 	const FSlateBrush* GetBindingValidationBrush(TWeakObjectPtr<UMDFastBindingInstance> Binding) const;
+
+	FText GetBindingPerformanceTooltip(TWeakObjectPtr<UMDFastBindingInstance> Binding) const;
+	const FSlateBrush* GetBindingPerformanceBrush(TWeakObjectPtr<UMDFastBindingInstance> Binding) const;
 
 	void OnBlueprintCompiled(UBlueprint* Blueprint);
 	

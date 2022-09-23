@@ -132,13 +132,16 @@ TArray<FFieldVariant> FMDFastBindingFieldPathCustomization::GatherPossibleFields
 	
 	if (const FMDFastBindingFieldPath* FieldPath = ResolveFieldPath())
 	{
-		if (const UClass* Class = Cast<UClass>(InStruct))
+		if (FieldPath->bAllowGetterFunctions)
 		{
-			for (TFieldIterator<UFunction> It(Class); It; ++It)
+			if (const UClass* Class = Cast<UClass>(InStruct))
 			{
-				if (FMDFastBindingFieldPath::IsFunctionValidForPath(**It))
+				for (TFieldIterator<UFunction> It(Class); It; ++It)
 				{
-					Fields.Add(*It);
+					if (FieldPath->IsFunctionValidForPath(**It))
+					{
+						Fields.Add(*It);
+					}
 				}
 			}
 		}
@@ -175,7 +178,9 @@ void FMDFastBindingFieldPathCustomization::BuildFieldPathMenu(FMenuBuilder& Menu
 {
 	TArray<FFieldVariant> Fields = GatherPossibleFields(InStruct);
 	for (const FFieldVariant& Field : Fields)
-	{		
+	{
+		const FMDFastBindingFieldPath* FieldPath = ResolveFieldPath();
+		const bool bRecursive = FieldPath != nullptr && FieldPath->bAllowSubProperties;
 		TArray<FFieldVariant> Path = ParentPath;
 		const FProperty* FieldProp = nullptr;
 		FText DisplayName;
@@ -205,12 +210,12 @@ void FMDFastBindingFieldPathCustomization::BuildFieldPathMenu(FMenuBuilder& Menu
 		FUIAction OnFieldSelected = FUIAction(FExecuteAction::CreateSP(this, &FMDFastBindingFieldPathCustomization::SetFieldPath, Path));
 		const FObjectPropertyBase* ObjectProp = CastField<const FObjectPropertyBase>(FieldProp);
 		const FStructProperty* StructProp = CastField<const FStructProperty>(FieldProp);
-		if (ObjectProp != nullptr && GatherPossibleFields(ObjectProp->PropertyClass).Num() > 0)
+		if (bRecursive && ObjectProp != nullptr && GatherPossibleFields(ObjectProp->PropertyClass).Num() > 0)
 		{
 			FNewMenuDelegate NewMenuDelegate = FNewMenuDelegate::CreateSP(this, &FMDFastBindingFieldPathCustomization::BuildFieldPathMenu, static_cast<UStruct*>(ObjectProp->PropertyClass), Path);
 			MenuBuilder.AddSubMenu(OnFieldSelected, BuildPropertyWidget(FieldProp, DisplayName, ToolTip, bIsFunction), NewMenuDelegate);
 		}
-		else if (StructProp != nullptr && GatherPossibleFields(StructProp->Struct).Num() > 0)
+		else if (bRecursive && StructProp != nullptr && GatherPossibleFields(StructProp->Struct).Num() > 0)
 		{
 			FNewMenuDelegate NewMenuDelegate = FNewMenuDelegate::CreateSP(this, &FMDFastBindingFieldPathCustomization::BuildFieldPathMenu, static_cast<UStruct*>(StructProp->Struct), Path);
 			MenuBuilder.AddSubMenu(OnFieldSelected, BuildPropertyWidget(FieldProp, DisplayName, ToolTip, bIsFunction), NewMenuDelegate);

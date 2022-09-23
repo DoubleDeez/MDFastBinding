@@ -1,6 +1,6 @@
 ﻿#include "BindingValues/MDFastBindingValue_Property.h"
 
-#define LOCTEXT_NAMESPACE "MDFastBindingDestination_Property"
+#define LOCTEXT_NAMESPACE "MDFastBindingValue_Property"
 
 namespace MDFastBindingValue_Property_Private
 {
@@ -72,7 +72,7 @@ void UMDFastBindingValue_Property::SetupBindingItems()
 	Super::SetupBindingItems();
 
 	EnsureBindingItemExists(MDFastBindingValue_Property_Private::PathRootName
-		, nullptr
+		, GetPathRootProperty()
 		, LOCTEXT("PathRootToolTip", "The root object that has the property to get the value of. (Defaults to 'Self').")
 		, true);
 }

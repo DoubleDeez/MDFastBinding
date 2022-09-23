@@ -6,6 +6,7 @@
 
 DECLARE_DELEGATE_RetVal_OneParam(UObject*, FMDGetFieldPathOwner, UObject*);
 DECLARE_DELEGATE_RetVal(UStruct*, FMDGetFieldPathOwnerStruct);
+DECLARE_DELEGATE_RetVal_OneParam(bool, FMDFilterFieldPathField, const FFieldVariant&);
 
 /**
  * 
@@ -28,7 +29,7 @@ public:
 	bool IsLeafFunction();
 
 	bool IsPropertyValidForPath(const FProperty& Prop) const;
-	static bool IsFunctionValidForPath(const UFunction& Func);
+	bool IsFunctionValidForPath(const UFunction& Func) const;
 	
 	UStruct* GetPathOwnerStruct() const;
 
@@ -40,9 +41,16 @@ public:
 	
 	FMDGetFieldPathOwner OwnerGetter;
 	FMDGetFieldPathOwnerStruct OwnerStructGetter;
+	FMDFilterFieldPathField FieldFilter;
 
 	// Set to true if you're going to be setting the value of the property
 	bool bOnlyAllowBlueprintReadWriteProperties = false;
+
+	// Set to false if you only want to be able to select top-level properties
+	bool bAllowSubProperties = true;
+
+	// Set to false if you only want to allow properties in your field path
+	bool bAllowGetterFunctions = true;
 
 	UPROPERTY(meta = (DeprecatedProperty))
 	TArray<FName> FieldPath;

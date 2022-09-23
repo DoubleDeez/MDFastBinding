@@ -6,12 +6,25 @@
 
 UClass* UMDFastBindingInstance::GetBindingOuterClass() const
 {
-	const UObject* Object = this;
+	if (const UMDFastBindingContainer* BindingContainer = GetBindingContainer())
+	{
+		if (BindingContainer != nullptr)
+		{
+			return BindingContainer->GetOuter()->GetClass();
+		}
+	}
+
+	return nullptr;
+}
+
+UMDFastBindingContainer* UMDFastBindingInstance::GetBindingContainer() const
+{
+	UObject* Object = GetOuter();
 	while (Object != nullptr)
 	{
-		if (Object->IsA<UMDFastBindingContainer>() && Object->GetOuter() != nullptr)
+		if (UMDFastBindingContainer* BindingContainer = Cast<UMDFastBindingContainer>(Object))
 		{
-			return Object->GetOuter()->GetClass();
+			return BindingContainer;
 		}
 
 		Object = Object->GetOuter();
@@ -41,6 +54,25 @@ void UMDFastBindingInstance::TerminateBinding(UObject* SourceObject)
 	if (BindingDestination != nullptr)
 	{
 		BindingDestination->TerminateDestination(SourceObject);
+	}
+}
+
+bool UMDFastBindingInstance::ShouldBindingTick() const
+{
+	if (BindingDestination != nullptr)
+	{
+		return BindingDestination->DoesObjectRequireTick();
+	}
+	
+	return false;
+}
+
+void UMDFastBindingInstance::MarkBindingDirty()
+{
+	if (UMDFastBindingContainer* BindingContainer = GetBindingContainer())
+	{
+		constexpr bool bShouldTick = true;
+		BindingContainer->SetBindingTickPolicy(this, bShouldTick);
 	}
 }
 
@@ -77,6 +109,49 @@ void UMDFastBindingInstance::OnVariableRenamed(UClass* VariableClass, const FNam
 			Destination->OnVariableRenamed(VariableClass, OldVariableName, NewVariableName);
 		}
 	}
+}
+
+bool UMDFastBindingInstance::IsBindingPerformant() const
+{
+	if (BindingDestination != nullptr)
+	{
+		TFunction<bool(UMDFastBindingObject*)> IsBindingObjectPerformant;
+
+		IsBindingObjectPerformant = [&IsBindingObjectPerformant](UMDFastBindingObject* BindingObject) -> bool
+		{
+			if (BindingObject == nullptr)
+			{
+				return true;
+			}
+			
+			const EMDFastBindingUpdateType UpdateType = BindingObject->GetUpdateType();
+			if (UpdateType == EMDFastBindingUpdateType::Once)
+			{
+				// Once doesn't care about their binding items when deciding update frequency
+				return true;
+			}
+
+			if (UpdateType == EMDFastBindingUpdateType::Always)
+			{
+				return false;
+			}
+
+			// IfUpdatesNeeded and EventBased are performant if their binding items are performant
+			for (const FMDFastBindingItem& BindingItem : BindingObject->GetBindingItems())
+			{
+				if (!IsBindingObjectPerformant(BindingItem.Value))
+				{
+					return false;
+				}
+			}
+
+			return true;
+		};
+		
+		return IsBindingObjectPerformant(BindingDestination);
+	}
+
+	return false;
 }
 #endif
 

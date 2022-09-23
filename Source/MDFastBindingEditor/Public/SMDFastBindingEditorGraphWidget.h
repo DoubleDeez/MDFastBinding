@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
+#include "GraphEditor.h"
 #include "Widgets/SCompoundWidget.h"
 
 class UMDFastBindingGraph;
@@ -8,7 +9,8 @@ class UMDFastBindingInstance;
 class UMDFastBindingObject;
 class UMDFastBindingValueBase;
 class UMDFastBindingDestinationBase;
-class SGraphEditor;
+struct FEdGraphSchemaAction;
+struct FGraphActionListBuilderBase;
 
 /**
  * 

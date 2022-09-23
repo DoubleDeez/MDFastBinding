@@ -18,6 +18,8 @@ enum class EMDFastBindingUpdateType
 	// Will only grab the latest value is any of the inputs have changed.
 	// Some values treat this as "Always" (eg. Value_Property) since the only way to know if it changed is to get the value.
 	IfUpdatesNeeded,
+	// User's cannot select EventBased, it is determined by the nature of the binding object (eg. FieldNotify properties)
+	EventBased UMETA(Hidden),
 	// Will grab the latest value until it's successful, then reuses that value in future updates
 	Once
 };
@@ -113,6 +115,10 @@ public:
 	void IncrementExtendablePinCount() { ++ExtendablePinListCount; }
 
 	void RemoveExtendablePinBindingItem(int32 ItemIndex);
+
+	void MarkObjectDirty();
+
+	virtual bool DoesObjectRequireTick() const;
 	
 	const FMDFastBindingItem* FindBindingItemWithValue(const UMDFastBindingValueBase* Value) const;
 	const FMDFastBindingItem* FindBindingItem(const FName& ItemName) const;
@@ -166,6 +172,8 @@ public:
 	virtual TSharedRef<class SWidget> CreateNodeHeaderWidget();
 
 	virtual void OnVariableRenamed(UClass* VariableClass, const FName& OldVariableName, const FName& NewVariableName);
+
+	EMDFastBindingUpdateType GetUpdateType() const { return UpdateType; }
 #endif
 
 protected:
@@ -195,6 +203,9 @@ protected:
 	EMDFastBindingUpdateType UpdateType = EMDFastBindingUpdateType::IfUpdatesNeeded;
 
 private:
+	UPROPERTY(Transient)
+	bool bIsObjectDirty = true;
+	
 	mutable TWeakObjectPtr<UClass> BindingOuterClass;
 	mutable TWeakObjectPtr<UMDFastBindingInstance> OuterBinding;
 };

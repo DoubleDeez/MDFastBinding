@@ -1,13 +1,15 @@
 ﻿#include "MDFastBindingGraphSchema.h"
 
 #include "BlueprintConnectionDrawingPolicy.h"
+#include "BindingDestinations/MDFastBindingDestinationBase.h"
+#include "BindingValues/MDFastBindingValueBase.h"
+#include "BindingValues/MDFastBindingValue_Property.h"
+#include "EdGraphSchema_K2.h"
 #include "MDFastBindingEditorStyle.h"
 #include "MDFastBindingGraph.h"
 #include "MDFastBindingGraphNode.h"
 #include "MDFastBindingInstance.h"
-#include "BindingDestinations/MDFastBindingDestinationBase.h"
-#include "BindingValues/MDFastBindingValueBase.h"
-#include "BindingValues/MDFastBindingValue_Property.h"
+#include "ScopedTransaction.h"
 
 #define LOCTEXT_NAMESPACE "MDFastBindingGraphSchema"
 
@@ -366,20 +368,5 @@ bool UMDFastBindingGraphSchema::RequestVariableDropOnPin(UEdGraph* InGraph, FPro
 	
 	return Super::RequestVariableDropOnPin(InGraph, InVariableToDrop, InPin, InDropPosition, InScreenPosition);
 }
-
-#if ENGINE_MAJOR_VERSION <= 4
-bool UMDFastBindingGraphSchema::IsSelfPin(const UEdGraphPin& Pin) const
-{
-	if (const UMDFastBindingGraphNode* Node = Cast<const UMDFastBindingGraphNode>(Pin.GetOwningNode()))
-	{
-		if (const UMDFastBindingObject* BindingObject = Node->GetBindingObject())
-		{
-			return BindingObject->DoesBindingItemDefaultToSelf(Pin.GetFName());
-		}
-	}
-
-	return Super::IsSelfPin(Pin);
-}
-#endif
 
 #undef LOCTEXT_NAMESPACE

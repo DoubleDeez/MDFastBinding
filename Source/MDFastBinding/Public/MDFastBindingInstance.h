@@ -4,6 +4,7 @@
 #include "UObject/Object.h"
 #include "MDFastBindingInstance.generated.h"
 
+class UMDFastBindingContainer;
 class UMDFastBindingDestinationBase;
 class UMDFastBindingValueBase;
 /**
@@ -16,6 +17,8 @@ class MDFASTBINDING_API UMDFastBindingInstance : public UObject
 
 public:
 	UClass* GetBindingOuterClass() const;
+
+	UMDFastBindingContainer* GetBindingContainer() const;
 	
 	void InitializeBinding(UObject* SourceObject);
 	void UpdateBinding(UObject* SourceObject);
@@ -23,10 +26,17 @@ public:
 
 	UMDFastBindingDestinationBase* GetBindingDestination() const { return BindingDestination; }
 
+	bool ShouldBindingTick() const;
+
+	void MarkBindingDirty();
+
 #if WITH_EDITOR
 	virtual EDataValidationResult IsDataValid(TArray<FText>& ValidationErrors) override;
 
 	void OnVariableRenamed(UClass* VariableClass, const FName& OldVariableName, const FName& NewVariableName);
+
+	// Returns false if any nodes use the `Always` update type
+	bool IsBindingPerformant() const;
 #endif
 	
 #if WITH_EDITORONLY_DATA

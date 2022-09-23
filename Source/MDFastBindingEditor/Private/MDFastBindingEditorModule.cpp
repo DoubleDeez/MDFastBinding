@@ -10,10 +10,13 @@
 #include "MDFastBindingFunctionWrapper.h"
 #include "MDFastBindingFunctionWrapperCustomization.h"
 #include "MDFastBindingInstance.h"
+#include "MDFastBindingObject.h"
+#include "MDFastBindingObjectCustomization.h"
 #include "SMDFastBindingEditorWidget.h"
 #include "PropertyEditorDelegates.h"
 #include "PropertyEditorModule.h"
 #include "Framework/Docking/LayoutExtender.h"
+#include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "Modules/ModuleManager.h"
 #include "Widgets/Docking/SDockTab.h"
@@ -57,6 +60,7 @@ void FMDFastBindingEditorModule::StartupModule()
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	PropertyModule.RegisterCustomPropertyTypeLayout(FMDFastBindingFieldPath::StaticStruct()->GetFName(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FMDFastBindingFieldPathCustomization::MakeInstance));
 	PropertyModule.RegisterCustomPropertyTypeLayout(FMDFastBindingFunctionWrapper::StaticStruct()->GetFName(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FMDFastBindingFunctionWrapperCustomization::MakeInstance));
+	PropertyModule.RegisterCustomClassLayout(UMDFastBindingObject::StaticClass()->GetFName(), FOnGetDetailCustomizationInstance::CreateStatic(&FMDFastBindingObjectCustomization::MakeInstance));
 	
 	FBlueprintEditorModule& BlueprintEditorModule = FModuleManager::LoadModuleChecked<FBlueprintEditorModule>("Kismet");
 	BlueprintEditorModule.GetMenuExtensibilityManager()->GetExtenderDelegates().Add(FAssetEditorExtender::CreateRaw(this, &FMDFastBindingEditorModule::CheckAddBindingEditorToolbarButton));
@@ -72,6 +76,7 @@ void FMDFastBindingEditorModule::ShutdownModule()
 	{
 		PropertyModule->UnregisterCustomPropertyTypeLayout(FMDFastBindingFieldPath::StaticStruct()->GetFName());
 		PropertyModule->UnregisterCustomPropertyTypeLayout(FMDFastBindingFunctionWrapper::StaticStruct()->GetFName());
+		PropertyModule->UnregisterCustomClassLayout(UMDFastBindingObject::StaticClass()->GetFName());
 	}
 	
 	FMDFastBindingEditorStyle::Shutdown();
