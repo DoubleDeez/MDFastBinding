@@ -6,12 +6,16 @@ void FMDFastBindingPropertySetter_Objects::SetProperty(const FProperty& Destinat
 {
 	const FObjectPropertyBase* DestObjProp = CastField<const FObjectPropertyBase>(&DestinationProp);
 	const FObjectPropertyBase* SrcObjProp = CastField<const FObjectPropertyBase>(&SourceProp);
+	const FInterfaceProperty* DestInterfaceProp = CastField<const FInterfaceProperty>(&DestinationProp);
+	const FInterfaceProperty* SrcInterfaceProp = CastField<const FInterfaceProperty>(&SourceProp);
 
-	UObject* ObjectValue = SrcObjProp->GetObjectPropertyValue(SourceValuePtr);
+	UObject* ObjectValue = (SrcObjProp != nullptr) ? SrcObjProp->GetObjectPropertyValue(SourceValuePtr) : SrcInterfaceProp->GetPropertyValue(SourceValuePtr).GetObject();
+	const UClass* SourcePropClass = (SrcObjProp != nullptr) ? SrcObjProp->PropertyClass : SrcInterfaceProp->InterfaceClass;
+	const UClass* DestinationClass = (DestObjProp != nullptr) ? DestObjProp->PropertyClass : DestInterfaceProp->InterfaceClass;
 
 	// Check if the declared types are compatible, if not, check if the actual type is compatible
-	const bool bCanAssign = (SrcObjProp->PropertyClass->IsChildOf(DestObjProp->PropertyClass))
-		|| (ObjectValue != nullptr && ObjectValue->IsA(DestObjProp->PropertyClass));
+	const bool bCanAssign = (SourcePropClass->IsChildOf(DestinationClass))
+		|| (ObjectValue != nullptr && ObjectValue->IsA(DestinationClass));
 	
 	if (bCanAssign)
 	{
@@ -22,9 +26,14 @@ void FMDFastBindingPropertySetter_Objects::SetProperty(const FProperty& Destinat
 		{
 			SoftDestObjProp->CopyCompleteValue(DestinationValuePtr, SourceValuePtr);
 		}
-		else
+		else if (DestObjProp != nullptr)
 		{
 			DestObjProp->SetObjectPropertyValue(DestinationValuePtr, ObjectValue);
+		}
+		else if (DestInterfaceProp != nullptr)
+		{
+			const FScriptInterface& Interface = SrcInterfaceProp->GetPropertyValue(SourceValuePtr);
+			DestInterfaceProp->SetPropertyValue(DestinationValuePtr, FScriptInterface(ObjectValue, Interface.GetInterface()));
 		}
 	}
 	else
@@ -37,5 +46,7 @@ bool FMDFastBindingPropertySetter_Objects::CanSetProperty(const FProperty& Desti
 {
 	const FObjectPropertyBase* DestObjProp = CastField<const FObjectPropertyBase>(&DestinationProp);
 	const FObjectPropertyBase* SrcObjProp = CastField<const FObjectPropertyBase>(&SourceProp);
-	return DestObjProp != nullptr && SrcObjProp != nullptr;
+	const FInterfaceProperty* DestInterfaceProp = CastField<const FInterfaceProperty>(&DestinationProp);
+	const FInterfaceProperty* SrcInterfaceProp = CastField<const FInterfaceProperty>(&SourceProp);
+	return (DestObjProp != nullptr || DestInterfaceProp != nullptr) && (SrcObjProp != nullptr || SrcInterfaceProp != nullptr);
 }
