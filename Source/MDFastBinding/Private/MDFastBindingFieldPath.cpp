@@ -156,7 +156,7 @@ TTuple<const FProperty*, void*> FMDFastBindingFieldPath::ResolvePath(UObject* So
 		}
 	}
 
-	return {};
+	return { GetLeafProperty(), nullptr };
 }
 
 const FProperty* FMDFastBindingFieldPath::GetLeafProperty()
