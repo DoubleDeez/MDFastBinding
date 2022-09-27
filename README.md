@@ -38,3 +38,6 @@ Bindings->TerminateBindings(this);
 7. Checkout the examples in the /Content/Examples folder, here's a screenshot binding 2 health variables to a progress bar widget's percent:
 
 ![Example of binding a health bar percentage](Resources/readme-binding-example.png)
+
+## Performance
+Check out the [Performance](https://github.com/DoubleDeez/MDFastBinding/wiki/Performance) wiki page for details on how to make performant bindings.
