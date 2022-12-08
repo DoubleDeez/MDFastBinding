@@ -1,10 +1,11 @@
 #include "MDFastBinding.h"
 
 #include "Modules/ModuleManager.h"
-#include "UObject/UnrealType.h"
+#include "PropertySetters/MDFastBindingPropertySetter_Colors.h"
 #include "PropertySetters/MDFastBindingPropertySetter_Containers.h"
 #include "PropertySetters/MDFastBindingPropertySetter_Numeric.h"
 #include "PropertySetters/MDFastBindingPropertySetter_Objects.h"
+#include "UObject/UnrealType.h"
 
 #define LOCTEXT_NAMESPACE "FMDFastBindingModule"
 
@@ -13,6 +14,7 @@ void FMDFastBindingModule::StartupModule()
 	AddPropertySetter(MakeShared<FMDFastBindingPropertySetter_Objects>());
 	AddPropertySetter(MakeShared<FMDFastBindingPropertySetter_Containers>());
 	AddPropertySetter(MakeShared<FMDFastBindingPropertySetter_Numeric>());
+	AddPropertySetter(MakeShared<FMDFastBindingPropertySetter_Colors>());
 }
 
 void FMDFastBindingModule::ShutdownModule()
