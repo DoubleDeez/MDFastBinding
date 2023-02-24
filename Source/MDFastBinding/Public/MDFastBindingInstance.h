@@ -6,7 +6,9 @@
 
 class UMDFastBindingContainer;
 class UMDFastBindingDestinationBase;
+class UMDFastBindingObject;
 class UMDFastBindingValueBase;
+
 /**
  * 
  */
@@ -50,6 +52,8 @@ public:
 	FText GetBindingDisplayName() const;
 
 	void SetBindingDisplayName(const FText& InText);
+
+	UMDFastBindingObject* FindBindingObjectWithGUID(const FGuid& Guid) const;
 	
 	UPROPERTY(Instanced)
 	TArray<UMDFastBindingValueBase*> OrphanedValues;
@@ -59,6 +63,11 @@ public:
 
 	UPROPERTY()
 	FString BindingName;
+
+private:
+	UPROPERTY(Transient)
+	mutable TMap<FGuid, TWeakObjectPtr<UMDFastBindingObject>> GuidToBindingObjectMap;
+public:
 #endif
 
 protected:

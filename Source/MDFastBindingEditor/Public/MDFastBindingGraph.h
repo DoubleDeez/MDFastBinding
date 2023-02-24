@@ -24,6 +24,8 @@ public:
 	
 	void SetBinding(UMDFastBindingInstance* InBinding);
 	UMDFastBindingInstance* GetBinding() const { return Binding.Get(); }
+	
+	void SetBindingBeingDebugged(UMDFastBindingInstance* InBinding);
 
 	UMDFastBindingGraphNode* FindNodeWithBindingObject(UMDFastBindingObject* InObject) const;
 	void SelectNodeWithBindingObject(UMDFastBindingObject* InObject);
@@ -32,6 +34,7 @@ public:
 
 private:
 	TWeakObjectPtr<UMDFastBindingInstance> Binding;
+	TWeakObjectPtr<UMDFastBindingInstance> BindingBeingDebugged;
 
 	TWeakPtr<SMDFastBindingEditorGraphWidget> GraphWidget;
 };

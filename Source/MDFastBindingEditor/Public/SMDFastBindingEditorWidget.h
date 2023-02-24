@@ -2,11 +2,13 @@
 
 #include "WorkflowOrientedApp/WorkflowTabFactory.h"
 #include "EditorUndoClient.h"
+#include "UObject/WeakFieldPtr.h"
 
 class UMDFastBindingContainer;
 class UMDFastBindingInstance;
 class FBlueprintEditor;
 class FMenuBuilder;
+class FObjectPropertyBase;
 class IDetailsView;
 class SMDFastBindingEditorGraphWidget;
 
@@ -53,7 +55,12 @@ private:
 	const FSlateBrush* GetBindingPerformanceBrush(TWeakObjectPtr<UMDFastBindingInstance> Binding) const;
 
 	void OnBlueprintCompiled(UBlueprint* Blueprint);
-	
+
+	void UpdateBindingBeingDebugged(UObject* ObjectBeingDebugged, UBlueprint* Blueprint);
+	void UpdateBindingBeingDebugged();
+
+	TWeakPtr<FBlueprintEditor> BlueprintEditor;
+	TWeakFieldPtr<FObjectPropertyBase> BindingContainerProperty;
 	TWeakObjectPtr<UMDFastBindingContainer> BindingContainer;
 	TWeakObjectPtr<UMDFastBindingInstance> SelectedBinding;
 	TWeakObjectPtr<UMDFastBindingInstance> NewBinding;

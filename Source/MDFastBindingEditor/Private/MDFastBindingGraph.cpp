@@ -91,6 +91,18 @@ void UMDFastBindingGraph::SetBinding(UMDFastBindingInstance* InBinding)
 	}
 }
 
+void UMDFastBindingGraph::SetBindingBeingDebugged(UMDFastBindingInstance* InBinding)
+{
+	BindingBeingDebugged = InBinding;
+	for (UEdGraphNode* Node : Nodes)
+	{
+		if (UMDFastBindingGraphNode* BindingNode = Cast<UMDFastBindingGraphNode>(Node))
+		{
+			BindingNode->SetBindingBeingDebugged(InBinding);
+		}
+	}
+}
+
 UMDFastBindingGraphNode* UMDFastBindingGraph::FindNodeWithBindingObject(UMDFastBindingObject* InObject) const
 {
 	for (UEdGraphNode* Node : Nodes)

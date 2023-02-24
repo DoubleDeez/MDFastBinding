@@ -102,6 +102,12 @@ void SMDFastBindingEditorGraphWidget::SetBinding(UMDFastBindingInstance* InBindi
 	GraphObj->SetBinding(InBinding);
 }
 
+void SMDFastBindingEditorGraphWidget::SetBindingBeingDebugged(UMDFastBindingInstance* InBinding)
+{
+	BindingBeingDebugged = InBinding;
+	GraphObj->SetBindingBeingDebugged(InBinding);
+}
+
 void SMDFastBindingEditorGraphWidget::RefreshGraph() const
 {
 	GraphObj->RefreshGraph();

@@ -93,6 +93,26 @@ const FProperty* FMDFastBindingItem::ResolveOutputProperty() const
 	return nullptr;
 }
 
+#if WITH_EDITOR
+TTuple<const FProperty*, void*> FMDFastBindingItem::GetCachedValue() const
+{
+	if (Value != nullptr)
+	{
+		return Value->GetCachedValue();
+	}
+	
+	if (const FProperty* ItemProp = ItemProperty.Get())
+	{
+		if (AllocatedDefaultValue != nullptr)
+		{
+			return TTuple<const FProperty*, void*>{ ItemProp, AllocatedDefaultValue };
+		}
+	}
+
+	return {};
+}
+#endif
+
 UClass* UMDFastBindingObject::GetBindingOuterClass() const
 {
 #if !WITH_EDITOR

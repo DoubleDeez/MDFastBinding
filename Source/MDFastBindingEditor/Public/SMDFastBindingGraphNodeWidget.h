@@ -5,6 +5,8 @@
 #include "SGraphPin.h"
 #include "KismetPins/SGraphPinObject.h"
 
+class SMDFastBindingPinValueInspector;
+class SMDFastBindingGraphNodeWidget;
 class UMDFastBindingGraphNode;
 class UMDFastBindingObject;
 
@@ -36,6 +38,8 @@ public:
 
 	UMDFastBindingObject* GetBindingObject() const;
 
+	UMDFastBindingObject* GetBindingObjectBeingDebugged() const;
+
 protected:
 	virtual void UpdateErrorInfo() override;
 
@@ -47,6 +51,23 @@ protected:
 
 	virtual FReply OnAddPin() override;
 
+	virtual void Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) override;
+
 	bool IsSelfPin(UEdGraphPin& Pin) const;
+
+	void UpdateDebugTooltip(double InCurrentTime);
+
+	void SetDebugTooltipPin(const FGeometry& PinGeometry, UEdGraphPin* Pin, UMDFastBindingObject* DebugObject);
+	void ClearPinDebugTooltip();
+
+	void CalculatePinTooltipLocation(const FVector2D& Offset, FVector2D& OutTooltipLocation);
+
+private:
+	TWeakPtr<FPinValueInspectorTooltip> PinValueInspectorTooltip;
+	TWeakPtr<SMDFastBindingPinValueInspector> PinValueInspectorPtr;
+
+	double UnhoveredTooltipCloseTime = 0.0;
+
+	constexpr static double CloseTooltipGracePeriod = 0.4;
 	
 };

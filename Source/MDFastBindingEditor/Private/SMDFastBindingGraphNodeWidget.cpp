@@ -1,9 +1,12 @@
 ﻿#include "SMDFastBindingGraphNodeWidget.h"
 
+#include "BlueprintEditor.h"
 #include "GraphEditorSettings.h"
+#include "MDFastBindingEditorDebug.h"
 #include "MDFastBindingGraphNode.h"
 #include "MDFastBindingObject.h"
 #include "NodeFactory.h"
+#include "SGraphPanel.h"
 #include "Widgets/SBoxPanel.h"
 
 #define LOCTEXT_NAMESPACE "MDFastBindingGraphNodeWidget"
@@ -34,6 +37,16 @@ UMDFastBindingObject* SMDFastBindingGraphNodeWidget::GetBindingObject() const
 	if (const UMDFastBindingGraphNode* Node = GetGraphNode())
 	{
 		return Node->GetBindingObject();
+	}
+
+	return nullptr;
+}
+
+UMDFastBindingObject* SMDFastBindingGraphNodeWidget::GetBindingObjectBeingDebugged() const
+{
+	if (const UMDFastBindingGraphNode* Node = GetGraphNode())
+	{
+		return Node->GetBindingObjectBeingDebugged();
 	}
 
 	return nullptr;
@@ -130,6 +143,13 @@ FReply SMDFastBindingGraphNodeWidget::OnAddPin()
 	return SGraphNode::OnAddPin();
 }
 
+void SMDFastBindingGraphNodeWidget::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
+{
+	SGraphNode::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
+
+	UpdateDebugTooltip(InCurrentTime);
+}
+
 bool SMDFastBindingGraphNodeWidget::IsSelfPin(UEdGraphPin& Pin) const
 {
 	if (const UMDFastBindingObject* BindingObject = GetBindingObject())
@@ -138,6 +158,154 @@ bool SMDFastBindingGraphNodeWidget::IsSelfPin(UEdGraphPin& Pin) const
 	}
 
 	return false;
+}
+
+void SMDFastBindingGraphNodeWidget::UpdateDebugTooltip(double InCurrentTime)
+{
+	auto IsTooltipHovered = [&]()
+	{
+		if (PinValueInspectorPtr.IsValid())
+		{
+			// The parent of the inspector is the actual tooltip
+			const TSharedPtr<SWidget> ParentWidget = PinValueInspectorPtr.Pin()->GetParentWidget();
+			return ParentWidget.IsValid() && ParentWidget->IsHovered();
+		}
+
+		return false;
+	};
+	
+	if (IsTooltipHovered())
+	{
+		// Don't update while interacting with the tooltip
+		UnhoveredTooltipCloseTime = InCurrentTime + CloseTooltipGracePeriod;
+		return;
+	}
+	
+	if (UMDFastBindingObject* DebugObject = GetBindingObjectBeingDebugged())
+	{
+		for (const TSharedRef<SGraphPin>& Pin : InputPins)
+		{
+			if (Pin->IsHovered())
+			{
+				SetDebugTooltipPin(Pin->GetCachedGeometry(), Pin->GetPinObj(), DebugObject);
+				return;
+			}
+		}
+	}
+
+	// Output pins need to redirect to their connected input since that's where the values are stored
+	for (const TSharedRef<SGraphPin>& Pin : OutputPins)
+	{
+		if (Pin->IsHovered())
+		{
+			if (UEdGraphPin* GraphPin = Pin->GetPinObj())
+			{
+				if (GraphPin->LinkedTo.Num() > 0)
+				{
+					// Binding pins only have a single connection
+					if (UEdGraphPin* LinkedPin = GraphPin->LinkedTo[0])
+					{
+						if (const UMDFastBindingGraphNode* LinkedNode = Cast<UMDFastBindingGraphNode>(LinkedPin->GetOwningNode()))
+						{
+							if (UMDFastBindingObject* DebugObject = LinkedNode->GetBindingObjectBeingDebugged())
+							{
+								SetDebugTooltipPin(Pin->GetCachedGeometry(), LinkedPin, DebugObject);
+								return;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if (PinValueInspectorTooltip.IsValid())
+	{
+		// Close the tooltip after the grace period
+		if (FMath::IsNearlyZero(UnhoveredTooltipCloseTime))
+		{
+			UnhoveredTooltipCloseTime = InCurrentTime + CloseTooltipGracePeriod;
+		}
+		else if (InCurrentTime >= UnhoveredTooltipCloseTime)
+		{
+			ClearPinDebugTooltip();
+		}
+	}
+}
+
+void SMDFastBindingGraphNodeWidget::SetDebugTooltipPin(const FGeometry& PinGeometry, UEdGraphPin* Pin, UMDFastBindingObject* DebugObject)
+{
+	UnhoveredTooltipCloseTime = 0.0;
+	if (!PinValueInspectorTooltip.IsValid() && DebugObject)
+	{
+		const TSharedRef<SMDFastBindingPinValueInspector> PinValueInspector = SNew(SMDFastBindingPinValueInspector);
+		PinValueInspector->SetReferences(Pin, DebugObject);
+		PinValueInspectorPtr = PinValueInspector;
+		PinValueInspectorTooltip = FPinValueInspectorTooltip::SummonTooltip(Pin, PinValueInspector);
+		
+		const TSharedPtr<FPinValueInspectorTooltip> ValueTooltip = PinValueInspectorTooltip.Pin();
+		if (ValueTooltip.IsValid())
+		{
+			// Calculate the offset so that the tooltip appears near the pin vertically
+			FVector2D PinOffset = FVector2D(PinGeometry.AbsolutePosition) / PinGeometry.Scale - GetUnscaledPosition();
+			PinOffset.X = 5.f;
+			PinOffset.Y += PinGeometry.Size.Y * 0.5f;
+			
+			FVector2D TooltipLocation;
+			CalculatePinTooltipLocation(PinOffset, TooltipLocation);
+			ValueTooltip->MoveTooltip(TooltipLocation);
+		}
+	}
+	else if (!DebugObject || (PinValueInspectorPtr.IsValid() && !PinValueInspectorPtr.Pin()->Matches(Pin, DebugObject)))
+	{
+		ClearPinDebugTooltip();
+	}
+}
+
+void SMDFastBindingGraphNodeWidget::ClearPinDebugTooltip()
+{
+	if (PinValueInspectorTooltip.IsValid())
+	{
+		PinValueInspectorTooltip.Pin()->TryDismissTooltip();
+	}
+}
+
+void SMDFastBindingGraphNodeWidget::CalculatePinTooltipLocation(const FVector2D& Offset, FVector2D& OutTooltipLocation)
+{
+	TSharedPtr<SGraphPanel> GraphPanel = GetOwnerPanel();
+	if (GraphPanel.IsValid())
+	{
+		// Reset to the pin's location in graph space.
+		OutTooltipLocation = GetPosition() + Offset;
+		
+		// Shift the desired location to the right edge of the pin's geometry.
+		OutTooltipLocation.X += GetTickSpaceGeometry().Size.X;
+
+		// Align to the first entry in the inspector's tree view.
+		TSharedPtr<FPinValueInspectorTooltip> Inspector = PinValueInspectorTooltip.Pin();
+		if (Inspector.IsValid() && Inspector->ValueInspectorWidget.IsValid())
+		{
+			// Some hacky magic numbers for ease
+			static const float VerticalOffsetWithSearchFilter = 41.0f;
+			static const float VerticalOffsetWithoutSearchFilter = 19.0f;
+
+			if (Inspector->ValueInspectorWidget->ShouldShowSearchFilter())
+			{
+				OutTooltipLocation.Y -= VerticalOffsetWithSearchFilter;
+			}
+			else
+			{
+				OutTooltipLocation.Y -= VerticalOffsetWithoutSearchFilter;
+			}
+		}
+
+		// Convert our desired location from graph coordinates into panel space.
+		OutTooltipLocation -= GraphPanel->GetViewOffset();
+		OutTooltipLocation *= GraphPanel->GetZoomAmount();
+
+		// Finally, convert the modified location from panel space into screen space.
+		OutTooltipLocation = GraphPanel->GetTickSpaceGeometry().LocalToAbsolute(OutTooltipLocation);
+	}
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -30,6 +30,7 @@ public:
 	void Construct(const FArguments& InArgs, UBlueprint* Blueprint);
 
 	void SetBinding(UMDFastBindingInstance* InBinding);
+	void SetBindingBeingDebugged(UMDFastBindingInstance* InBinding);
 
 	void RefreshGraph() const;
 
@@ -73,6 +74,7 @@ private:
 	UMDFastBindingGraph* GraphObj = nullptr;
 
 	TWeakObjectPtr<UMDFastBindingInstance> Binding;
+	TWeakObjectPtr<UMDFastBindingInstance> BindingBeingDebugged;
 
 	TArray<TSubclassOf<UMDFastBindingValueBase>> ValueClasses;
 

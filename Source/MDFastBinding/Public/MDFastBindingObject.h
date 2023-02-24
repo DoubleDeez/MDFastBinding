@@ -83,6 +83,10 @@ public:
 
 	// Resolves wildcard binding items (where ItemProperty is null, the output property of Value is used instead)
 	const FProperty* ResolveOutputProperty() const;
+	
+#if WITH_EDITOR
+	TTuple<const FProperty*, void*> GetCachedValue() const;
+#endif
 
 private:
 	void* AllocatedDefaultValue = nullptr;
@@ -142,6 +146,9 @@ public:
 	
 	UPROPERTY()
 	bool bIsCommentBubbleVisible = false;
+
+	UPROPERTY(VisibleAnywhere, Category = "Debug", AdvancedDisplay)
+	FGuid BindingObjectIdentifier = FGuid::NewGuid();
 
 	virtual FText GetDisplayName();
 	virtual FText GetToolTipText();

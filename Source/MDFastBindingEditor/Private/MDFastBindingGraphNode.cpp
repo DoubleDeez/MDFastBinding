@@ -1,12 +1,13 @@
 ﻿#include "MDFastBindingGraphNode.h"
 
+#include "BindingDestinations/MDFastBindingDestinationBase.h"
+#include "BindingValues/MDFastBindingValueBase.h"
+#include "EdGraphSchema_K2.h"
 #include "MDFastBindingEditorStyle.h"
 #include "MDFastBindingGraph.h"
 #include "MDFastBindingInstance.h"
 #include "MDFastBindingObject.h"
 #include "SMDFastBindingGraphNodeWidget.h"
-#include "BindingDestinations/MDFastBindingDestinationBase.h"
-#include "BindingValues/MDFastBindingValueBase.h"
 
 #define LOCTEXT_NAMESPACE "MDFastBindingGraphNode"
 
@@ -27,6 +28,21 @@ void UMDFastBindingGraphNode::SetBindingObject(UMDFastBindingObject* InObject)
 		NodeComment = InObject->DevComment;
 		bCommentBubbleVisible = InObject->bIsCommentBubbleVisible;
 	}
+}
+
+void UMDFastBindingGraphNode::SetBindingBeingDebugged(UMDFastBindingInstance* InBinding)
+{
+	BindingBeingDebugged = InBinding;
+}
+
+UMDFastBindingObject* UMDFastBindingGraphNode::GetBindingObjectBeingDebugged() const
+{
+	if (BindingObject.IsValid() && BindingBeingDebugged.IsValid())
+	{
+		return BindingBeingDebugged->FindBindingObjectWithGUID(BindingObject->BindingObjectIdentifier);
+	}
+
+	return nullptr;
 }
 
 void UMDFastBindingGraphNode::ClearConnection(const FName& PinName)

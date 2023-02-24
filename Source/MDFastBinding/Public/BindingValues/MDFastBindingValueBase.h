@@ -19,6 +19,9 @@ public:
 	void TerminateValue(UObject* SourceObject);
 	
 	TTuple<const FProperty*, void*> GetValue(UObject* SourceObject, bool& OutDidUpdate);
+#if WITH_EDITOR
+	TTuple<const FProperty*, void*> GetCachedValue() const { return CachedValue; }
+#endif
 	
 	virtual bool CheckNeedsUpdate() const override;
 

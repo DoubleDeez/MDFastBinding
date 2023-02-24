@@ -4,6 +4,7 @@
 #include "EdGraph/EdGraphNode.h"
 #include "MDFastBindingGraphNode.generated.h"
 
+class UMDFastBindingInstance;
 class UMDFastBindingObject;
 
 /**
@@ -23,6 +24,9 @@ public:
 
 	UMDFastBindingObject* GetBindingObject() const { return BindingObject.Get(); }
 	UMDFastBindingObject* GetCopiedBindingObject() const { return CopiedObject; }
+	
+	void SetBindingBeingDebugged(UMDFastBindingInstance* InBinding);
+	UMDFastBindingObject* GetBindingObjectBeingDebugged() const;
 
 	void ClearConnection(const FName& PinName);
 
@@ -57,6 +61,7 @@ protected:
 
 private:
 	TWeakObjectPtr<UMDFastBindingObject> BindingObject;
+	TWeakObjectPtr<UMDFastBindingInstance> BindingBeingDebugged;
 
 	UPROPERTY()
 	UMDFastBindingObject* CopiedObject = nullptr;

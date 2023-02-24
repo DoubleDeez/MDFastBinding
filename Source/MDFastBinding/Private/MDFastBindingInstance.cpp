@@ -233,4 +233,81 @@ void UMDFastBindingInstance::SetBindingDisplayName(const FText& InText)
 	Modify();
 	BindingName = InText.ToString();
 }
+
+UMDFastBindingObject* UMDFastBindingInstance::FindBindingObjectWithGUID(const FGuid& Guid) const
+{
+	if (GuidToBindingObjectMap.Contains(Guid))
+	{
+		if (UMDFastBindingObject* Object = GuidToBindingObjectMap[Guid].Get())
+		{
+			return Object;
+		}
+	}
+
+	auto CheckObject = [&](UMDFastBindingObject* Object)
+	{
+		if (Object != nullptr && Object->BindingObjectIdentifier == Guid)
+		{
+			GuidToBindingObjectMap.Add(Guid, Object);
+			return true;
+		}
+
+		return false;
+	};
+	
+	// Traverse the tree of nodes connected to BindingDestination
+	if (BindingDestination != nullptr)
+	{
+		TFunction<UMDFastBindingObject*(UMDFastBindingObject*)> CheckBindingNodeTree;
+
+		CheckBindingNodeTree = [&](UMDFastBindingObject* BindingObject) -> UMDFastBindingObject*
+		{
+			if (BindingObject == nullptr)
+			{
+				return nullptr;
+			}
+
+			if (CheckObject(BindingObject))
+			{
+				return BindingObject;
+			}
+
+			for (const FMDFastBindingItem& BindingItem : BindingObject->GetBindingItems())
+			{
+				if (UMDFastBindingObject* FoundObject = CheckBindingNodeTree(BindingItem.Value))
+				{
+					return FoundObject;
+				}
+			}
+
+			return nullptr;
+		};
+		
+		if (UMDFastBindingObject* FoundObject = CheckBindingNodeTree(BindingDestination))
+		{
+			return FoundObject;
+		}
+	}
+	
+	// Check if the object is an orphan / inactive destination 
+	{
+		for (UMDFastBindingValueBase* Orphan : OrphanedValues)
+		{
+			if (CheckObject(Orphan))
+			{
+				return Orphan;
+			}
+		}
+
+		for (UMDFastBindingDestinationBase* InactiveDestination : InactiveDestinations)
+		{
+			if (CheckObject(InactiveDestination))
+			{
+				return InactiveDestination;
+			}
+		}
+	}
+
+	return nullptr;
+}
 #endif

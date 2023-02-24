@@ -181,6 +181,8 @@ class FMDFastBindingDestinationClassFilter : public IClassViewerFilter
 
 void SMDFastBindingEditorWidget::Construct(const FArguments&, const TWeakPtr<FBlueprintEditor> InBlueprintEditor)
 {
+	BlueprintEditor = InBlueprintEditor;
+	
 	FDetailsViewArgs DetailsViewArgs;
 	DetailsViewArgs.bLockable = false;
 	DetailsViewArgs.bShowPropertyMatrixButton = false;
@@ -191,6 +193,7 @@ void SMDFastBindingEditorWidget::Construct(const FArguments&, const TWeakPtr<FBl
 	UBlueprint* Blueprint = InBlueprintEditor.Pin()->GetBlueprintObj();
 	AssignBindingData(Blueprint->GeneratedClass);
 	Blueprint->OnCompiled().AddSP(this, &SMDFastBindingEditorWidget::OnBlueprintCompiled);
+	Blueprint->OnSetObjectBeingDebugged().AddSP(this, &SMDFastBindingEditorWidget::UpdateBindingBeingDebugged, Blueprint);
 	
 	BindingListView = SNew(SListView<TWeakObjectPtr<UMDFastBindingInstance>>)
 		.ListItemsSource(&Bindings)
@@ -202,6 +205,8 @@ void SMDFastBindingEditorWidget::Construct(const FArguments&, const TWeakPtr<FBl
 	BindingGraphWidget = SNew(SMDFastBindingEditorGraphWidget, Blueprint)
 		.OnSelectionChanged(this, &SMDFastBindingEditorWidget::OnGraphSelectionChanged);
 	BindingGraphWidget->SetBinding(GetSelectedBinding());
+	
+	UpdateBindingBeingDebugged(Blueprint->GetObjectBeingDebugged(), Blueprint);
 	
 	ChildSlot
 	[
@@ -280,6 +285,7 @@ void SMDFastBindingEditorWidget::RefreshGraph() const
 
 void SMDFastBindingEditorWidget::AssignBindingData(UClass* BindingOwnerClass)
 {
+	BindingContainerProperty.Reset();
 	BindingContainer.Reset();
 
 	if (BindingOwnerClass != nullptr)
@@ -290,6 +296,7 @@ void SMDFastBindingEditorWidget::AssignBindingData(UClass* BindingOwnerClass)
 			{
 				if (UObject* BindingOwnerCDO = BindingOwnerClass->GetDefaultObject())
 				{
+					BindingContainerProperty = *It;
 					if (UMDFastBindingContainer* Container = Cast<UMDFastBindingContainer>(It->GetObjectPropertyValue_InContainer(BindingOwnerCDO)))
 					{
 						BindingContainer = Container;
@@ -321,6 +328,8 @@ void SMDFastBindingEditorWidget::SelectBinding(UMDFastBindingInstance* InBinding
 	{
 		BindingListView->SetSelection(InBinding);
 	}
+
+	UpdateBindingBeingDebugged();
 }
 
 UMDFastBindingContainer* SMDFastBindingEditorWidget::GetSelectedBindingContainer() const
@@ -574,6 +583,42 @@ void SMDFastBindingEditorWidget::OnBlueprintCompiled(UBlueprint* Blueprint)
 	if (Bindings.IsValidIndex(SelectedIndex))
 	{
 		SelectBinding(Bindings[SelectedIndex].Get());
+	}
+}
+
+void SMDFastBindingEditorWidget::UpdateBindingBeingDebugged(UObject* ObjectBeingDebugged, UBlueprint* Blueprint)
+{
+	if (!BindingGraphWidget.IsValid())
+	{
+		return;
+	}
+	
+	if (Blueprint != nullptr && ObjectBeingDebugged != nullptr && ObjectBeingDebugged->GetClass() == Blueprint->GeneratedClass && BindingContainerProperty.IsValid())
+	{
+		// Find the debugged binding container
+		if (UMDFastBindingContainer* Container = Cast<UMDFastBindingContainer>(BindingContainerProperty->GetObjectPropertyValue_InContainer(ObjectBeingDebugged)))
+		{
+			const int32 SelectedIndex = Bindings.IndexOfByKey(SelectedBinding);
+			if (Container->GetBindings().IsValidIndex(SelectedIndex))
+			{
+				BindingGraphWidget->SetBindingBeingDebugged(Container->GetBindings()[SelectedIndex]);
+				return;
+			}
+		}
+	}
+
+	// Fallback to clearing the debugged object
+	BindingGraphWidget->SetBindingBeingDebugged(nullptr);
+}
+
+void SMDFastBindingEditorWidget::UpdateBindingBeingDebugged()
+{
+	if (BlueprintEditor.IsValid())
+	{
+		if (UBlueprint* Blueprint = BlueprintEditor.Pin()->GetBlueprintObj())
+		{
+			UpdateBindingBeingDebugged(Blueprint->GetObjectBeingDebugged(), Blueprint);
+		}
 	}
 }
 
