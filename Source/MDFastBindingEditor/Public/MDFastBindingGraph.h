@@ -26,7 +26,8 @@ public:
 	UMDFastBindingInstance* GetBinding() const { return Binding.Get(); }
 	
 	void SetBindingBeingDebugged(UMDFastBindingInstance* InBinding);
-
+	UMDFastBindingInstance* GetBindingBeingDebugged() const { return BindingBeingDebugged.Get(); }
+	
 	UMDFastBindingGraphNode* FindNodeWithBindingObject(UMDFastBindingObject* InObject) const;
 	void SelectNodeWithBindingObject(UMDFastBindingObject* InObject);
 

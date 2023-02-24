@@ -7,6 +7,9 @@
 #include "BindingValues/MDFastBindingValueBase.h"
 #include "UObject/TextProperty.h"
 
+#if WITH_EDITORONLY_DATA
+#include "Misc/App.h"
+#endif
 #if WITH_EDITOR
 #include "Widgets/Text/STextBlock.h"
 #endif
@@ -28,7 +31,14 @@ TTuple<const FProperty*, void*> FMDFastBindingItem::GetValue(UObject* SourceObje
 	
 	if (Value != nullptr)
 	{
-		return Value->GetValue(SourceObject, OutDidUpdate);
+		const TTuple<const FProperty*, void*> Result = Value->GetValue(SourceObject, OutDidUpdate);
+#if WITH_EDITORONLY_DATA
+		if (OutDidUpdate)
+		{
+			LastUpdateTime = FApp::GetCurrentTime();
+		}
+#endif
+		return Result;
 	}
 	
 	if (!bAllowDefaults)
@@ -48,6 +58,12 @@ TTuple<const FProperty*, void*> FMDFastBindingItem::GetValue(UObject* SourceObje
 	}
 
 	OutDidUpdate = !bHasRetrievedDefaultValue;
+#if WITH_EDITORONLY_DATA
+	if (OutDidUpdate)
+	{
+		LastUpdateTime = FApp::GetCurrentTime();
+	}
+#endif
 	if (ItemProp->IsA<FStrProperty>())
 	{
 		bHasRetrievedDefaultValue = true;

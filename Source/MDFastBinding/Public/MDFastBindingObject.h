@@ -54,6 +54,11 @@ public:
 	UPROPERTY()
 	FName ExtendablePinListNameBase = NAME_None;
 
+#if WITH_EDITORONLY_DATA
+	UPROPERTY(Transient)
+	double LastUpdateTime = 0.0;
+#endif
+
 	FText ToolTip;
 
 	TWeakFieldPtr<const FProperty> ItemProperty;

@@ -5,6 +5,7 @@
 #include "BindingValues/MDFastBindingValueBase.h"
 #include "BindingValues/MDFastBindingValue_Property.h"
 #include "EdGraphSchema_K2.h"
+#include "MDFastBindingConnectionDrawingPolicy.h"
 #include "MDFastBindingEditorStyle.h"
 #include "MDFastBindingGraph.h"
 #include "MDFastBindingGraphNode.h"
@@ -153,7 +154,7 @@ FConnectionDrawingPolicy* UMDFastBindingGraphSchema::CreateConnectionDrawingPoli
 	int32 InFrontLayerID, float InZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements,
 	UEdGraph* InGraphObj) const
 {
-	return new FKismetConnectionDrawingPolicy(InBackLayerID, InFrontLayerID, InZoomFactor, InClippingRect, InDrawElements, InGraphObj);
+	return new FMDFastBindingConnectionDrawingPolicy(InBackLayerID, InFrontLayerID, InZoomFactor, InClippingRect, InDrawElements, InGraphObj);
 }
 
 void UMDFastBindingGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const
