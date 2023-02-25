@@ -3,6 +3,7 @@
 #include "BlueprintEditor.h"
 #include "GraphEditorSettings.h"
 #include "MDFastBindingEditorDebug.h"
+#include "MDFastBindingEditorStyle.h"
 #include "MDFastBindingGraphNode.h"
 #include "MDFastBindingObject.h"
 #include "NodeFactory.h"
@@ -148,6 +149,38 @@ void SMDFastBindingGraphNodeWidget::Tick(const FGeometry& AllottedGeometry, cons
 	SGraphNode::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
 
 	UpdateDebugTooltip(InCurrentTime);
+}
+
+void SMDFastBindingGraphNodeWidget::GetOverlayBrushes(bool bSelected, const FVector2D WidgetSize, TArray<FOverlayBrushInfo>& Brushes) const
+{
+	if (const UMDFastBindingObject* BindingObject = GetBindingObject())
+	{
+		FOverlayBrushInfo UpdateTypeBrush;
+
+		switch (BindingObject->GetUpdateType())
+		{
+		case EMDFastBindingUpdateType::Once:
+			UpdateTypeBrush.Brush = FMDFastBindingEditorStyle::Get().GetBrush(TEXT("Icon.UpdateType.Once"));
+			break;
+		case EMDFastBindingUpdateType::EventBased:
+			UpdateTypeBrush.Brush = FMDFastBindingEditorStyle::Get().GetBrush(TEXT("Icon.UpdateType.EventBased"));
+			break;
+		case EMDFastBindingUpdateType::IfUpdatesNeeded:
+			UpdateTypeBrush.Brush = FMDFastBindingEditorStyle::Get().GetBrush(TEXT("Icon.UpdateType.IfUpdatesNeeded"));
+			break;
+		case EMDFastBindingUpdateType::Always:
+			UpdateTypeBrush.Brush = FMDFastBindingEditorStyle::Get().GetBrush(TEXT("Icon.UpdateType.Always"));
+			break;
+		}
+
+		if (UpdateTypeBrush.Brush != nullptr)
+		{
+			UpdateTypeBrush.OverlayOffset.X = (WidgetSize.X - (UpdateTypeBrush.Brush->ImageSize.X / 2.f)) - 3.f;
+			UpdateTypeBrush.OverlayOffset.Y = (UpdateTypeBrush.Brush->ImageSize.Y / -2.f) + 2.f;
+		}
+		
+		Brushes.Add(UpdateTypeBrush);
+	}
 }
 
 bool SMDFastBindingGraphNodeWidget::IsSelfPin(UEdGraphPin& Pin) const

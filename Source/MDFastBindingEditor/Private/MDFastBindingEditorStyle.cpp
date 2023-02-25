@@ -41,6 +41,7 @@ FName FMDFastBindingEditorStyle::GetStyleSetName()
 
 const FVector2D Icon16x16(16.0f, 16.0f);
 const FVector2D Icon24x24(24.0f, 24.0f);
+const FVector2D Icon32x32(32.0f, 32.0f);
 
 TSharedRef<FSlateStyleSet> FMDFastBindingEditorStyle::Create()
 {
@@ -50,6 +51,10 @@ TSharedRef<FSlateStyleSet> FMDFastBindingEditorStyle::Create()
 	Style->Set(TEXT("Icon.FastBinding_24x"), new IMAGE_BRUSH(TEXT("FastBindingIcon_24x"), Icon24x24));
 	Style->Set(TEXT("Icon.Clock"), new IMAGE_BRUSH(TEXT("ClockIcon_16x"), Icon16x16));
 	Style->Set(TEXT("Icon.Flame"), new IMAGE_BRUSH(TEXT("FlameIcon_16x"), Icon16x16));
+	Style->Set(TEXT("Icon.UpdateType.Once"), new IMAGE_BRUSH(TEXT("UpdateTypeOnceIcon_32x"), Icon32x32));
+	Style->Set(TEXT("Icon.UpdateType.EventBased"), new IMAGE_BRUSH(TEXT("UpdateTypeEventBasedIcon_32x"), Icon32x32));
+	Style->Set(TEXT("Icon.UpdateType.IfUpdatesNeeded"), new IMAGE_BRUSH(TEXT("UpdateTypeIfUpdatesNeededIcon_32x"), Icon32x32));
+	Style->Set(TEXT("Icon.UpdateType.Always"), new IMAGE_BRUSH(TEXT("UpdateTypeAlwaysIcon_32x"), Icon32x32));
 
 	Style->Set(TEXT("Background.Selector"), new FSlateColorBrush(FStyleColors::Select.GetSpecifiedColor() * 0.5f));
 	Style->Set(TEXT("Background.SelectorInactive"), new FSlateColorBrush(FLinearColor::Transparent));
