@@ -15,6 +15,8 @@ class MDFASTBINDING_API UMDFastBindingValueBase : public UMDFastBindingObject
 	GENERATED_BODY()
 
 public:
+	virtual void BeginDestroy() override;
+	
 	void InitializeValue(UObject* SourceObject);
 	void TerminateValue(UObject* SourceObject);
 	

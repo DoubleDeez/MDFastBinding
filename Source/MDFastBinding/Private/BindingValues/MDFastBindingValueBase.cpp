@@ -1,5 +1,16 @@
 ﻿#include "BindingValues/MDFastBindingValueBase.h"
 
+void UMDFastBindingValueBase::BeginDestroy()
+{
+	Super::BeginDestroy();
+	
+	if (CachedValue.Value != nullptr)
+	{
+		FMemory::Free(CachedValue.Value);
+		CachedValue.Value = nullptr;
+	}
+}
+
 void UMDFastBindingValueBase::InitializeValue(UObject* SourceObject)
 {
 	SetupBindingItems_Internal();
@@ -35,11 +46,16 @@ TTuple<const FProperty*, void*> UMDFastBindingValueBase::GetValue(UObject* Sourc
 			return Value;
 		}
 
-		if (CachedValue.Key == nullptr || CachedValue.Value == nullptr || !CachedValue.Key->Identical(CachedValue.Value, Value.Value))
+		if (CachedValue.Key == nullptr || CachedValue.Value == nullptr)
 		{
 			CachedValue.Key = Value.Key;
 			CachedValue.Value = FMemory::Malloc(CachedValue.Key->GetSize(), CachedValue.Key->GetMinAlignment());
 			CachedValue.Key->InitializeValue(CachedValue.Value);
+			CachedValue.Key->CopyCompleteValue(CachedValue.Value, Value.Value);
+			OutDidUpdate = true;
+		}
+		else if (!CachedValue.Key->Identical(CachedValue.Value, Value.Value))
+		{
 			CachedValue.Key->CopyCompleteValue(CachedValue.Value, Value.Value);
 			OutDidUpdate = true;
 		}
