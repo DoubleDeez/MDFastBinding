@@ -19,12 +19,7 @@ void UMDFastBindingGraph::RefreshGraph()
 
 void UMDFastBindingGraph::SetBinding(UMDFastBindingInstance* InBinding)
 {
-	TArray<UEdGraphNode*> NodesCopy = Nodes;
-	for (UEdGraphNode* Node : NodesCopy)
-	{
-		RemoveNode(Node);
-	}
-
+	Nodes.Empty();
 	Binding = InBinding;
 
 	if (InBinding == nullptr)
@@ -58,7 +53,12 @@ void UMDFastBindingGraph::SetBinding(UMDFastBindingInstance* InBinding)
 						{
 							if (UEdGraphPin* ConnectedPin = ConnectedNode->FindPin(UMDFastBindingGraphNode::OutputPinName, EGPD_Output))
 							{
-								Pin->MakeLinkTo(ConnectedPin);
+								// Don't use Pin->MakeLinkTo as that will mark our widget package dirty which we don't want
+								if (!Pin->LinkedTo.Contains(ConnectedPin))
+								{
+									Pin->LinkedTo.Add(ConnectedPin);
+									ConnectedPin->LinkedTo.Add(Pin);
+								}
 							}
 						}
 					}
