@@ -54,6 +54,7 @@ public:
 	void SetBindingDisplayName(const FText& InText);
 
 	UMDFastBindingObject* FindBindingObjectWithGUID(const FGuid& Guid) const;
+	TArray<UMDFastBindingObject*> GatherAllBindingObjects() const;
 	
 	UPROPERTY(Instanced)
 	TArray<UMDFastBindingValueBase*> OrphanedValues;

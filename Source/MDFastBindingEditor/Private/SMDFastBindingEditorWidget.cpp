@@ -5,7 +5,9 @@
 #include "ClassViewerModule.h"
 #include "Kismet2/SClassPickerDialog.h"
 #include "MDFastBindingContainer.h"
+#include "MDFastBindingEditorDebug.h"
 #include "MDFastBindingEditorModule.h"
+#include "MDFastBindingEditorPersistantData.h"
 #include "MDFastBindingEditorStyle.h"
 #include "MDFastBindingGraphNode.h"
 #include "MDFastBindingInstance.h"
@@ -194,6 +196,7 @@ void SMDFastBindingEditorWidget::Construct(const FArguments&, const TWeakPtr<FBl
 	AssignBindingData(Blueprint->GeneratedClass);
 	Blueprint->OnCompiled().AddSP(this, &SMDFastBindingEditorWidget::OnBlueprintCompiled);
 	Blueprint->OnSetObjectBeingDebugged().AddSP(this, &SMDFastBindingEditorWidget::UpdateBindingBeingDebugged, Blueprint);
+
 	
 	BindingListView = SNew(SListView<TWeakObjectPtr<UMDFastBindingInstance>>)
 		.ListItemsSource(&Bindings)
@@ -208,6 +211,11 @@ void SMDFastBindingEditorWidget::Construct(const FArguments&, const TWeakPtr<FBl
 	
 	UpdateBindingBeingDebugged(Blueprint->GetObjectBeingDebugged(), Blueprint);
 	
+	WatchList = SNew(SMDFastBindingWatchList);
+	WatchList->SetReferences(GetSelectedBinding(), BindingBeingDebugged.Get());
+
+	UMDFastBindingEditorPersistantData::Get().OnWatchListChanged.AddSP(WatchList.Get(), &SMDFastBindingWatchList::RefreshList);
+	
 	ChildSlot
 	[
 		SNew(SSplitter)
@@ -215,34 +223,93 @@ void SMDFastBindingEditorWidget::Construct(const FArguments&, const TWeakPtr<FBl
 		.MinSize(350.f)
 		.Value(0.15f)
 		[
-			SAssignNew(DetailSwitcher, SWidgetSwitcher)
-			+SWidgetSwitcher::Slot()
-			.Padding(4.f)
+			SNew(SSplitter)
+			.Orientation(Orient_Vertical)
+			+SSplitter::Slot()
+			.Value(0.5f)
+			[
+				SAssignNew(DetailSwitcher, SWidgetSwitcher)
+				+SWidgetSwitcher::Slot()
+				.Padding(4.f)
+				[
+					SNew(SVerticalBox)
+					+SVerticalBox::Slot()
+					.HAlign(HAlign_Fill)
+					.VAlign(VAlign_Top)
+					.AutoHeight()
+					[
+						SNew(STextBlock).Text(LOCTEXT("BindingListLabel", "Bindings:"))
+					]
+					+SVerticalBox::Slot()
+					.HAlign(HAlign_Fill)
+					.VAlign(VAlign_Fill)
+					.FillHeight(1.f)
+					.Padding(0.f, 4.f)
+					[
+						BindingListView.ToSharedRef()
+					]
+					+SVerticalBox::Slot()
+					.HAlign(HAlign_Fill)
+					.VAlign(VAlign_Top)
+					.AutoHeight()
+					[
+						SNew(SButton)
+						.HAlign(HAlign_Center)
+						.OnClicked(this, &SMDFastBindingEditorWidget::OnAddBinding)
+						[
+							SNew(SHorizontalBox)
+							+SHorizontalBox::Slot()
+							.HAlign(HAlign_Left)
+							.VAlign(VAlign_Center)
+							.AutoWidth()
+							.Padding(0, 0, 4.f, 0)
+							[
+								SNew(SImage)
+								.Image(FAppStyle::Get().GetBrush(TEXT("EditableComboBox.Add")))
+							]
+							+SHorizontalBox::Slot()
+							.HAlign(HAlign_Left)
+							.VAlign(VAlign_Center)
+							.AutoWidth()
+							[
+								SNew(STextBlock).Text(LOCTEXT("AddBindingButtonLabel", "Add Binding"))
+							]
+						]
+					]
+				]
+				+SWidgetSwitcher::Slot()
+				[
+					DetailsView.ToSharedRef()
+				]
+			]	
+			+SSplitter::Slot()
+			.Value(0.5f)
 			[
 				SNew(SVerticalBox)
 				+SVerticalBox::Slot()
 				.HAlign(HAlign_Fill)
 				.VAlign(VAlign_Top)
 				.AutoHeight()
+				.Padding(4.f)
 				[
-					SNew(STextBlock).Text(LOCTEXT("BindingListLabel", "Bindings:"))
+					SNew(STextBlock).Text(LOCTEXT("WatchListLabel", "Watched Pins:"))
 				]
 				+SVerticalBox::Slot()
 				.HAlign(HAlign_Fill)
 				.VAlign(VAlign_Fill)
 				.FillHeight(1.f)
-				.Padding(0.f, 4.f)
 				[
-					BindingListView.ToSharedRef()
+					WatchList.ToSharedRef()
 				]
 				+SVerticalBox::Slot()
 				.HAlign(HAlign_Fill)
 				.VAlign(VAlign_Top)
 				.AutoHeight()
+				.Padding(4.f)
 				[
 					SNew(SButton)
 					.HAlign(HAlign_Center)
-					.OnClicked(this, &SMDFastBindingEditorWidget::OnAddBinding)
+					.OnClicked(this, &SMDFastBindingEditorWidget::OnClearWatches)
 					[
 						SNew(SHorizontalBox)
 						+SHorizontalBox::Slot()
@@ -252,21 +319,17 @@ void SMDFastBindingEditorWidget::Construct(const FArguments&, const TWeakPtr<FBl
 						.Padding(0, 0, 4.f, 0)
 						[
 							SNew(SImage)
-							.Image(FAppStyle::Get().GetBrush(TEXT("EditableComboBox.Add")))
+							.Image(FAppStyle::Get().GetBrush(TEXT("GenericCommands.Delete")))
 						]
 						+SHorizontalBox::Slot()
 						.HAlign(HAlign_Left)
 						.VAlign(VAlign_Center)
 						.AutoWidth()
 						[
-							SNew(STextBlock).Text(LOCTEXT("AddBindingButtonLabel", "Add Binding"))
+							SNew(STextBlock).Text(LOCTEXT("ClearWatchesButtonLabel", "Clear Watches"))
 						]
 					]
-				]
-			]
-			+SWidgetSwitcher::Slot()
-			[
-				DetailsView.ToSharedRef()
+				]	
 			]
 		]
 		+SSplitter::Slot()
@@ -588,11 +651,7 @@ void SMDFastBindingEditorWidget::OnBlueprintCompiled(UBlueprint* Blueprint)
 
 void SMDFastBindingEditorWidget::UpdateBindingBeingDebugged(UObject* ObjectBeingDebugged, UBlueprint* Blueprint)
 {
-	if (!BindingGraphWidget.IsValid())
-	{
-		return;
-	}
-	
+	BindingBeingDebugged.Reset();
 	if (Blueprint != nullptr && ObjectBeingDebugged != nullptr && ObjectBeingDebugged->GetClass() == Blueprint->GeneratedClass && BindingContainerProperty.IsValid())
 	{
 		// Find the debugged binding container
@@ -601,14 +660,23 @@ void SMDFastBindingEditorWidget::UpdateBindingBeingDebugged(UObject* ObjectBeing
 			const int32 SelectedIndex = Bindings.IndexOfByKey(SelectedBinding);
 			if (Container->GetBindings().IsValidIndex(SelectedIndex))
 			{
-				BindingGraphWidget->SetBindingBeingDebugged(Container->GetBindings()[SelectedIndex]);
-				return;
+				BindingBeingDebugged = Container->GetBindings()[SelectedIndex];
 			}
 		}
 	}
 
-	// Fallback to clearing the debugged object
-	BindingGraphWidget->SetBindingBeingDebugged(nullptr);
+	
+
+	if (WatchList.IsValid())
+	{
+		WatchList->SetReferences(GetSelectedBinding(), BindingBeingDebugged.Get());
+		WatchList->RefreshList();
+	}
+	
+	if (BindingGraphWidget.IsValid())
+	{
+		BindingGraphWidget->SetBindingBeingDebugged(BindingBeingDebugged.Get());
+	}
 }
 
 void SMDFastBindingEditorWidget::UpdateBindingBeingDebugged()
@@ -620,6 +688,22 @@ void SMDFastBindingEditorWidget::UpdateBindingBeingDebugged()
 			UpdateBindingBeingDebugged(Blueprint->GetObjectBeingDebugged(), Blueprint);
 		}
 	}
+}
+
+FReply SMDFastBindingEditorWidget::OnClearWatches()
+{
+	if (const UMDFastBindingInstance* Binding = GetSelectedBinding())
+	{
+		for (const UMDFastBindingObject* Object : Binding->GatherAllBindingObjects())
+		{
+			if (Object != nullptr)
+			{
+				UMDFastBindingEditorPersistantData::Get().RemoveNodeFromWatchList(Object->BindingObjectIdentifier);
+			}
+		}
+	}
+	
+	return FReply::Handled();
 }
 
 const FName FMDFastBindingEditorSummoner::TabId = TEXT("MDFastBindingID");

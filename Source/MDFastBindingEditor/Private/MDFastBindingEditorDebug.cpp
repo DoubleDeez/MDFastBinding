@@ -2,11 +2,14 @@
 
 #include "BlueprintEditor.h"
 #include "EdGraphSchema_K2.h"
+#include "Framework/MultiBox/MultiBoxBuilder.h"
+#include "MDFastBindingEditorPersistantData.h"
+#include "MDFastBindingInstance.h"
 #include "MDFastBindingObject.h"
 #include "Kismet2/KismetDebugUtilities.h"
 
 
-bool FMDFastBindingDebugLineItem::HasChildren() const
+bool FMDFastBindingDebugLineItemBase::HasChildren() const
 {
 	if (!CachedChildren.IsSet())
 	{
@@ -14,6 +17,107 @@ bool FMDFastBindingDebugLineItem::HasChildren() const
 	}
 		
 	return CachedChildren.GetValue().Num() > 0;
+}
+
+void FMDFastBindingDebugLineItemBase::GatherChildrenBase(TArray<FDebugTreeItemPtr>& OutChildren, const FString& InSearchString, bool bRespectSearch)
+{
+	if (!CachedChildren.IsSet())
+	{
+		UpdateCachedChildren();
+	}
+
+	OutChildren.Append(CachedChildren.GetValue());
+}
+
+void FMDFastBindingWatchedObjectNodeLineItem::RefreshWatchedObject(UMDFastBindingObject* Object)
+{
+	bIsObjectDirty = WatchedObjectPtr.Get() != Object;
+	WatchedObjectPtr = Object;
+	UpdateCachedChildren();
+}
+
+void FMDFastBindingWatchedObjectNodeLineItem::UpdateCachedChildren() const
+{
+	CachedChildren = TArray<FDebugTreeItemPtr>();
+	
+	if (UMDFastBindingObject* WatchedObject = WatchedObjectPtr.Get())
+	{
+		TArray<FName> WatchedPins;
+		UMDFastBindingEditorPersistantData::Get().GatherWatchedPins(WatchedObject->BindingObjectIdentifier, WatchedPins);
+
+		// Remove unwatched pins
+		for (auto It = CachedPins.CreateIterator(); It; ++It)
+		{
+			if (!WatchedPins.Contains(It.Key()))
+			{
+				It.RemoveCurrent();
+			}
+		}
+
+		// Add newly watched pins
+		for (const FName& Pin : WatchedPins)
+		{
+			if (!CachedPins.Contains(Pin))
+			{
+				const TSharedPtr<FMDFastBindingItemDebugLineItem> Item = MakeShared<FMDFastBindingItemDebugLineItem>(WatchedObject, Pin);
+				CachedPins.Add(Pin, Item);
+			}
+			else if (bIsObjectDirty)
+			{
+				const TSharedPtr<FMDFastBindingItemDebugLineItem> Item = StaticCastSharedPtr<FMDFastBindingItemDebugLineItem>(CachedPins[Pin]);
+				Item->RefreshDebugObject(WatchedObject);
+			}
+		}
+	}
+
+	bIsObjectDirty = false;
+	CachedPins.GenerateValueArray(CachedChildren.GetValue());
+}
+
+UObject* FMDFastBindingWatchedObjectNodeLineItem::GetParentObject()
+{
+	return WatchedObjectPtr.Get();
+}
+
+void FMDFastBindingWatchedObjectNodeLineItem::ExtendContextMenu(FMenuBuilder& MenuBuilder, bool bInDebuggerTab)
+{
+	FMDFastBindingDebugLineItemBase::ExtendContextMenu(MenuBuilder, bInDebuggerTab);
+
+	MenuBuilder.AddMenuEntry(
+		INVTEXT("Remove Watch"),
+		INVTEXT("Remove this object from the Watch window"),
+		FSlateIcon(),
+		FUIAction(
+			FExecuteAction::CreateWeakLambda(WatchedObjectPtr.Get(), [Obj = WatchedObjectPtr]()
+			{
+				if (const UMDFastBindingObject* WatchedObject = Obj.Get())
+				{
+					UMDFastBindingEditorPersistantData::Get().RemoveNodeFromWatchList(WatchedObject->BindingObjectIdentifier);
+				}
+			}),
+			FCanExecuteAction()
+		)
+	);
+}
+
+FText FMDFastBindingWatchedObjectNodeLineItem::GetDisplayName() const
+{
+	if (UMDFastBindingObject* WatchedObject = WatchedObjectPtr.Get())
+	{
+		return WatchedObject->DevName.IsEmptyOrWhitespace() ? WatchedObject->GetClass()->GetDisplayNameText() : WatchedObject->DevName;
+	}
+	
+	return INVTEXT("[Invalid]");
+}
+
+FText FMDFastBindingWatchedObjectNodeLineItem::GetDescription() const
+{
+	if (UMDFastBindingObject* WatchedObject = WatchedObjectPtr.Get())
+	{
+		return WatchedObject->GetDisplayName();
+	}
+	
+	return INVTEXT("[Invalid]");
 }
 
 TSharedRef<SWidget> FMDFastBindingDebugLineItem::GetNameIcon()
@@ -44,16 +148,6 @@ TSharedRef<SWidget> FMDFastBindingDebugLineItem::GenerateValueWidget(TSharedPtr<
 	return SNew(STextBlock)
 		.Text(this, &FMDFastBindingDebugLineItem::GetDisplayValue)
 		.ToolTipText(this, &FMDFastBindingDebugLineItem::GetDisplayValue);
-}
-
-void FMDFastBindingDebugLineItem::GatherChildrenBase(TArray<FDebugTreeItemPtr>& OutChildren, const FString& InSearchString, bool bRespectSearch)
-{
-	if (!CachedChildren.IsSet())
-	{
-		UpdateCachedChildren();
-	}
-
-	OutChildren.Append(CachedChildren.GetValue());
 }
 
 const FProperty* FMDFastBindingDebugLineItem::GetItemProperty() const
@@ -150,7 +244,18 @@ void FMDFastBindingDebugLineItem::UpdateCachedChildren() const
 				if (const FProperty* ChildProp = *It)
 				{
 					void* ChildValuePtr = PropertyValue != nullptr ? ChildProp->ContainerPtrToValuePtr<void>(PropertyValue) : nullptr;
-					CachedChildren.GetValue().Add(MakeShared<FMDFastBindingPropertyDebugLineItem>(ChildProp, ChildValuePtr));
+					if (!CachedPropertyItems.Contains(ChildProp->GetFName()))
+					{
+						CachedPropertyItems.Add(ChildProp->GetFName(), MakeShared<FMDFastBindingPropertyDebugLineItem>(ChildProp, ChildValuePtr));
+					}
+					else
+					{
+						TSharedPtr<FMDFastBindingPropertyDebugLineItem> Item = StaticCastSharedPtr<FMDFastBindingPropertyDebugLineItem>(CachedPropertyItems[ChildProp->GetFName()]);
+						if (Item->GetValuePtr() != ChildValuePtr)
+						{
+							Item->UpdateValuePtr(ChildValuePtr);
+						}
+					}
 				}
 			}
 		}
@@ -163,7 +268,19 @@ void FMDFastBindingDebugLineItem::UpdateCachedChildren() const
 				{
 					void* ChildValuePtr = Helper.GetRawPtr(i);
 					const FText ElementDisplayName = FText::Format(INVTEXT("[{0}]"), FText::AsNumber(i));
-					CachedChildren.GetValue().Add(MakeShared<FMDFastBindingPropertyDebugLineItem>(ArrayProp->Inner, ChildValuePtr, ElementDisplayName));
+					const FName PropertyName = *FString::Printf(TEXT("%d"), i);
+					if (!CachedPropertyItems.Contains(PropertyName))
+					{
+						CachedPropertyItems.Add(PropertyName, MakeShared<FMDFastBindingPropertyDebugLineItem>(ArrayProp->Inner, ChildValuePtr, ElementDisplayName));
+					}
+					else
+					{
+						TSharedPtr<FMDFastBindingPropertyDebugLineItem> Item = StaticCastSharedPtr<FMDFastBindingPropertyDebugLineItem>(CachedPropertyItems[PropertyName]);
+						if (Item->GetValuePtr() != ChildValuePtr)
+						{
+							Item->UpdateValuePtr(ChildValuePtr);
+						}
+					}
 				}
 			}
 		}
@@ -176,7 +293,19 @@ void FMDFastBindingDebugLineItem::UpdateCachedChildren() const
 				{
 					void* ChildValuePtr = Helper.GetElementPtr(i);
 					const FText ElementDisplayName = FText::Format(INVTEXT("[{0}]"), FText::AsNumber(i));
-					CachedChildren.GetValue().Add(MakeShared<FMDFastBindingPropertyDebugLineItem>(SetProp->ElementProp, ChildValuePtr, ElementDisplayName));
+					const FName PropertyName = *FString::Printf(TEXT("%d"), i);
+					if (!CachedPropertyItems.Contains(PropertyName))
+					{
+						CachedPropertyItems.Add(PropertyName, MakeShared<FMDFastBindingPropertyDebugLineItem>(SetProp->ElementProp, ChildValuePtr, ElementDisplayName));
+					}
+					else
+					{
+						TSharedPtr<FMDFastBindingPropertyDebugLineItem> Item = StaticCastSharedPtr<FMDFastBindingPropertyDebugLineItem>(CachedPropertyItems[PropertyName]);
+						if (Item->GetValuePtr() != ChildValuePtr)
+						{
+							Item->UpdateValuePtr(ChildValuePtr);
+						}
+					}
 				}
 			}
 		}
@@ -190,16 +319,48 @@ void FMDFastBindingDebugLineItem::UpdateCachedChildren() const
 					// Key
 					void* ChildKeyPtr = Helper.GetKeyPtr(i);
 					const FText KeyDisplayName = FText::Format(INVTEXT("Key[{0}]"), FText::AsNumber(i));
-					CachedChildren.GetValue().Add(MakeShared<FMDFastBindingPropertyDebugLineItem>(MapProp->KeyProp, ChildKeyPtr, KeyDisplayName));
+					const FName KeyPropertyName = *FString::Printf(TEXT("Key[%d]"), i);
+					if (!CachedPropertyItems.Contains(KeyPropertyName))
+					{
+						CachedPropertyItems.Add(KeyPropertyName, MakeShared<FMDFastBindingPropertyDebugLineItem>(MapProp->KeyProp, ChildKeyPtr, KeyDisplayName));
+					}
+					else
+					{
+						TSharedPtr<FMDFastBindingPropertyDebugLineItem> Item = StaticCastSharedPtr<FMDFastBindingPropertyDebugLineItem>(CachedPropertyItems[KeyPropertyName]);
+						if (Item->GetValuePtr() != ChildKeyPtr)
+						{
+							Item->UpdateValuePtr(ChildKeyPtr);
+						}
+					}
 
 					// Value
 					void* ChildValuePtr = Helper.GetValuePtr(i);
 					const FText ValueDisplayName = FText::Format(INVTEXT("Value[{0}]"), FText::AsNumber(i));
-					CachedChildren.GetValue().Add(MakeShared<FMDFastBindingPropertyDebugLineItem>(MapProp->ValueProp, ChildValuePtr, KeyDisplayName));
+					const FName ValuePropertyName = *FString::Printf(TEXT("Value[%d]"), i);
+					if (!CachedPropertyItems.Contains(ValuePropertyName))
+					{
+						CachedPropertyItems.Add(ValuePropertyName, MakeShared<FMDFastBindingPropertyDebugLineItem>(MapProp->ValueProp, ChildValuePtr, ValueDisplayName));
+					}
+					else
+					{
+						TSharedPtr<FMDFastBindingPropertyDebugLineItem> Item = StaticCastSharedPtr<FMDFastBindingPropertyDebugLineItem>(CachedPropertyItems[ValuePropertyName]);
+						if (Item->GetValuePtr() != ChildValuePtr)
+						{
+							Item->UpdateValuePtr(ChildValuePtr);
+						}
+					}
 				}
 			}
 		}
 	}
+	
+	CachedPropertyItems.GenerateValueArray(CachedChildren.GetValue());
+}
+
+void FMDFastBindingItemDebugLineItem::RefreshDebugObject(UMDFastBindingObject* DebugObject)
+{
+	DebugObjectPtr = DebugObject;
+	CachedChildren.Reset();
 }
 
 const FMDFastBindingItem* FMDFastBindingItemDebugLineItem::GetBindingItem() const
@@ -239,6 +400,62 @@ TTuple<const FProperty*, void*> FMDFastBindingItemDebugLineItem::GetPropertyInst
 	return {};
 }
 
+UObject* FMDFastBindingItemDebugLineItem::GetParentObject()
+{
+	return DebugObjectPtr.Get();
+}
+
+void FMDFastBindingItemDebugLineItem::ExtendContextMenu(FMenuBuilder& MenuBuilder, bool bInDebuggerTab)
+{
+	FMDFastBindingDebugLineItem::ExtendContextMenu(MenuBuilder, bInDebuggerTab);
+
+	if (const UMDFastBindingObject* DebugObject = DebugObjectPtr.Get())
+	{
+		if (UMDFastBindingEditorPersistantData::Get().IsPinBeingWatched(DebugObject->BindingObjectIdentifier, ItemName))
+		{
+			MenuBuilder.AddMenuEntry(
+				INVTEXT("Remove Watch"),
+				INVTEXT("Remove this pin from the Watch window"),
+				FSlateIcon(),
+				FUIAction(
+					FExecuteAction::CreateWeakLambda(DebugObject, [Obj = DebugObjectPtr, PinName = ItemName]()
+					{
+						if (const UMDFastBindingObject* DebugObject = Obj.Get())
+						{
+							UMDFastBindingEditorPersistantData::Get().RemovePinFromWatchList(DebugObject->BindingObjectIdentifier, PinName);
+						}
+					}),
+					FCanExecuteAction()
+				)
+			);
+		}
+		else
+		{
+			MenuBuilder.AddMenuEntry(
+				INVTEXT("Add Watch"),
+				INVTEXT("Add this pin to the Watch window"),
+				FSlateIcon(),
+				FUIAction(
+					FExecuteAction::CreateWeakLambda(DebugObject, [Obj = DebugObjectPtr, PinName = ItemName]()
+					{
+						if (const UMDFastBindingObject* DebugObject = Obj.Get())
+						{
+							UMDFastBindingEditorPersistantData::Get().AddPinToWatchList(DebugObject->BindingObjectIdentifier, PinName);
+						}
+					}),
+					FCanExecuteAction()
+				)
+			);
+		}
+	}
+}
+
+
+void FMDFastBindingPropertyDebugLineItem::UpdateValuePtr(void* InValuePtr)
+{
+	ValuePtr = InValuePtr;
+	CachedChildren.Reset();
+}
 
 TTuple<const FProperty*, void*> FMDFastBindingPropertyDebugLineItem::GetPropertyInstance() const
 {
@@ -262,5 +479,54 @@ void SMDFastBindingPinValueInspector::PopulateTreeView()
 	{
 		const TSharedPtr<FMDFastBindingItemDebugLineItem> Item = MakeShared<FMDFastBindingItemDebugLineItem>(DebugObject, PinName);
 		AddTreeItemUnique(Item);
+	}
+}
+
+void SMDFastBindingWatchList::SetReferences(UMDFastBindingInstance* InCDOBinding, UMDFastBindingInstance* InDebugBinding)
+{
+	CDOBinding = InCDOBinding;
+	DebugBinding = InDebugBinding;
+}
+
+void SMDFastBindingWatchList::RefreshList()
+{
+	// Hack to refresh the list since it's not exposed
+	SetPinRef({});
+}
+
+void SMDFastBindingWatchList::PopulateTreeView()
+{
+	// Fallback to CDO binding so we can still see a list while not debugging
+	bIsDebugging = DebugBinding.IsValid();
+	if (const UMDFastBindingInstance* Binding = bIsDebugging ? DebugBinding.Get() : CDOBinding.Get())
+	{
+		const TArray<UMDFastBindingObject*> Objects = Binding->GatherAllBindingObjects();
+		for (UMDFastBindingObject* Object : Objects)
+		{
+			if (UMDFastBindingEditorPersistantData::Get().IsNodeBeingWatched(Object->BindingObjectIdentifier))
+			{
+				TSharedPtr<FMDFastBindingWatchedObjectNodeLineItem>& Item = TreeItems.FindOrAdd(Object->BindingObjectIdentifier);
+				if (!Item.IsValid())
+				{
+					Item = MakeShared<FMDFastBindingWatchedObjectNodeLineItem>(Object);
+				}
+				else
+				{
+					Item->RefreshWatchedObject(Object);
+				}
+				
+				AddTreeItemUnique(Item);
+			}
+		}
+	}
+}
+
+void SMDFastBindingWatchList::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
+{
+	SPinValueInspector::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
+
+	if (bIsDebugging && !DebugBinding.IsValid())
+	{
+		RefreshList();
 	}
 }

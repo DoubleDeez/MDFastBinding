@@ -68,6 +68,15 @@ UMDFastBindingInstance* UMDFastBindingContainer::DuplicateBinding(UMDFastBinding
 	{
 		if (UMDFastBindingInstance* NewBinding = DuplicateObject<UMDFastBindingInstance>(InBinding, this, NAME_None))
 		{
+			// Init unique identifiers for all of the objects
+			for (UMDFastBindingObject* Object : NewBinding->GatherAllBindingObjects())
+			{
+				if (Object != nullptr)
+				{
+					Object->BindingObjectIdentifier = FGuid::NewGuid();
+				}
+			}
+			
 			Bindings.Insert(NewBinding, CurrentIdx + 1);
 			return NewBinding;
 		}

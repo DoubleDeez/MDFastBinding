@@ -153,7 +153,7 @@ public:
 	bool bIsCommentBubbleVisible = false;
 
 	UPROPERTY(VisibleAnywhere, Category = "Debug", AdvancedDisplay)
-	FGuid BindingObjectIdentifier = FGuid::NewGuid();
+	FGuid BindingObjectIdentifier;
 
 	virtual FText GetDisplayName();
 	virtual FText GetToolTipText();

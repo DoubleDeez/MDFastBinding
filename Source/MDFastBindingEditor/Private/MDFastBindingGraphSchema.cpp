@@ -181,7 +181,7 @@ void UMDFastBindingGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder&
 	}
 }
 
-void UMDFastBindingGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNotifcation) const
+void UMDFastBindingGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNotification) const
 {
 	auto OrphanValue = [](UMDFastBindingGraphNode* Node, const FName& BindingName)
 	{
@@ -209,7 +209,7 @@ void UMDFastBindingGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSend
 		}
 	}
 	
-	Super::BreakPinLinks(TargetPin, bSendsNodeNotifcation);
+	Super::BreakPinLinks(TargetPin, bSendsNodeNotification);
 }
 
 const FPinConnectionResponse UMDFastBindingGraphSchema::CanCreateConnection(const UEdGraphPin* A, const UEdGraphPin* B) const

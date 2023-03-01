@@ -310,4 +310,40 @@ UMDFastBindingObject* UMDFastBindingInstance::FindBindingObjectWithGUID(const FG
 
 	return nullptr;
 }
+
+TArray<UMDFastBindingObject*> UMDFastBindingInstance::GatherAllBindingObjects() const
+{
+	TArray<UMDFastBindingObject*> Result;
+	
+	TArray<UMDFastBindingObject*> NextNodes;
+	if (UMDFastBindingDestinationBase* BindingDest = GetBindingDestination())
+	{
+		NextNodes.Add(BindingDest);		
+	}
+	NextNodes.Append(OrphanedValues);
+	NextNodes.Append(InactiveDestinations);
+	
+	while (NextNodes.Num() > 0)
+	{
+		TArray<UMDFastBindingObject*> CurrentNodes = MoveTemp(NextNodes);
+		NextNodes.Empty();
+
+		while (CurrentNodes.Num() > 0)
+		{
+			UMDFastBindingObject* Node = CurrentNodes[0];
+			CurrentNodes.RemoveAt(0);
+			Result.Add(Node);
+			
+			for (const FMDFastBindingItem& Item : Node->GetBindingItems())
+			{
+				if (Item.Value != nullptr)
+				{
+					NextNodes.Add(Item.Value);
+				}
+			}
+		}
+	}
+
+	return Result;
+}
 #endif

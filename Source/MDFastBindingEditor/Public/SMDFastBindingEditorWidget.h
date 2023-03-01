@@ -11,6 +11,7 @@ class FMenuBuilder;
 class FObjectPropertyBase;
 class IDetailsView;
 class SMDFastBindingEditorGraphWidget;
+class SMDFastBindingWatchList;
 
 typedef TSet<class UObject*> FGraphPanelSelectionSet;
 
@@ -58,18 +59,22 @@ private:
 
 	void UpdateBindingBeingDebugged(UObject* ObjectBeingDebugged, UBlueprint* Blueprint);
 	void UpdateBindingBeingDebugged();
+	
+	FReply OnClearWatches();
 
 	TWeakPtr<FBlueprintEditor> BlueprintEditor;
 	TWeakFieldPtr<FObjectPropertyBase> BindingContainerProperty;
 	TWeakObjectPtr<UMDFastBindingContainer> BindingContainer;
 	TWeakObjectPtr<UMDFastBindingInstance> SelectedBinding;
 	TWeakObjectPtr<UMDFastBindingInstance> NewBinding;
+	TWeakObjectPtr<UMDFastBindingInstance> BindingBeingDebugged;
 	TArray<TWeakObjectPtr<UMDFastBindingInstance>> Bindings;
 	TSharedPtr<IDetailsView> DetailsView;
 	TSharedPtr<SWidgetSwitcher> DetailSwitcher;
 	
 	TSharedPtr<SListView<TWeakObjectPtr<UMDFastBindingInstance>>> BindingListView;
 	TSharedPtr<SMDFastBindingEditorGraphWidget> BindingGraphWidget;
+	TSharedPtr<SMDFastBindingWatchList> WatchList;
 
 	friend class SBindingRow;
 };

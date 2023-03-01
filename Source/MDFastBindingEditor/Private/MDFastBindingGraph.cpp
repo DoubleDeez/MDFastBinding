@@ -32,37 +32,14 @@ void UMDFastBindingGraph::SetBinding(UMDFastBindingInstance* InBinding)
 		return;
 	}
 
-	// Construct Nodes
-	TArray<UMDFastBindingObject*> NextNodes;
-	if (UMDFastBindingDestinationBase* BindingDest = InBinding->GetBindingDestination())
-	{
-		NextNodes.Add(BindingDest);		
-	}
-	NextNodes.Append(InBinding->OrphanedValues);
-	NextNodes.Append(InBinding->InactiveDestinations);
-	while (NextNodes.Num() > 0)
-	{
-		TArray<UMDFastBindingObject*> CurrentNodes = MoveTemp(NextNodes);
-		NextNodes.Empty();
+	const TArray<UMDFastBindingObject*> Objects = Binding->GatherAllBindingObjects();
 
-		while (CurrentNodes.Num() > 0)
-		{
-			UMDFastBindingObject* Node = CurrentNodes[0];
-			CurrentNodes.RemoveAt(0);
-			
-			for (const FMDFastBindingItem& Item : Node->GetBindingItems())
-			{
-				if (Item.Value != nullptr)
-				{
-					NextNodes.Add(Item.Value);
-				}
-			}
-
-			UMDFastBindingGraphNode* NewNode = Cast<UMDFastBindingGraphNode>(CreateNode(UMDFastBindingGraphNode::StaticClass(), false));
-			NewNode->CreateNewGuid();
-			NewNode->SetBindingObject(Node);
-			NewNode->AllocateDefaultPins();
-		}
+	for (UMDFastBindingObject* Object : Objects)
+	{
+		UMDFastBindingGraphNode* NewNode = Cast<UMDFastBindingGraphNode>(CreateNode(UMDFastBindingGraphNode::StaticClass(), false));
+		NewNode->CreateNewGuid();
+		NewNode->SetBindingObject(Object);
+		NewNode->AllocateDefaultPins();
 	}
 
 	// Form pin connections

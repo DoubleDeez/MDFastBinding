@@ -222,7 +222,6 @@ UMDFastBindingInstance* UMDFastBindingObject::GetOuterBinding() const
 
 bool UMDFastBindingObject::CheckNeedsUpdate() const
 {
-	
 	if (UpdateType != EMDFastBindingUpdateType::Always)
 	{
 		if (UpdateType == EMDFastBindingUpdateType::Once)
@@ -364,7 +363,15 @@ void UMDFastBindingObject::PostLoad()
 {
 	Super::PostLoad();
 
+#if WITH_EDITORONLY_DATA
+	if (!BindingObjectIdentifier.IsValid())
+	{
+		BindingObjectIdentifier = FGuid::NewGuid();
+	}
+#endif
+	
 	SetupBindingItems_Internal();
+	
 }
 
 void UMDFastBindingObject::PostInitProperties()

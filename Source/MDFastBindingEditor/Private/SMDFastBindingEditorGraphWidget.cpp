@@ -11,6 +11,7 @@
 #include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "HAL/PlatformApplicationMisc.h"
 #include "MDFastBindingEditorCommands.h"
+#include "MDFastBindingEditorPersistantData.h"
 #include "MDFastBindingGraph.h"
 #include "MDFastBindingGraphNode.h"
 #include "MDFastBindingGraphSchema.h"
@@ -230,6 +231,63 @@ FActionMenuContent SMDFastBindingEditorGraphWidget::OnCreateNodeOrPinMenu(UEdGra
 						);
 					}
 				}
+
+				// Pin debugging actions
+				{
+					// Outputs don't have values to watch, so instead watch the pin we're linked to
+					const UEdGraphPin* EffectivePin = [&]() -> const UEdGraphPin*
+					{
+						if (InGraphPin->Direction == EGPD_Input)
+						{
+							return InGraphPin;
+						}
+
+						if (InGraphPin->LinkedTo.Num() > 0)
+						{
+							return InGraphPin->LinkedTo[0];
+						}
+
+						return nullptr;
+					}();
+		
+					const UEdGraphNode* EffectiveNode = EffectivePin != nullptr ? EffectivePin->GetOwningNode() : nullptr;
+					if (const UMDFastBindingGraphNode* Node = Cast<UMDFastBindingGraphNode>(EffectiveNode))
+					{
+						if (const UMDFastBindingObject* EffectiveBindingObject = Node->GetBindingObject())
+						{
+							if (UMDFastBindingEditorPersistantData::Get().IsPinBeingWatched(EffectiveBindingObject->BindingObjectIdentifier, EffectivePin->PinName))
+							{
+								MenuBuilder->AddMenuEntry(
+									FText::Format(LOCTEXT("MDFastBindingEditor_RemovePinWatch", "Remove '{0}' from Watch List"), FText::FromName(EffectivePin->PinName)),
+									LOCTEXT("MDFastBindingEditor_RemovePinWatchTooltip", "Remove this pin from the watch window"),
+									FSlateIcon(),
+									FUIAction(
+										FExecuteAction::CreateLambda([NodeID = EffectiveBindingObject->BindingObjectIdentifier, PinName = EffectivePin->PinName]()
+										{
+											UMDFastBindingEditorPersistantData::Get().RemovePinFromWatchList(NodeID, PinName);
+										}),
+										FCanExecuteAction()
+									)
+								);
+							}
+							else
+							{
+								MenuBuilder->AddMenuEntry(
+									FText::Format(LOCTEXT("MDFastBindingEditor_AddPinWatch", "Add '{0}' to Watch List"), FText::FromName(EffectivePin->PinName)),
+									LOCTEXT("MDFastBindingEditor_AddPinWatchTooltip", "Add this pin from the watch window"),
+									FSlateIcon(),
+									FUIAction(
+									FExecuteAction::CreateLambda([NodeID = EffectiveBindingObject->BindingObjectIdentifier, PinName = EffectivePin->PinName]()
+										{
+											UMDFastBindingEditorPersistantData::Get().AddPinToWatchList(NodeID, PinName);
+										}),
+										FCanExecuteAction()
+									)
+								);
+							}
+						}
+					}
+				}
 			}
 		}
 	}
@@ -409,6 +467,11 @@ void SMDFastBindingEditorGraphWidget::PasteNodes() const
 		{
 			for (UMDFastBindingObject* BindingObject : BindingObjects)
 			{
+				if (BindingObject != nullptr)
+				{
+					BindingObject->BindingObjectIdentifier = FGuid::NewGuid();
+				}
+				
 				if (UMDFastBindingDestinationBase* BindingDest = Cast<UMDFastBindingDestinationBase>(BindingObject))
 				{
 					NewObjects.Add(BindingPtr->SetDestination(BindingDest));
