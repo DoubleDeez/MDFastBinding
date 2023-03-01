@@ -21,6 +21,7 @@
 #include "ScopedTransaction.h"
 #include "UObject/StrongObjectPtr.h"
 #include "UObject/UObjectIterator.h"
+#include "Widgets/Input/SEditableTextBox.h"
 
 #define LOCTEXT_NAMESPACE "SMDFastBindingEditorGraphWidget"
 
@@ -181,7 +182,8 @@ FActionMenuContent SMDFastBindingEditorGraphWidget::OnCreateActionMenu(UEdGraph*
 						.OnActionSelected(this, &SMDFastBindingEditorGraphWidget::OnActionSelected, InNodePosition, InDraggedPins)
 						.OnCollectAllActions(this, &SMDFastBindingEditorGraphWidget::CollectAllActions, InDraggedPins)
 						.DraggedFromPins(InDraggedPins)
-						.GraphObj(GraphObj);
+						.GraphObj(GraphObj)
+						.AutoExpandActionMenu(true);
 	
 	return FActionMenuContent(
 		SNew(SBorder)
@@ -193,7 +195,8 @@ FActionMenuContent SMDFastBindingEditorGraphWidget::OnCreateActionMenu(UEdGraph*
 			[
 				ActionMenu
 			]
-		]);
+		],
+		ActionMenu->GetFilterTextBox());
 }
 
 FActionMenuContent SMDFastBindingEditorGraphWidget::OnCreateNodeOrPinMenu(UEdGraph* CurrentGraph, const UEdGraphNode* InGraphNode, const UEdGraphPin* InGraphPin, FMenuBuilder* MenuBuilder, bool bIsDebugging)
