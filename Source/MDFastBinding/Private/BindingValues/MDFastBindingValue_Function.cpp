@@ -180,6 +180,11 @@ void UMDFastBindingValue_Function::OnVariableRenamed(UClass* VariableClass, cons
 
 	Function.OnVariableRenamed(VariableClass, OldVariableName, NewVariableName);
 }
+
+UFunction* UMDFastBindingValue_Function::GetFunction()
+{
+	return Function.GetFunctionPtr();
+}
 #endif
 
 #undef LOCTEXT_NAMESPACE

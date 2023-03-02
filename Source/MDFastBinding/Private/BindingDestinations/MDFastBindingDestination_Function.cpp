@@ -145,6 +145,11 @@ void UMDFastBindingDestination_Function::OnVariableRenamed(UClass* VariableClass
 
 	Function.OnVariableRenamed(VariableClass, OldVariableName, NewVariableName);
 }
+
+UFunction* UMDFastBindingDestination_Function::GetFunction()
+{
+	return Function.GetFunctionPtr();
+}
 #endif
 
 #if WITH_EDITORONLY_DATA
