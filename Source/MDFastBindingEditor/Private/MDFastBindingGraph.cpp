@@ -1,5 +1,6 @@
 ﻿#include "MDFastBindingGraph.h"
 
+#include "GraphEditAction.h"
 #include "MDFastBindingGraphNode.h"
 #include "MDFastBindingInstance.h"
 #include "MDFastBindingObject.h"
@@ -28,6 +29,11 @@ void UMDFastBindingGraph::SetBinding(UMDFastBindingInstance* InBinding)
 	}
 
 	const TArray<UMDFastBindingObject*> Objects = Binding->GatherAllBindingObjects();
+	if (Objects.IsEmpty())
+	{
+		NotifyGraphChanged(FEdGraphEditAction(EEdGraphActionType::GRAPHACTION_Default, this, nullptr, false));
+		return;
+	}
 
 	for (UMDFastBindingObject* Object : Objects)
 	{
