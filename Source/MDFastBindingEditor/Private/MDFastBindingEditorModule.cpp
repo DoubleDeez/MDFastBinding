@@ -4,6 +4,8 @@
 #include "BlueprintEditorTabs.h"
 #include "LevelEditor.h"
 #include "MDFastBindingContainer.h"
+#include "MDFastBindingDesignerExtension.h"
+#include "MDFastBindingEditorConfig.h"
 #include "MDFastBindingEditorStyle.h"
 #include "MDFastBindingFieldPath.h"
 #include "MDFastBindingFieldPathCustomization.h"
@@ -15,10 +17,12 @@
 #include "SMDFastBindingEditorWidget.h"
 #include "PropertyEditorDelegates.h"
 #include "PropertyEditorModule.h"
+#include "UMGEditorModule.h"
 #include "Framework/Docking/LayoutExtender.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "Modules/ModuleManager.h"
+#include "WidgetBlueprint.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "WorkflowOrientedApp/WorkflowTabManager.h"
 
@@ -63,7 +67,11 @@ void FMDFastBindingEditorModule::StartupModule()
 	PropertyModule.RegisterCustomClassLayout(UMDFastBindingObject::StaticClass()->GetFName(), FOnGetDetailCustomizationInstance::CreateStatic(&FMDFastBindingObjectCustomization::MakeInstance));
 	
 	FBlueprintEditorModule& BlueprintEditorModule = FModuleManager::LoadModuleChecked<FBlueprintEditorModule>("Kismet");
-	BlueprintEditorModule.GetMenuExtensibilityManager()->GetExtenderDelegates().Add(FAssetEditorExtender::CreateRaw(this, &FMDFastBindingEditorModule::CheckAddBindingEditorToolbarButton));
+	BlueprintEditorModule.GetMenuExtensibilityManager()->GetExtenderDelegates().Add(FAssetEditorExtender::CreateRaw(this, &FMDFastBindingEditorModule::CheckAddBindingEditorToolbarButtons));
+
+	DesignerExtensionFactory = FMDFastBindingDesignerExtension::MakeFactory();
+	IUMGEditorModule& UMGEditorInterface = FModuleManager::GetModuleChecked<IUMGEditorModule>("UMGEditor");
+	UMGEditorInterface.GetDesignerExtensibilityManager()->AddDesignerExtensionFactory(DesignerExtensionFactory.ToSharedRef());
 
 	RenameHandle = FBlueprintEditorUtils::OnRenameVariableReferencesEvent.AddRaw(this, &FMDFastBindingEditorModule::OnRenameVariable);
 }
@@ -78,13 +86,19 @@ void FMDFastBindingEditorModule::ShutdownModule()
 		PropertyModule->UnregisterCustomPropertyTypeLayout(FMDFastBindingFunctionWrapper::StaticStruct()->GetFName());
 		PropertyModule->UnregisterCustomClassLayout(UMDFastBindingObject::StaticClass()->GetFName());
 	}
+
+	if (IUMGEditorModule* UMGEditorInterface = FModuleManager::GetModulePtr<IUMGEditorModule>("UMGEditor"))
+	{
+		UMGEditorInterface->GetDesignerExtensibilityManager()->RemoveDesignerExtensionFactory(DesignerExtensionFactory.ToSharedRef());
+	}
 	
 	FMDFastBindingEditorStyle::Shutdown();
 
 	TabBinding.Reset();
+	DesignerExtensionFactory.Reset();
 }
 
-TSharedRef<FExtender> FMDFastBindingEditorModule::CheckAddBindingEditorToolbarButton(
+TSharedRef<FExtender> FMDFastBindingEditorModule::CheckAddBindingEditorToolbarButtons(
 	const TSharedRef<FUICommandList> Commands, const TArray<UObject*> Objects) const
 {
 	TSharedRef<FExtender> Extender = MakeShareable(new FExtender());
@@ -94,22 +108,41 @@ TSharedRef<FExtender> FMDFastBindingEditorModule::CheckAddBindingEditorToolbarBu
 		if (DoesObjectHaveFastBindings(*EditorObject))
 		{
 			Extender->AddToolBarExtension(TEXT("Asset"), EExtensionHook::After, Commands
-				, FToolBarExtensionDelegate::CreateRaw(
-					this, &FMDFastBindingEditorModule::AddBindingEditorToolbarButton, MakeWeakObjectPtr(EditorObject)));
+				, FToolBarExtensionDelegate::CreateRaw(this, &FMDFastBindingEditorModule::AddBindingEditorToolbarButtons, MakeWeakObjectPtr(EditorObject)));
 		}	
 	}
 	
 	return Extender;	
 }
 
-void FMDFastBindingEditorModule::AddBindingEditorToolbarButton(FToolBarBuilder& ToolBarBuilder, TWeakObjectPtr<UObject> EditorObject) const
+void FMDFastBindingEditorModule::AddBindingEditorToolbarButtons(FToolBarBuilder& ToolBarBuilder, TWeakObjectPtr<UObject> EditorObject) const
 {
 	ToolBarBuilder.AddToolBarButton(
 		FUIAction(FExecuteAction::CreateRaw(this, &FMDFastBindingEditorModule::OpenBindingEditor, EditorObject))
 		, NAME_None
 		, LOCTEXT("BindingEditorButtonLabel", "Binding Editor")
-		, LOCTEXT("BindingEditorButtonLabel", "Opens the binding editor for this asset")
+		, LOCTEXT("BindingEditorButtonLabelTooltip", "Opens the binding editor for this asset")
 		, FSlateIcon(FMDFastBindingEditorStyle::GetStyleSetName(), TEXT("Icon.FastBinding_24x")));
+
+	if (EditorObject.IsValid() && EditorObject->IsA<UWidgetBlueprint>())
+	{
+		ToolBarBuilder.AddToolBarButton(
+			FUIAction(FExecuteAction::CreateUObject(GetMutableDefault<UMDFastBindingEditorConfig>(), &UMDFastBindingEditorConfig::ToggleShouldRunBindingsAtDesignTime))
+			, NAME_None
+			, TAttribute<FText>::CreateLambda([]()
+			{
+				return GetDefault<UMDFastBindingEditorConfig>()->ShouldRunBindingsAtDesignTime()
+					? LOCTEXT("DisableDesignTimeBindingsButtonLabel", "Disable Design-Time Bindings")
+					: LOCTEXT("EnableDesignTimeBindingsButtonLabel", "Enable Design-Time Bindings");
+			})
+			, LOCTEXT("ToggleDesignTimeBindingsButtonTooltip", "Toggle whether bindings should execute in the widget designer.")
+			, TAttribute<FSlateIcon>::CreateLambda([]()
+			{
+				return GetDefault<UMDFastBindingEditorConfig>()->ShouldRunBindingsAtDesignTime()
+					? FSlateIcon(FMDFastBindingEditorStyle::GetStyleSetName(), TEXT("Icon.Enabled"))
+					: FSlateIcon(FMDFastBindingEditorStyle::GetStyleSetName(), TEXT("Icon.Disabled"));
+			}));
+	}
 }
 
 bool FMDFastBindingEditorModule::DoesObjectHaveFastBindings(const UObject& Object)

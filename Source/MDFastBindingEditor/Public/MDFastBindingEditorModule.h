@@ -45,12 +45,14 @@ public:
 	static UMDFastBindingContainer* FindBindingContainerCDOInClass(UClass* Class);
 
 private:
-	TSharedRef<FExtender> CheckAddBindingEditorToolbarButton(const TSharedRef<FUICommandList> Commands, const TArray<UObject*> Objects) const;
-	void AddBindingEditorToolbarButton(FToolBarBuilder& ToolBarBuilder, TWeakObjectPtr<UObject> EditorObject) const;
+	TSharedRef<FExtender> CheckAddBindingEditorToolbarButtons(const TSharedRef<FUICommandList> Commands, const TArray<UObject*> Objects) const;
+	void AddBindingEditorToolbarButtons(FToolBarBuilder& ToolBarBuilder, TWeakObjectPtr<UObject> EditorObject) const;
 	
 	void OnRenameVariable(UBlueprint* Blueprint, UClass* VariableClass, const FName& OldVariableName, const FName& NewVariableName);
 	
 	TSharedPtr<FMDFastBindingEditorTabBinding> TabBinding;
 
 	FDelegateHandle RenameHandle;
+	
+	TSharedPtr<class IDesignerExtensionFactory> DesignerExtensionFactory;
 };

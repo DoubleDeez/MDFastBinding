@@ -390,6 +390,7 @@ void SMDFastBindingEditorWidget::SelectBinding(UMDFastBindingInstance* InBinding
 	if (BindingListView.IsValid())
 	{
 		BindingListView->SetSelection(InBinding);
+		BindingListView->RequestScrollIntoView(SelectedBinding);
 	}
 
 	UpdateBindingBeingDebugged();

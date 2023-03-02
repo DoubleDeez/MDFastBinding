@@ -25,9 +25,11 @@ public class MDFastBindingEditor : ModuleRules
 			new string[]
 			{
 				"Core",
+				"DeveloperSettings",
 				"GraphEditor",
 				"MDFastBinding", 
-				"PropertyEditor"
+				"PropertyEditor",
+				"UMGEditor"
 			}
 			);
 			
@@ -45,6 +47,7 @@ public class MDFastBindingEditor : ModuleRules
 				"Projects",
 				"Slate",
 				"SlateCore",
+				"UMG",
 				"UnrealEd"
 			}
 			);
