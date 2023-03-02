@@ -342,28 +342,32 @@ bool UMDFastBindingGraphSchema::RequestVariableDropOnNode(UEdGraph* InGraph, FPr
 
 bool UMDFastBindingGraphSchema::RequestVariableDropOnPin(UEdGraph* InGraph, FProperty* InVariableToDrop, UEdGraphPin* InPin, const FVector2D& InDropPosition, const FVector2D& InScreenPosition)
 {
-	const FVector2D NodeOffset = [&]()
+	if (CanVariableBeDropped(InGraph, InVariableToDrop))
 	{
-		if (InPin == nullptr)
+		const FVector2D NodeOffset = [&]()
 		{
-			return FVector2D::ZeroVector;
-		}
-
-		return InPin->Direction == EGPD_Input ? FVector2D(-200, 0) : FVector2D(200, 0);
-	}();
-	FMDFastBindingSchemaAction_CreateValue CreateAction = FMDFastBindingSchemaAction_CreateValue(UMDFastBindingValue_Property::StaticClass());
-	if (UMDFastBindingGraphNode* Node = Cast<UMDFastBindingGraphNode>(CreateAction.PerformAction(InGraph, InPin, InDropPosition + NodeOffset)))
-	{
-		if (UMDFastBindingValue_Property* PropertyValue = Cast<UMDFastBindingValue_Property>(Node->GetBindingObject()))
-		{
-			PropertyValue->SetFieldPath({ InVariableToDrop });
-			
-			if (UMDFastBindingGraph* Graph = Cast<UMDFastBindingGraph>(InGraph))
+			if (InPin == nullptr)
 			{
-				Graph->RefreshGraph();
-				Graph->SelectNodeWithBindingObject(PropertyValue);
+				return FVector2D::ZeroVector;
 			}
-			return true;
+
+			return InPin->Direction == EGPD_Input ? FVector2D(-200, 0) : FVector2D(200, 0);
+		}();
+		
+		FMDFastBindingSchemaAction_CreateValue CreateAction = FMDFastBindingSchemaAction_CreateValue(UMDFastBindingValue_Property::StaticClass());
+		if (UMDFastBindingGraphNode* Node = Cast<UMDFastBindingGraphNode>(CreateAction.PerformAction(InGraph, InPin, InDropPosition + NodeOffset)))
+		{
+			if (UMDFastBindingValue_Property* PropertyValue = Cast<UMDFastBindingValue_Property>(Node->GetBindingObject()))
+			{
+				PropertyValue->SetFieldPath({ InVariableToDrop });
+			
+				if (UMDFastBindingGraph* Graph = Cast<UMDFastBindingGraph>(InGraph))
+				{
+					Graph->RefreshGraph();
+					Graph->SelectNodeWithBindingObject(PropertyValue);
+				}
+				return true;
+			}
 		}
 	}
 	
