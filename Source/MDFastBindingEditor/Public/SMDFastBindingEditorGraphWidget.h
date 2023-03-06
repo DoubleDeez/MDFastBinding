@@ -45,11 +45,7 @@ private:
 	const TArray<TSubclassOf<UMDFastBindingValueBase>>& GetValueClasses();
 	const TArray<TSubclassOf<UMDFastBindingDestinationBase>>& GetDestinationClasses();
 
-	FActionMenuContent OnCreateActionMenu(UEdGraph* InGraph, const FVector2D& InNodePosition, const TArray<UEdGraphPin*>& InDraggedPins, bool bAutoExpand, SGraphEditor::FActionMenuClosed InOnMenuClose);
 	FActionMenuContent OnCreateNodeOrPinMenu(UEdGraph* CurrentGraph, const UEdGraphNode* InGraphNode, const UEdGraphPin* InGraphPin, FMenuBuilder* MenuBuilder, bool bIsDebugging);
-	
-	void OnActionSelected(const TArray<TSharedPtr<FEdGraphSchemaAction>>& SelectedActions, ESelectInfo::Type InSelectionType, FVector2D InNodePosition, TArray<UEdGraphPin*> InDraggedPins) const;
-	void CollectAllActions(FGraphActionListBuilderBase& OutAllActions, TArray<UEdGraphPin*> InDraggedPins);
 
 	bool CanDeleteSelectedNodes() const;
 	void DeleteSelectedNodes() const;

@@ -40,7 +40,6 @@ void SMDFastBindingEditorGraphWidget::Construct(const FArguments& InArgs, UBluep
 	SGraphEditor::FGraphEditorEvents GraphEvents;
 	GraphEvents.OnTextCommitted.BindSP(this, &SMDFastBindingEditorGraphWidget::OnNodeTitleChanged);
 	GraphEvents.OnSelectionChanged = InArgs._OnSelectionChanged;
-	GraphEvents.OnCreateActionMenu.BindSP(this, &SMDFastBindingEditorGraphWidget::OnCreateActionMenu);
 	GraphEvents.OnCreateNodeOrPinMenu.BindSP(this, &SMDFastBindingEditorGraphWidget::OnCreateNodeOrPinMenu);
 
 	RegisterCommands();
@@ -176,29 +175,6 @@ const TArray<TSubclassOf<UMDFastBindingDestinationBase>>& SMDFastBindingEditorGr
 	return DestinationClasses;
 }
 
-FActionMenuContent SMDFastBindingEditorGraphWidget::OnCreateActionMenu(UEdGraph* InGraph, const FVector2D& InNodePosition, const TArray<UEdGraphPin*>& InDraggedPins, bool bAutoExpand, SGraphEditor::FActionMenuClosed InOnMenuClose)
-{
-	const TSharedRef<SGraphActionMenu> ActionMenu = SNew(SGraphActionMenu)
-						.OnActionSelected(this, &SMDFastBindingEditorGraphWidget::OnActionSelected, InNodePosition, InDraggedPins)
-						.OnCollectAllActions(this, &SMDFastBindingEditorGraphWidget::CollectAllActions, InDraggedPins)
-						.DraggedFromPins(InDraggedPins)
-						.GraphObj(GraphObj)
-						.AutoExpandActionMenu(true);
-	
-	return FActionMenuContent(
-		SNew(SBorder)
-		.BorderImage(FAppStyle::GetBrush("Menu.Background"))
-		[
-			SNew(SBox)
-			.MinDesiredWidth(300.f)
-			.MinDesiredHeight(400.f)
-			[
-				ActionMenu
-			]
-		],
-		ActionMenu->GetFilterTextBox());
-}
-
 FActionMenuContent SMDFastBindingEditorGraphWidget::OnCreateNodeOrPinMenu(UEdGraph* CurrentGraph, const UEdGraphNode* InGraphNode, const UEdGraphPin* InGraphPin, FMenuBuilder* MenuBuilder, bool bIsDebugging)
 {
 	// Menu when right clicking
@@ -296,40 +272,6 @@ FActionMenuContent SMDFastBindingEditorGraphWidget::OnCreateNodeOrPinMenu(UEdGra
 	}
     	
 	return FActionMenuContent(MenuBuilder->MakeWidget());
-}
-
-void SMDFastBindingEditorGraphWidget::OnActionSelected(const TArray<TSharedPtr<FEdGraphSchemaAction>>& SelectedActions, ESelectInfo::Type InSelectionType, FVector2D InNodePosition, TArray<UEdGraphPin*> InDraggedPins) const
-{
-	if (InSelectionType == ESelectInfo::OnMouseClick  || InSelectionType == ESelectInfo::OnKeyPress)
-	{
-		for (TSharedPtr<FEdGraphSchemaAction> SelectedAction : SelectedActions)
-		{
-			if (SelectedAction.IsValid() && GraphObj != nullptr)
-			{
-				SelectedAction->PerformAction(GraphObj, InDraggedPins.Num() > 0 ? InDraggedPins[0] : nullptr, InNodePosition);
-			}
-		}
-	}
-
-	FSlateApplication::Get().DismissAllMenus();
-}
-
-void SMDFastBindingEditorGraphWidget::CollectAllActions(FGraphActionListBuilderBase& OutAllActions, TArray<UEdGraphPin*> InDraggedPins)
-{
-	static const FString CreateValueCategory = TEXT("Create Value Node...");
-	for (const TSubclassOf<UMDFastBindingValueBase>& ValueClass : GetValueClasses())
-	{
-		OutAllActions.AddAction(MakeShared<FMDFastBindingSchemaAction_CreateValue>(ValueClass), CreateValueCategory);
-	}
-	
-	if (InDraggedPins.Num() == 0 || (InDraggedPins.Num() == 1 && InDraggedPins[0] != nullptr && InDraggedPins[0]->Direction == EGPD_Output))
-	{
-		static const FString SetDestinationCategory = TEXT("Set Destination Node...");
-		for (const TSubclassOf<UMDFastBindingDestinationBase>& DestinationClass : GetDestinationClasses())
-		{
-			OutAllActions.AddAction(MakeShared<FMDFastBindingSchemaAction_SetDestination>(DestinationClass), SetDestinationCategory);
-		}
-	}
 }
 
 bool SMDFastBindingEditorGraphWidget::CanDeleteSelectedNodes() const

@@ -159,25 +159,55 @@ FConnectionDrawingPolicy* UMDFastBindingGraphSchema::CreateConnectionDrawingPoli
 
 void UMDFastBindingGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const
 {
-	static const FString CreateValueCategory = TEXT("Create Value Node...");
-	TArray<TSubclassOf<UMDFastBindingValueBase>> ValueClasses;
-	
-	for (TObjectIterator<UClass> ClassIt; ClassIt; ++ClassIt)
+	// Values
 	{
-		if (ClassIt->IsChildOf(UMDFastBindingValueBase::StaticClass()) && !ClassIt->HasAnyClassFlags(CLASS_Abstract | CLASS_Deprecated | CLASS_Hidden))
+		static const FString CreateValueCategory = TEXT("Create Value Node...");
+		TArray<TSubclassOf<UMDFastBindingValueBase>> ValueClasses;
+	
+		for (TObjectIterator<UClass> ClassIt; ClassIt; ++ClassIt)
 		{
-			ValueClasses.Add(*ClassIt);
+			if (ClassIt->IsChildOf(UMDFastBindingValueBase::StaticClass()) && !ClassIt->HasAnyClassFlags(CLASS_Abstract | CLASS_Deprecated | CLASS_Hidden))
+			{
+				ValueClasses.Add(*ClassIt);
+			}
+		}
+
+		ValueClasses.Sort([](const TSubclassOf<UMDFastBindingValueBase>& A, const TSubclassOf<UMDFastBindingValueBase>& B)
+		{
+			return A->GetDisplayNameText().CompareTo(B->GetDisplayNameText()) < 0;
+		});
+
+		for (const TSubclassOf<UMDFastBindingValueBase>& ValueClass : ValueClasses)
+		{
+			ContextMenuBuilder.AddAction(MakeShared<FMDFastBindingSchemaAction_CreateValue>(ValueClass), CreateValueCategory);
 		}
 	}
 
-	ValueClasses.Sort([](const TSubclassOf<UMDFastBindingValueBase>& A, const TSubclassOf<UMDFastBindingValueBase>& B)
+	// Destinations
 	{
-		return A->GetDisplayNameText().CompareTo(B->GetDisplayNameText()) < 0;
-	});
+		if (ContextMenuBuilder.FromPin == nullptr || ContextMenuBuilder.FromPin->Direction == EGPD_Output)
+		{
+			static const FString SetDestinationCategory = TEXT("Set Destination Node...");
+			TArray<TSubclassOf<UMDFastBindingDestinationBase>> DestinationClasses;
+			
+			for (TObjectIterator<UClass> ClassIt; ClassIt; ++ClassIt)
+			{
+				if (ClassIt->IsChildOf(UMDFastBindingDestinationBase::StaticClass()) && !ClassIt->HasAnyClassFlags(CLASS_Abstract | CLASS_Deprecated | CLASS_Hidden))
+				{
+					DestinationClasses.Add(*ClassIt);
+				}
+			}
 
-	for (const TSubclassOf<UMDFastBindingValueBase>& ValueClass : ValueClasses)
-	{
-		ContextMenuBuilder.AddAction(MakeShared<FMDFastBindingSchemaAction_CreateValue>(ValueClass), CreateValueCategory);
+			DestinationClasses.Sort([](const TSubclassOf<UMDFastBindingDestinationBase>& A, const TSubclassOf<UMDFastBindingDestinationBase>& B)
+			{
+				return A->GetDisplayNameText().CompareTo(B->GetDisplayNameText()) < 0;
+			});
+			
+			for (const TSubclassOf<UMDFastBindingDestinationBase>& DestinationClass : DestinationClasses)
+			{
+				ContextMenuBuilder.AddAction(MakeShared<FMDFastBindingSchemaAction_SetDestination>(DestinationClass), SetDestinationCategory);
+			}
+		}
 	}
 }
 
