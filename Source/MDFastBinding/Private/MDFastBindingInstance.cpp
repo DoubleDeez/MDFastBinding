@@ -83,8 +83,9 @@ EDataValidationResult UMDFastBindingInstance::IsDataValid(TArray<FText>& Validat
 	{
 		return BindingDestination->IsDataValid(ValidationErrors);
 	}
-	
-	return UObject::IsDataValid(ValidationErrors);
+
+	ValidationErrors.Add(NSLOCTEXT("MDFastBindingInstance", "NullDestinationValidationError", "This binding is missing a destination"));
+	return EDataValidationResult::Invalid;
 }
 
 void UMDFastBindingInstance::OnVariableRenamed(UClass* VariableClass, const FName& OldVariableName, const FName& NewVariableName)
