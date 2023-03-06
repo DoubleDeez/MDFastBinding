@@ -11,8 +11,34 @@
 #include "MDFastBindingGraphNode.h"
 #include "MDFastBindingInstance.h"
 #include "ScopedTransaction.h"
+#include "BindingValues/MDFastBindingValue_FieldNotify.h"
+#include "FieldNotification/IFieldValueChanged.h"
 
 #define LOCTEXT_NAMESPACE "MDFastBindingGraphSchema"
+
+namespace MDFastBindingGraphSchema_Private
+{
+	bool IsFieldNotifyProperty(const FProperty* Prop)
+	{
+		if (Prop != nullptr)
+		{
+			// Blueprint variables use the meta data to mark field notify
+			if (!Prop->IsNative())
+			{
+				return Prop->HasMetaData(TEXT("FieldNotify"));
+			}
+			else if (const UClass* Class = Prop->GetOwnerClass())
+			{
+				if (const INotifyFieldValueChanged* FieldNotify = Cast<INotifyFieldValueChanged>(Class->GetDefaultObject()))
+				{
+					return FieldNotify->GetFieldNotificationDescriptor().GetField(Class, Prop->GetFName()).IsValid();
+				}
+			}
+		}
+
+		return false;
+	}
+}
 
 FMDFastBindingSchemaAction_CreateValue::FMDFastBindingSchemaAction_CreateValue(TSubclassOf<UMDFastBindingValueBase> InValueClass)
 		: ValueClass(InValueClass)
@@ -393,8 +419,9 @@ bool UMDFastBindingGraphSchema::RequestVariableDropOnPin(UEdGraph* InGraph, FPro
 
 			return InPin->Direction == EGPD_Input ? FVector2D(-200, 0) : FVector2D(200, 0);
 		}();
-		
-		FMDFastBindingSchemaAction_CreateValue CreateAction = FMDFastBindingSchemaAction_CreateValue(UMDFastBindingValue_Property::StaticClass());
+
+		UClass* ValueClass = MDFastBindingGraphSchema_Private::IsFieldNotifyProperty(InVariableToDrop) ? UMDFastBindingValue_FieldNotify::StaticClass() : UMDFastBindingValue_Property::StaticClass();
+		FMDFastBindingSchemaAction_CreateValue CreateAction = FMDFastBindingSchemaAction_CreateValue(ValueClass);
 		if (UMDFastBindingGraphNode* Node = Cast<UMDFastBindingGraphNode>(CreateAction.PerformAction(InGraph, InPin, InDropPosition + NodeOffset)))
 		{
 			if (UMDFastBindingValue_Property* PropertyValue = Cast<UMDFastBindingValue_Property>(Node->GetBindingObject()))
