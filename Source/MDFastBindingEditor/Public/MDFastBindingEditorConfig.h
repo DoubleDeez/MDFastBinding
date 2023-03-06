@@ -28,5 +28,5 @@ protected:
 	// This is useful for previewing bindings that are intended to replace PreConstruct script
 	// or for bindings that interact with Widget Animations
 	UPROPERTY(EditDefaultsOnly, Config, Category = "UMG")
-	bool bShouldRunBindingsAtDesignTime = true;
+	bool bShouldRunBindingsAtDesignTime = false;
 };
