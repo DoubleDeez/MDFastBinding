@@ -195,6 +195,8 @@ void UMDFastBindingGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSend
 			BindingObject->OrphanBindingItem(BindingName);
 		}
 	};
+
+	FScopedTransaction Transaction = FScopedTransaction(LOCTEXT("BreakBindingPinLink", "Break Pin Link"));
 	
 	// Use the input pin(s) to determine what to orphan
 	if (TargetPin.Direction == EGPD_Input)
@@ -210,6 +212,14 @@ void UMDFastBindingGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSend
 	}
 	
 	Super::BreakPinLinks(TargetPin, bSendsNodeNotification);
+
+	if (TargetPin.GetOwningNode())
+	{
+		if (UMDFastBindingGraph* Graph = Cast<UMDFastBindingGraph>(TargetPin.GetOwningNode()->GetGraph()))
+		{
+			Graph->RefreshGraph();
+		}
+	}
 }
 
 const FPinConnectionResponse UMDFastBindingGraphSchema::CanCreateConnection(const UEdGraphPin* A, const UEdGraphPin* B) const

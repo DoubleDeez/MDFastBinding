@@ -569,6 +569,7 @@ void UMDFastBindingObject::ClearBindingItemValue(const FName& ItemName)
 {
 	if (FMDFastBindingItem* BindingItem = BindingItems.FindByKey(ItemName))
 	{
+		Modify();
 		BindingItem->Value = nullptr;
 		BindingItem->ClearDefaultValues();
 	}
