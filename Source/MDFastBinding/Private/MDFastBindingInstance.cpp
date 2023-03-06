@@ -154,6 +154,28 @@ bool UMDFastBindingInstance::IsBindingPerformant() const
 
 	return false;
 }
+
+int32 UMDFastBindingInstance::GetBindingIndex() const
+{
+#if WITH_EDITORONLY_DATA
+	if (const UMDFastBindingContainer* BindingContainer = GetBindingContainer())
+	{
+		return BindingContainer->GetBindings().IndexOfByKey(this);
+	}
+#endif
+	
+	return INDEX_NONE;
+}
+
+void UMDFastBindingInstance::MoveToIndex(int32 Index)
+{
+#if WITH_EDITORONLY_DATA
+	if (UMDFastBindingContainer* BindingContainer = GetBindingContainer())
+	{
+		BindingContainer->MoveBindingToIndex(this, Index);
+	}
+#endif
+}
 #endif
 
 #if WITH_EDITORONLY_DATA

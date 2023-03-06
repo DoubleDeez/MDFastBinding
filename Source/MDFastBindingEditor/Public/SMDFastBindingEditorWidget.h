@@ -10,6 +10,7 @@ class FBlueprintEditor;
 class FMenuBuilder;
 class FObjectPropertyBase;
 class IDetailsView;
+class SMDFastBindingInstanceRow;
 class SMDFastBindingEditorGraphWidget;
 class SMDFastBindingWatchList;
 
@@ -28,6 +29,13 @@ public:
 	UMDFastBindingContainer* GetSelectedBindingContainer() const;
 	UMDFastBindingInstance* GetSelectedBinding() const;
 	
+	UMDFastBindingInstance* GetNewBinding() const;
+	void ResetNewBinding();
+	
+	FReply OnAddBinding();
+	FReply OnDuplicateBinding(TWeakObjectPtr<UMDFastBindingInstance> Binding);
+	FReply OnDeleteBinding(TWeakObjectPtr<UMDFastBindingInstance> Binding);
+	
 	virtual void PostUndo(bool bSuccess) override;
 	virtual void PostRedo(bool bSuccess) override;
 
@@ -40,20 +48,12 @@ private:
 	EVisibility GetBindingTreeVisibility() const;
 	
 	void PopulateBindingsList();
-	TSharedRef<ITableRow> GenerateBindingListWidget(TWeakObjectPtr<UMDFastBindingInstance> Binding, const TSharedRef<STableViewBase>& OwnerTable);
-	void SetBindingDisplayName(const FText& InName, ETextCommit::Type CommitType, TWeakObjectPtr<UMDFastBindingInstance> Binding);
-	
-	FReply OnAddBinding();
-	FReply OnDuplicateBinding(TWeakObjectPtr<UMDFastBindingInstance> Binding);
-	FReply OnDeleteBinding(TWeakObjectPtr<UMDFastBindingInstance> Binding);
+	TSharedRef<ITableRow> GenerateBindingListRowWidget(TWeakObjectPtr<UMDFastBindingInstance> Binding, const TSharedRef<STableViewBase>& OwnerTable);
+
+	TOptional<EItemDropZone> OnCanAcceptDropBinding(const FDragDropEvent& DragDropEvent, EItemDropZone DropZone, TWeakObjectPtr<UMDFastBindingInstance> TargetBindingPtr, TSharedRef<SMDFastBindingInstanceRow> BindingRow) const;
+	FReply OnAcceptDropBinding(const FDragDropEvent& DragDropEvent, EItemDropZone DropZone, TWeakObjectPtr<UMDFastBindingInstance> TargetBindingPtr, TSharedRef<SMDFastBindingInstanceRow> BindingRow);
 
 	void OnDetailsPanelPropertyChanged(const FPropertyChangedEvent& Event);
-
-	FText GetBindingValidationTooltip(TWeakObjectPtr<UMDFastBindingInstance> Binding) const;
-	const FSlateBrush* GetBindingValidationBrush(TWeakObjectPtr<UMDFastBindingInstance> Binding) const;
-
-	FText GetBindingPerformanceTooltip(TWeakObjectPtr<UMDFastBindingInstance> Binding) const;
-	const FSlateBrush* GetBindingPerformanceBrush(TWeakObjectPtr<UMDFastBindingInstance> Binding) const;
 
 	void OnBlueprintCompiled(UBlueprint* Blueprint);
 
@@ -75,8 +75,6 @@ private:
 	TSharedPtr<SListView<TWeakObjectPtr<UMDFastBindingInstance>>> BindingListView;
 	TSharedPtr<SMDFastBindingEditorGraphWidget> BindingGraphWidget;
 	TSharedPtr<SMDFastBindingWatchList> WatchList;
-
-	friend class SBindingRow;
 };
 
 struct FMDFastBindingEditorSummoner : public FWorkflowTabFactory

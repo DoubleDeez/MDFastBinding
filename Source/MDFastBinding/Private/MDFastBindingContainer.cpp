@@ -89,6 +89,24 @@ bool UMDFastBindingContainer::DeleteBinding(UMDFastBindingInstance* InBinding)
 {
 	return Bindings.Remove(InBinding) > 0;
 }
+
+void UMDFastBindingContainer::MoveBindingToIndex(UMDFastBindingInstance* InBinding, int32 Index)
+{
+	const int32 CurrentIndex = Bindings.IndexOfByKey(InBinding);
+	if (CurrentIndex != INDEX_NONE && Index != INDEX_NONE && CurrentIndex != Index)
+	{
+		Modify();
+		Bindings.Insert(InBinding, Index);
+		if (Index > CurrentIndex)
+		{
+			Bindings.RemoveAt(CurrentIndex);
+		}
+		else
+		{
+			Bindings.RemoveAt(CurrentIndex + 1);
+		}
+	}
+}
 #endif
 
 #if WITH_EDITOR

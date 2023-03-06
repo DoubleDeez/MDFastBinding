@@ -39,6 +39,9 @@ public:
 
 	// Returns false if any nodes use the `Always` update type
 	bool IsBindingPerformant() const;
+
+	int32 GetBindingIndex() const;
+	void MoveToIndex(int32 Index);
 #endif
 	
 #if WITH_EDITORONLY_DATA

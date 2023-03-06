@@ -14,6 +14,7 @@
 #include "Misc/MessageDialog.h"
 #include "ScopedTransaction.h"
 #include "SMDFastBindingEditorGraphWidget.h"
+#include "SMDFastBindingInstanceRow.h"
 #include "Widgets/Layout/SWidgetSwitcher.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Text/SInlineEditableTextBlock.h"
@@ -25,144 +26,6 @@ namespace SMDFastBindingEditorWidget_Private
 	const int32 BindingListIndex = 0;
 	const int32 NodeDetailsIndex = 1;
 }
-
-/**
- * 
- */
-class SBindingRow : public SCompoundWidget
-{
-public:
-	SLATE_BEGIN_ARGS(SBindingRow)
-		{
-		}
-	SLATE_END_ARGS()
-
-	void StartEditingTitle() const
-	{
-		if (TitleText.IsValid())
-		{
-			TitleText->EnterEditingMode();
-		}
-	}
-
-	void Construct(const FArguments& InArgs, TSharedRef<SMDFastBindingEditorWidget> EditorWidget, TWeakObjectPtr<UMDFastBindingInstance> BindingPtr)
-	{
-		CachedEditorWidget = EditorWidget;
-		CachedBindingPtr = BindingPtr;
-		
-		if (UMDFastBindingInstance* Binding = BindingPtr.Get())
-		{
-			ChildSlot
-			[
-				SNew(SBorder)
-				.Padding(3.f)
-				.BorderImage(this, &SBindingRow::GetBorder)
-				[
-					SNew(SHorizontalBox)
-					+SHorizontalBox::Slot()
-					.VAlign(VAlign_Center)
-					.HAlign(HAlign_Fill)
-					.AutoWidth()
-					.Padding(4.f, 0.f)
-					[
-						SNew(SImage)
-						.ToolTipText(EditorWidget, &SMDFastBindingEditorWidget::GetBindingValidationTooltip, BindingPtr)
-						.Image(EditorWidget, &SMDFastBindingEditorWidget::GetBindingValidationBrush, BindingPtr)
-					]
-					+SHorizontalBox::Slot()
-					.VAlign(VAlign_Center)
-					.HAlign(HAlign_Fill)
-					.AutoWidth()
-					.Padding(4.f, 0.f)
-					[
-						SNew(SImage)
-						.ToolTipText(EditorWidget, &SMDFastBindingEditorWidget::GetBindingPerformanceTooltip, BindingPtr)
-						.Image(EditorWidget, &SMDFastBindingEditorWidget::GetBindingPerformanceBrush, BindingPtr)
-					]
-					+SHorizontalBox::Slot()
-					.VAlign(VAlign_Center)
-					.HAlign(HAlign_Fill)
-					.FillWidth(1.f)
-					[
-						SAssignNew(TitleText, SInlineEditableTextBlock)
-						.Text_UObject(Binding, &UMDFastBindingInstance::GetBindingDisplayName)
-						.OnTextCommitted(EditorWidget, &SMDFastBindingEditorWidget::SetBindingDisplayName, BindingPtr)
-					]
-					+SHorizontalBox::Slot()
-					.VAlign(VAlign_Center)
-					.HAlign(HAlign_Fill)
-					.AutoWidth()
-					.Padding(2.f)
-					[
-						SNew(SButton)
-						.ButtonStyle(FMDFastBindingEditorStyle::Get(), "BindingButton")
-						.ContentPadding(2.f)
-						.OnClicked(EditorWidget, &SMDFastBindingEditorWidget::OnDuplicateBinding, BindingPtr)
-						.ToolTipText(LOCTEXT("DuplicateBindingTooltip", "Create a duplicate of this binding"))
-						[
-							SNew(SImage)
-							.Image(FAppStyle::Get().GetBrush(TEXT("GenericCommands.Duplicate")))
-						]
-					]
-					+SHorizontalBox::Slot()
-					.VAlign(VAlign_Center)
-					.HAlign(HAlign_Fill)
-					.AutoWidth()
-					.Padding(2.f)
-					[
-						SNew(SButton)
-						.ButtonStyle(FMDFastBindingEditorStyle::Get(), "BindingButton")
-						.ContentPadding(2.f)
-						.OnClicked(EditorWidget, &SMDFastBindingEditorWidget::OnDeleteBinding, BindingPtr)
-						.ToolTipText(LOCTEXT("DeleteBindingTooltip", "Delete this binding"))
-						[
-							SNew(SImage)
-							.Image(FAppStyle::Get().GetBrush(TEXT("GenericCommands.Delete")))
-						]
-					]
-				]
-			];
-		}
-	}
-
-	virtual void Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) override
-	{
-		// Focus the newly created binding's name field
-		if (CachedEditorWidget.Pin().IsValid() && CachedEditorWidget.Pin()->NewBinding == CachedBindingPtr)
-		{
-			StartEditingTitle();
-			CachedEditorWidget.Pin()->NewBinding.Reset();
-		}
-	}
-
-	virtual FReply OnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override
-	{
-		if (MouseEvent.GetEffectingButton() == EKeys::LeftMouseButton)
-		{
-			if (CachedEditorWidget.Pin().IsValid())
-			{
-				CachedEditorWidget.Pin()->SelectBinding(CachedBindingPtr.Get());
-			}
-		}
-
-		return SCompoundWidget::OnMouseButtonDown(MyGeometry, MouseEvent);
-	}
-
-private:
-	const FSlateBrush* GetBorder() const
-	{
-		if (CachedEditorWidget.Pin().IsValid() && CachedEditorWidget.Pin()->SelectedBinding == CachedBindingPtr)
-     	{
-			return FMDFastBindingEditorStyle::Get().GetBrush(TEXT("Background.Selector"));
-     	}
-
-		return FMDFastBindingEditorStyle::Get().GetBrush(TEXT("Background.SelectorInactive"));
-	}
-	
-	TSharedPtr<SInlineEditableTextBlock> TitleText;
-	TWeakObjectPtr<UMDFastBindingInstance> CachedBindingPtr;
-	TWeakPtr<SMDFastBindingEditorWidget> CachedEditorWidget;
-};
 
 
 class FMDFastBindingDestinationClassFilter : public IClassViewerFilter
@@ -201,7 +64,7 @@ void SMDFastBindingEditorWidget::Construct(const FArguments&, const TWeakPtr<FBl
 	BindingListView = SNew(SListView<TWeakObjectPtr<UMDFastBindingInstance>>)
 		.ListItemsSource(&Bindings)
 		.SelectionMode(ESelectionMode::None)
-		.OnGenerateRow(this, &SMDFastBindingEditorWidget::GenerateBindingListWidget);
+		.OnGenerateRow(this, &SMDFastBindingEditorWidget::GenerateBindingListRowWidget);
 
 	BindingListView->SetSelection(GetSelectedBinding());
 
@@ -411,6 +274,16 @@ UMDFastBindingInstance* SMDFastBindingEditorWidget::GetSelectedBinding() const
 	return nullptr;
 }
 
+UMDFastBindingInstance* SMDFastBindingEditorWidget::GetNewBinding() const
+{
+	return NewBinding.Get();
+}
+
+void SMDFastBindingEditorWidget::ResetNewBinding()
+{
+	NewBinding.Reset();
+}
+
 void SMDFastBindingEditorWidget::PostUndo(bool bSuccess)
 {
 	PopulateBindingsList();
@@ -495,21 +368,75 @@ void SMDFastBindingEditorWidget::PopulateBindingsList()
 	}
 }
 
-TSharedRef<ITableRow> SMDFastBindingEditorWidget::GenerateBindingListWidget(TWeakObjectPtr<UMDFastBindingInstance> Binding, const TSharedRef<STableViewBase>& OwnerTable)
+TSharedRef<ITableRow> SMDFastBindingEditorWidget::GenerateBindingListRowWidget(TWeakObjectPtr<UMDFastBindingInstance> Binding, const TSharedRef<STableViewBase>& OwnerTable)
 {
+	TSharedRef<SMDFastBindingInstanceRow> BindingRow = SNew(SMDFastBindingInstanceRow, SharedThis(this), Binding);
 	return SNew(STableRow<TWeakObjectPtr<UMDFastBindingInstance>>, OwnerTable)
+		.OnCanAcceptDrop(this, &SMDFastBindingEditorWidget::OnCanAcceptDropBinding, BindingRow)
+		.OnAcceptDrop(this, &SMDFastBindingEditorWidget::OnAcceptDropBinding, BindingRow)
+		.OnDragLeave_Lambda([](const FDragDropEvent& DragDropEvent)
+		{
+			if (const TSharedPtr<FDecoratedDragDropOp> DecoratedOp = DragDropEvent.GetOperationAs<FDecoratedDragDropOp>())
+			{
+				DecoratedOp->ResetToDefaultToolTip();
+			}
+		})
 		[
-			SNew(SBindingRow, SharedThis(this), Binding)
+			BindingRow
 		];
 }
 
-void SMDFastBindingEditorWidget::SetBindingDisplayName(const FText& InName, ETextCommit::Type CommitType, TWeakObjectPtr<UMDFastBindingInstance> Binding)
+TOptional<EItemDropZone> SMDFastBindingEditorWidget::OnCanAcceptDropBinding(const FDragDropEvent& DragDropEvent, EItemDropZone DropZone, TWeakObjectPtr<UMDFastBindingInstance> TargetBindingPtr, TSharedRef<SMDFastBindingInstanceRow> BindingRow) const
 {
-	if (UMDFastBindingInstance* BindingPtr = Binding.Get())
+	if (const TSharedPtr<FMDFastBindingInstanceRowDragDropOp> BindingDropOp = DragDropEvent.GetOperationAs<FMDFastBindingInstanceRowDragDropOp>())
 	{
-		FScopedTransaction Transaction = FScopedTransaction(LOCTEXT("RenameBindingTransaction", "Renamed Binding"));
-		BindingPtr->SetBindingDisplayName(InName);
+		if (BindingDropOp->IsValidTarget(TargetBindingPtr, DragDropEvent.GetScreenSpacePosition(), BindingRow->GetTickSpaceGeometry()))
+		{
+			BindingDropOp->SetValidTarget(true);
+			return FMDFastBindingInstanceRowDragDropOp::CalculateDropZoneRelativeToGeometry(DragDropEvent.GetScreenSpacePosition(), BindingRow->GetTickSpaceGeometry());
+		}
+
+		BindingDropOp->SetValidTarget(false);
 	}
+		
+	return TOptional<EItemDropZone>();
+}
+
+FReply SMDFastBindingEditorWidget::OnAcceptDropBinding(const FDragDropEvent& DragDropEvent, EItemDropZone DropZone, TWeakObjectPtr<UMDFastBindingInstance> TargetBindingPtr, TSharedRef<SMDFastBindingInstanceRow> BindingRow)
+{
+	const TSharedPtr<FMDFastBindingInstanceRowDragDropOp> BindingDropOp = DragDropEvent.GetOperationAs<FMDFastBindingInstanceRowDragDropOp>();
+	if (!BindingDropOp.IsValid())
+	{
+		return FReply::Unhandled();
+	}
+
+	UMDFastBindingInstance* DraggedBinding = BindingDropOp->CachedBindingPtr.Get();
+	const UMDFastBindingInstance* TargetBinding = TargetBindingPtr.Get();
+	if (DraggedBinding == nullptr || TargetBinding == nullptr)
+	{
+		return FReply::Unhandled();
+	}
+
+	const FGeometry& BindingRowGeometry = BindingRow->GetTickSpaceGeometry();
+	if (!BindingDropOp->IsValidTarget(TargetBindingPtr, DragDropEvent.GetScreenSpacePosition(), BindingRowGeometry))
+	{
+		return FReply::Unhandled();
+	}
+
+	const int32 DropIndex = FMDFastBindingInstanceRowDragDropOp::CalculateDropIndex(DragDropEvent.GetScreenSpacePosition(), BindingRowGeometry, TargetBinding->GetBindingIndex());
+	if (DropIndex == INDEX_NONE)
+	{
+		return FReply::Unhandled();
+	}
+
+	{
+		FScopedTransaction Transaction(LOCTEXT("ReorderBindings", "Reorder Bindings"));
+		DraggedBinding->MoveToIndex(DropIndex);
+	}
+
+	PopulateBindingsList();
+	
+	return FReply::Handled();
 }
 
 FReply SMDFastBindingEditorWidget::OnAddBinding()
@@ -575,71 +502,6 @@ void SMDFastBindingEditorWidget::OnDetailsPanelPropertyChanged(const FPropertyCh
 	RefreshGraph();
 }
 
-FText SMDFastBindingEditorWidget::GetBindingValidationTooltip(TWeakObjectPtr<UMDFastBindingInstance> Binding) const
-{
-	if (UMDFastBindingInstance* BindingPtr = Binding.Get())
-	{
-		TArray<FText> Errors;
-		BindingPtr->IsDataValid(Errors);
-		return FText::Join(FText::FromString(TEXT("\n")), Errors);
-	}
-
-	return FText::GetEmpty();
-}
-
-const FSlateBrush* SMDFastBindingEditorWidget::GetBindingValidationBrush(TWeakObjectPtr<UMDFastBindingInstance> Binding) const
-{
-	if (UMDFastBindingInstance* BindingPtr = Binding.Get())
-	{
-		TArray<FText> Errors;
-		const EDataValidationResult Result = BindingPtr->IsDataValid(Errors);
-		if (Result == EDataValidationResult::Valid)
-		{
-			return FAppStyle::Get().GetBrush("Icons.SuccessWithColor");
-		}
-		else if (Result == EDataValidationResult::Invalid)
-		{
-			return FAppStyle::Get().GetBrush("Icons.ErrorWithColor");
-		}
-	}
-
-	return nullptr;
-}
-
-FText SMDFastBindingEditorWidget::GetBindingPerformanceTooltip(TWeakObjectPtr<UMDFastBindingInstance> Binding) const
-{
-	if (const UMDFastBindingInstance* BindingPtr = Binding.Get())
-	{
-		if (BindingPtr->IsBindingPerformant())
-		{
-			return LOCTEXT("PerformantBindingTooltip", "This binding does not run every tick");
-		}
-		else
-		{
-			return LOCTEXT("PerformantBindingTooltip", "This binding is evaluated every tick");
-		}
-	}
-	
-	return FText::GetEmpty();
-}
-
-const FSlateBrush* SMDFastBindingEditorWidget::GetBindingPerformanceBrush(TWeakObjectPtr<UMDFastBindingInstance> Binding) const
-{
-	if (const UMDFastBindingInstance* BindingPtr = Binding.Get())
-	{
-		if (BindingPtr->IsBindingPerformant())
-		{
-			return FMDFastBindingEditorStyle::Get().GetBrush("Icon.Flame");
-		}
-		else
-		{
-			return FMDFastBindingEditorStyle::Get().GetBrush("Icon.Clock");
-		}
-	}
-	
-	return nullptr;
-}
-
 void SMDFastBindingEditorWidget::OnBlueprintCompiled(UBlueprint* Blueprint)
 {
 	const int32 SelectedIndex = Bindings.IndexOfByKey(SelectedBinding);
@@ -665,8 +527,6 @@ void SMDFastBindingEditorWidget::UpdateBindingBeingDebugged(UObject* ObjectBeing
 			}
 		}
 	}
-
-	
 
 	if (WatchList.IsValid())
 	{

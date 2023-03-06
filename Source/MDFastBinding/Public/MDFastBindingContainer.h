@@ -30,6 +30,8 @@ public:
 	UMDFastBindingInstance* AddBinding();
 	UMDFastBindingInstance* DuplicateBinding(UMDFastBindingInstance* InBinding);
 	bool DeleteBinding(UMDFastBindingInstance* InBinding);
+
+	void MoveBindingToIndex(UMDFastBindingInstance* InBinding, int32 Index);
 #endif
 
 #if WITH_EDITOR
