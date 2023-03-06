@@ -28,6 +28,8 @@ public:
 	void SetBindingBeingDebugged(UMDFastBindingInstance* InBinding);
 	UMDFastBindingObject* GetBindingObjectBeingDebugged() const;
 
+	UMDFastBindingGraphNode* GetLinkedOutputNode() const;
+
 	void ClearConnection(const FName& PinName);
 
 	void OnMoved();
@@ -39,6 +41,7 @@ public:
 	virtual void PrepareForCopying() override;
 
 	void CleanUpCopying();
+	void CleanUpPasting();
 
 	void RefreshGraph();
 

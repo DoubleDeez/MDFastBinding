@@ -19,6 +19,7 @@
 #include "MDFastBindingObject.h"
 #include "SGraphActionMenu.h"
 #include "ScopedTransaction.h"
+#include "SequencerSettings.h"
 #include "UObject/StrongObjectPtr.h"
 #include "UObject/UObjectIterator.h"
 #include "Widgets/Input/SEditableTextBox.h"
@@ -333,18 +334,51 @@ void SMDFastBindingEditorGraphWidget::RenameSelectedNode() const
 void SMDFastBindingEditorGraphWidget::CopySelectedNodes() const
 {
 	const FGraphPanelSelectionSet& SelectedNodes = GraphEditor->GetSelectedNodes();
-	TSet<UObject*> NodesToCopy;
 
+	// Populate a list of selected binding objects for copying
+	TSet<FGuid> SelectedObjects;
+	for (UObject* NodeObject : SelectedNodes)
+	{
+		if (const UMDFastBindingGraphNode* BindingNode = Cast<UMDFastBindingGraphNode>(NodeObject))
+		{
+			SelectedObjects.Add(BindingNode->GetBindingObject()->BindingObjectIdentifier);
+		}
+	}
+
+	// We only need the nodes that aren't owned by a selected node
+	TSet<UObject*> NodesToCopy;
 	for (UObject* NodeObject : SelectedNodes)
 	{
 		if (UMDFastBindingGraphNode* BindingNode = Cast<UMDFastBindingGraphNode>(NodeObject))
 		{
-			BindingNode->PrepareForCopying();
-			NodesToCopy.Add(BindingNode);
+			const UMDFastBindingGraphNode* LinkedNode = BindingNode->GetLinkedOutputNode();
+			if (LinkedNode == nullptr || !SelectedObjects.Contains(LinkedNode->GetBindingObject()->BindingObjectIdentifier))
+			{
+				BindingNode->PrepareForCopying();
+				NodesToCopy.Add(BindingNode);
+			}
 		}
 	}
 
-	if(NodesToCopy.Num() > 0)
+	// We need to clear any references to nodes that aren't selected since we don't want them copied
+	for (UObject* NodeObject : NodesToCopy)
+	{
+		if (const UMDFastBindingGraphNode* BindingNode = Cast<UMDFastBindingGraphNode>(NodeObject))
+		{
+			if (UMDFastBindingObject* BindingObject = BindingNode->GetCopiedBindingObject())
+			{
+				for (FMDFastBindingItem& BindingItem : BindingObject->GetBindingItems())
+				{
+					if (BindingItem.Value != nullptr && !SelectedObjects.Contains(BindingItem.Value->BindingObjectIdentifier))
+					{
+						BindingItem.Value = nullptr;
+					}
+				}
+			}
+		}
+	}
+
+	if (NodesToCopy.Num() > 0)
 	{
 		FString ExportedText;
 		FEdGraphUtilities::ExportNodesToText(NodesToCopy, /*out*/ ExportedText);
@@ -377,53 +411,100 @@ void SMDFastBindingEditorGraphWidget::PasteNodes() const
 	FEdGraphUtilities::ImportNodesFromText(TempBindingGraph.Get(), TextToImport, /*out*/ PastedNodes);
 
 	TArray<UMDFastBindingObject*> BindingObjects;
+	TArray<UMDFastBindingObject*> OrphanObjects;
 	for(UEdGraphNode* Node : PastedNodes)
 	{
 		UMDFastBindingGraphNode* BindingNode = Cast<UMDFastBindingGraphNode>(Node);
 		if (BindingNode && BindingNode->CanDuplicateNode())
 		{
-			BindingObjects.Add(BindingNode->GetCopiedBindingObject());
+			if (UMDFastBindingObject* CopiedObject = BindingNode->GetCopiedBindingObject())
+			{
+				BindingObjects.Add(CopiedObject);
+				OrphanObjects.Add(CopiedObject);
+				
+				TArray<UMDFastBindingValueBase*> BindingValues;
+				CopiedObject->GatherBindingValues(BindingValues);
+				BindingObjects.Append(BindingValues);
+				
+				BindingNode->CleanUpPasting();
+			}
 		}
 	}
-	FVector2D AvgNodePosition(0.0f, 0.0f);
 
+	TOptional<FIntPoint> TopLeftMostNodePosition;
 	for (const UMDFastBindingObject* Object : BindingObjects)
 	{
-		AvgNodePosition.X += Object->NodePos.X;
-		AvgNodePosition.Y += Object->NodePos.Y;
+		if (!TopLeftMostNodePosition.IsSet())
+		{
+			TopLeftMostNodePosition = Object->NodePos;
+		}
+		else if (Object->NodePos.X < TopLeftMostNodePosition.GetValue().X)
+		{
+			TopLeftMostNodePosition.GetValue().X = Object->NodePos.X;
+		}
+		else if (Object->NodePos.Y < TopLeftMostNodePosition.GetValue().Y)
+		{
+			TopLeftMostNodePosition.GetValue().Y = Object->NodePos.Y;
+		}
 	}
 
-	const float InvNumNodes = 1.0f / float(PastedNodes.Num());
-	AvgNodePosition.X *= InvNumNodes;
-	AvgNodePosition.Y *= InvNumNodes;
-
+	FIntPoint AvgNodePosition = FIntPoint::ZeroValue;
 	for (UMDFastBindingObject* Object : BindingObjects)
 	{
-		Object->NodePos.X = (Object->NodePos.X - AvgNodePosition.X);
-		Object->NodePos.Y = (Object->NodePos.Y - AvgNodePosition.Y);
+		Object->NodePos -= TopLeftMostNodePosition.GetValue();
+		AvgNodePosition += Object->NodePos;
+	}
+
+	if (BindingObjects.Num() > 0)
+	{
+		AvgNodePosition /= BindingObjects.Num();
+	}
+
+	const FIntPoint PasteLocation = FIntPoint(GraphEditor->GetPasteLocation().X, GraphEditor->GetPasteLocation().Y) - AvgNodePosition;
+	for (UMDFastBindingObject* Object : BindingObjects)
+	{
+		Object->NodePos += PasteLocation;
+	}
+
+	// Re-roll all the guids for the new objects
+	for (UMDFastBindingObject* BindingObject : BindingObjects)
+	{
+		if (BindingObject != nullptr)
+		{
+			BindingObject->BindingObjectIdentifier = FGuid::NewGuid();
+		}
 	}
 
 	TArray<UMDFastBindingObject*> NewObjects;
-	if(BindingObjects.Num() > 0)
+	if(OrphanObjects.Num() > 0)
 	{
 		FScopedTransaction Transaction(FGenericCommands::Get().Paste->GetDescription());
 
 		if(UMDFastBindingInstance* BindingPtr = Binding.Get())
 		{
-			for (UMDFastBindingObject* BindingObject : BindingObjects)
-			{
-				if (BindingObject != nullptr)
-				{
-					BindingObject->BindingObjectIdentifier = FGuid::NewGuid();
-				}
-				
+			for (UMDFastBindingObject* BindingObject : OrphanObjects)
+			{				
 				if (UMDFastBindingDestinationBase* BindingDest = Cast<UMDFastBindingDestinationBase>(BindingObject))
 				{
-					NewObjects.Add(BindingPtr->SetDestination(BindingDest));
+					if (UMDFastBindingDestinationBase* NewDest = BindingPtr->SetDestination(BindingDest))
+					{
+						NewObjects.Add(NewDest);
+				
+						TArray<UMDFastBindingValueBase*> BindingValues;
+						NewDest->GatherBindingValues(BindingValues);
+						NewObjects.Append(BindingValues);
+					}
 				}
 				else if (UMDFastBindingValueBase* BindingValue = Cast<UMDFastBindingValueBase>(BindingObject))
 				{
-					NewObjects.Add(BindingPtr->AddOrphan(BindingValue));
+					if (UMDFastBindingValueBase* NewValue = BindingPtr->AddOrphan(BindingValue))
+					{
+						NewObjects.Add(NewValue);
+				
+						TArray<UMDFastBindingValueBase*> BindingValues;
+						NewValue->GatherBindingValues(BindingValues);
+						NewObjects.Append(BindingValues);
+					}
 				}
 			}
 		}

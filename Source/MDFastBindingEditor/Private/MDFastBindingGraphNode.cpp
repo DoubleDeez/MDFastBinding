@@ -47,6 +47,17 @@ UMDFastBindingObject* UMDFastBindingGraphNode::GetBindingObjectBeingDebugged() c
 	return nullptr;
 }
 
+UMDFastBindingGraphNode* UMDFastBindingGraphNode::GetLinkedOutputNode() const
+{
+	const UEdGraphPin* OutputPin = FindPin(OutputPinName);
+	if (OutputPin == nullptr || OutputPin->LinkedTo.Num() == 0)
+	{
+		return nullptr;
+	}
+
+	return Cast<UMDFastBindingGraphNode>(OutputPin->LinkedTo[0]->GetOwningNode());
+}
+
 void UMDFastBindingGraphNode::ClearConnection(const FName& PinName)
 {
 	if (UMDFastBindingObject* Object = BindingObject.Get())
@@ -141,13 +152,16 @@ void UMDFastBindingGraphNode::PrepareForCopying()
 
 	if (const UMDFastBindingObject* Obj = GetBindingObject())
 	{
-		// Don't want to copy on sub-objects
 		CopiedObject = DuplicateObject<UMDFastBindingObject>(Obj, this);
-		CopiedObject->ClearBindingItemValuePtrs();
 	}
 }
 
 void UMDFastBindingGraphNode::CleanUpCopying()
+{
+	CopiedObject = nullptr;
+}
+
+void UMDFastBindingGraphNode::CleanUpPasting()
 {
 	CopiedObject = nullptr;
 }

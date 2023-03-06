@@ -583,6 +583,18 @@ void UMDFastBindingObject::ClearBindingItemValuePtrs()
 	}
 }
 
+void UMDFastBindingObject::GatherBindingValues(TArray<UMDFastBindingValueBase*>& OutValues) const
+{
+	for (const FMDFastBindingItem& BindingItem : BindingItems)
+	{
+		if (BindingItem.Value != nullptr)
+		{
+			OutValues.Add(BindingItem.Value);
+			BindingItem.Value->GatherBindingValues(OutValues);
+		}
+	}
+}
+
 void UMDFastBindingObject::OrphanBindingItem(const FName& ItemName)
 {
 	if (const FMDFastBindingItem* BindingItem = BindingItems.FindByKey(ItemName))

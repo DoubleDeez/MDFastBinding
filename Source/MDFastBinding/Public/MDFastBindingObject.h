@@ -165,6 +165,8 @@ public:
 	UMDFastBindingValueBase* SetBindingItem(const FName& ItemName, UMDFastBindingValueBase* InValue);
 	void ClearBindingItemValue(const FName& ItemName);
 	void ClearBindingItemValuePtrs();
+
+	void GatherBindingValues(TArray<UMDFastBindingValueBase*>& OutValues) const;
 	
 	void OrphanBindingItem(const FName& ItemName);
 	void OrphanBindingItem(UMDFastBindingValueBase* InValue);
