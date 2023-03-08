@@ -8,7 +8,7 @@
 #include "LevelEditor.h"
 #include "MDFastBindingContainer.h"
 #include "MDFastBindingDesignerExtension.h"
-#include "MDFastBindingEditorConfig.h"
+#include "Util/MDFastBindingEditorConfig.h"
 #include "MDFastBindingEditorStyle.h"
 #include "MDFastBindingFieldPath.h"
 #include "MDFastBindingFunctionWrapper.h"
@@ -23,6 +23,8 @@
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "Modules/ModuleManager.h"
 #include "WidgetBlueprint.h"
+#include "Util/MDFastBindingEditorHelpers.h"
+#include "WidgetExtension/MDFastBindingWidgetBlueprintExtension.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "WorkflowOrientedApp/WorkflowTabManager.h"
 
@@ -49,8 +51,7 @@ void FMDFastBindingEditorTabBinding::RegisterBlueprintEditorLayout(FLayoutExtend
 	Extender.ExtendLayout(FBlueprintEditorTabs::GraphEditorID, ELayoutExtensionPosition::Before, FTabManager::FTab(FMDFastBindingEditorSummoner::TabId, ETabState::ClosedTab));
 }
 
-void FMDFastBindingEditorTabBinding::RegisterBlueprintEditorTab(FWorkflowAllowedTabSet& TabFactories, FName InModeName,
-	TSharedPtr<FBlueprintEditor> BlueprintEditor)
+void FMDFastBindingEditorTabBinding::RegisterBlueprintEditorTab(FWorkflowAllowedTabSet& TabFactories, FName InModeName, TSharedPtr<FBlueprintEditor> BlueprintEditor)
 {
 	TabFactories.RegisterFactory(MakeShared<FMDFastBindingEditorSummoner>(BlueprintEditor));
 }
@@ -105,7 +106,7 @@ TSharedRef<FExtender> FMDFastBindingEditorModule::CheckAddBindingEditorToolbarBu
 
 	if (UObject* EditorObject = (Objects.Num() > 0) ? Objects[0] : nullptr)
 	{
-		if (DoesObjectHaveFastBindings(*EditorObject))
+		if (MDFastBindingEditorHelpers::DoesObjectSupportFastBindings(*EditorObject))
 		{
 			Extender->AddToolBarExtension(TEXT("Asset"), EExtensionHook::After, Commands
 				, FToolBarExtensionDelegate::CreateRaw(this, &FMDFastBindingEditorModule::AddBindingEditorToolbarButtons, MakeWeakObjectPtr(EditorObject)));
@@ -145,75 +146,6 @@ void FMDFastBindingEditorModule::AddBindingEditorToolbarButtons(FToolBarBuilder&
 	}
 }
 
-bool FMDFastBindingEditorModule::DoesObjectHaveFastBindings(const UObject& Object)
-{
-	if (const UBlueprint* BP = Cast<UBlueprint>(&Object))
-	{
-		return DoesClassHaveFastBindings(BP->GeneratedClass);
-	}
-
-	return DoesClassHaveFastBindings(Object.GetClass());
-}
-
-bool FMDFastBindingEditorModule::DoesClassHaveFastBindings(const UStruct* Class)
-{
-	TSet<const UStruct*> VisitedClasses;
-	TArray<const UStruct*> ClassesToVisit = { Class };
-
-	while (ClassesToVisit.Num() > 0)
-	{
-		const UStruct* ClassToVisit = ClassesToVisit.Pop();
-		VisitedClasses.Add(ClassToVisit);
-		
-		for (TFieldIterator<FProperty> It(ClassToVisit); It; ++It)
-		{
-			if (const FObjectPropertyBase* ObjectProp = CastField<const FObjectPropertyBase>(*It))
-			{
-				if (ObjectProp->PropertyClass->IsChildOf(UMDFastBindingContainer::StaticClass()))
-				{
-					return true;
-				}
-				
-				if (!VisitedClasses.Contains(ObjectProp->PropertyClass))
-				{
-					ClassesToVisit.Push(ObjectProp->PropertyClass);
-				}
-			}
-			else if (const FStructProperty* StructProp = CastField<const FStructProperty>(*It))
-			{
-				if (!VisitedClasses.Contains(StructProp->Struct))
-				{
-					ClassesToVisit.Push(StructProp->Struct);
-				}
-			}
-		}
-	}
-	
-	return false;
-}
-
-UMDFastBindingContainer* FMDFastBindingEditorModule::FindBindingContainerCDOInClass(UClass* Class)
-{
-	if (Class != nullptr)
-	{
-		for (TFieldIterator<FObjectPropertyBase> It(Class); It; ++It)
-		{
-			if (It->PropertyClass->IsChildOf(UMDFastBindingContainer::StaticClass()))
-			{
-				if (UObject* BindingOwnerCDO = Class->GetDefaultObject())
-				{
-					if (UMDFastBindingContainer* Container = Cast<UMDFastBindingContainer>(It->GetObjectPropertyValue_InContainer(BindingOwnerCDO)))
-					{
-						return Container;
-					}
-				}
-			}
-		}
-	}
-
-	return nullptr;
-}
-
 void FMDFastBindingEditorModule::OpenBindingEditor(TWeakObjectPtr<UObject> EditorObject) const
 {
 	UObject* Object = EditorObject.Get();
@@ -243,7 +175,7 @@ void FMDFastBindingEditorModule::OpenBindingEditor(TWeakObjectPtr<UObject> Edito
 			if (const TSharedPtr<SDockTab> Tab = TabManager->TryInvokeTab(FMDFastBindingEditorSummoner::TabId))
 			{
 				const TSharedPtr<SMDFastBindingEditorWidget> BindingWidget = StaticCastSharedRef<SMDFastBindingEditorWidget>(Tab->GetContent());
-				BindingWidget->AssignBindingData(BP->GeneratedClass);
+				BindingWidget->AssignBindingData(BP);
 			}
 		}
 	}
@@ -251,9 +183,9 @@ void FMDFastBindingEditorModule::OpenBindingEditor(TWeakObjectPtr<UObject> Edito
 
 void FMDFastBindingEditorModule::OnRenameVariable(UBlueprint* Blueprint, UClass* VariableClass, const FName& OldVariableName, const FName& NewVariableName)
 {
-	if (Blueprint != nullptr && DoesClassHaveFastBindings(Blueprint->GeneratedClass))
+	if (Blueprint != nullptr && MDFastBindingEditorHelpers::DoesClassSupportFastBindings(Blueprint->GeneratedClass))
 	{
-		if (UMDFastBindingContainer* BindingContainer = FindBindingContainerCDOInClass(Blueprint->GeneratedClass))
+		if (const UMDFastBindingContainer* BindingContainer = MDFastBindingEditorHelpers::FindBindingContainerCDOInClass(Blueprint->GeneratedClass))
 		{
 			for (UMDFastBindingInstance* Binding : BindingContainer->GetBindings())
 			{

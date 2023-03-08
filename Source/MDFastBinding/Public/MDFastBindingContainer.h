@@ -22,6 +22,12 @@ public:
 	void TerminateBindings(UObject* SourceObject);
 
 	void SetBindingTickPolicy(UMDFastBindingInstance* Binding, bool bShouldTick);
+	
+	UClass* GetBindingOwnerClass() const;
+
+	// Use this redirect the binding owner from the actual outer of this UObject
+	DECLARE_DELEGATE_RetVal(UClass*, FGetBindingOwnerClass);
+	FGetBindingOwnerClass GetBindingOwnerClassDelegate;
 
 // Editor only operations
 #if WITH_EDITORONLY_DATA

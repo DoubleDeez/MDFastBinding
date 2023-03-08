@@ -2,12 +2,14 @@
 
 #include "IHasDesignerExtensibility.h"
 #include "MDFastBindingContainer.h"
-#include "MDFastBindingEditorConfig.h"
-#include "MDFastBindingEditorModule.h"
+#include "Util/MDFastBindingEditorConfig.h"
 #include "WidgetBlueprint.h"
 #include "WidgetBlueprintEditor.h"
 #include "Blueprint/WidgetTree.h"
 #include "Slate/SObjectWidget.h"
+#include "Util/MDFastBindingEditorHelpers.h"
+#include "WidgetExtension/MDFastBindingWidgetClassExtension.h"
+#include "WidgetExtension/MDFastBindingWidgetExtension.h"
 
 class FMDFastBindingDesignerExtensionFactory : public IDesignerExtensionFactory, public TSharedFromThis<FMDFastBindingDesignerExtensionFactory>
 {
@@ -126,15 +128,28 @@ void FMDFastBindingDesignerExtension::InitializeBindingInstanceForWidget(UUserWi
 	{
 		return;
 	}
-	
-	if (FMDFastBindingEditorModule::DoesClassHaveFastBindings(Widget->GetClass()))
+
+	const UMDFastBindingContainer* CDOBindingContainer = nullptr;
+	// Widgets Extensions aren't initialized at design-time so we have to go to the class extension 
+	if (UWidgetBlueprintGeneratedClass* BPClass = Cast<UWidgetBlueprintGeneratedClass>(Widget->GetClass()))
 	{
-		if (const UMDFastBindingContainer* CDOBindingContainer = FMDFastBindingEditorModule::FindBindingContainerCDOInClass(Widget->GetClass()))
-		{			
-			UMDFastBindingContainer* BindingContainer = DuplicateObject<UMDFastBindingContainer>(CDOBindingContainer, Widget);
-			BindingContainer->InitializeBindings(Widget);
-			BindingContainers.Add(Widget, TStrongObjectPtr<UMDFastBindingContainer>(BindingContainer));
+		if (const UMDFastBindingWidgetClassExtension* Extension = BPClass->GetExtension<UMDFastBindingWidgetClassExtension>())
+		{
+			CDOBindingContainer = Extension->GetBindingContainer();
 		}
+	}
+
+	if (CDOBindingContainer == nullptr)
+	{
+		// Fallback to checking for a legacy property-based binding container
+		CDOBindingContainer = MDFastBindingEditorHelpers::FindBindingContainerCDOInClass(Widget->GetClass());
+	}
+	
+	if (CDOBindingContainer != nullptr)
+	{			
+		UMDFastBindingContainer* BindingContainer = DuplicateObject<UMDFastBindingContainer>(CDOBindingContainer, Widget);
+		BindingContainer->InitializeBindings(Widget);
+		BindingContainers.Add(Widget, TStrongObjectPtr<UMDFastBindingContainer>(BindingContainer));
 	}
 		
 	if (Widget->WidgetTree != nullptr)

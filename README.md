@@ -8,33 +8,38 @@ Setting up MDFastBinding with this repo requires that you build your own code.
 
 ## Setup
 1. Clone this repo into your Plugins folder.
-2. 
-    a) To add bindings to your class, you can extend from `UMDFastBindingUserWidget`
-
-    b) or add an instance to your own class and call the binding functions at the appropriate locations:
+2. **This step is not required for User Widgets**  
+Add a BindingContainer instance to your class and call the binding functions at the appropriate locations:
 
 In your header:
 ```cpp
+// This property will be automatically populated by the Binding Editor when you setup your bindings
 UPROPERTY(Instanced)
 TObjectPtr<class UMDFastBindingContainer> Bindings = nullptr;
 ```
 
 In your source file:
 ```cpp
+#include "MDFastBindingContainer.h"
+
+// Usually in a Construct type function
 Bindings->InitializeBindings(this);
+// Usually in a Tick type function
 Bindings->UpdateBindings(this);
+// Usually in a Destroy type function
 Bindings->TerminateBindings(this);
 ```
-3. Launch the editor and create a blueprint that extends your class (or `MDFastBindingWidget`)
-4. In the editor of your blueprint, you should see a "Binding Editor" button in the toolbar (may require closing and reopening your blueprint):
+3. Launch the editor, enable the plugin, and restart the editor if necessary.
+4. Create a blueprint that extends your class (or `UserWidget`)
+5. In the editor of your blueprint, you should see a "Binding Editor" button in the toolbar (may require closing and reopening your blueprint if you reparented it):
 
 ![Unreal 5 Binding Icon](Resources/readme-binding-editor-ue5.png)
 
-5. This will open a new tab with an empty graph and an empty list on the left side. Create a new binding by click the "Add Binding" button in the bottom left and name your new binding.
+6. This will open a new tab with an empty graph and an empty list on the left side. Create a new binding by click the "Add Binding" button in the bottom left and name your new binding.
 
 ![Unreal 5 Binding Icon](Resources/readme-add-binding-ue5.png)
 
-6. Now on the right side, you can right-click and start adding nodes to your new binding.  
+7. Now on the right side, you can right-click and start adding nodes to your new binding.  
 Here's a screenshot binding 2 health variables to a progress bar widget's percent:
 
 ![Example of binding a health bar percentage](Resources/readme-binding-example.png)

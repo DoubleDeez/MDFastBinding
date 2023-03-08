@@ -65,7 +65,7 @@ UClass* UMDFastBindingValue_Function::GetFunctionOwnerClass()
 		return ObjectProp->PropertyClass;
 	}
 	
-	return GetBindingOuterClass();
+	return GetBindingOwnerClass();
 }
 
 void UMDFastBindingValue_Function::PopulateFunctionParam(UObject* SourceObject, const FProperty* Param, void* ValuePtr)

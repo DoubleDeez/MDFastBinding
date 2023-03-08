@@ -18,7 +18,7 @@ class MDFASTBINDING_API UMDFastBindingInstance : public UObject
 	GENERATED_BODY()
 
 public:
-	UClass* GetBindingOuterClass() const;
+	UClass* GetBindingOwnerClass() const;
 
 	UMDFastBindingContainer* GetBindingContainer() const;
 	

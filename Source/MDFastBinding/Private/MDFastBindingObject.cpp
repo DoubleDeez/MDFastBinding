@@ -129,23 +129,21 @@ TTuple<const FProperty*, void*> FMDFastBindingItem::GetCachedValue() const
 }
 #endif
 
-UClass* UMDFastBindingObject::GetBindingOuterClass() const
+UClass* UMDFastBindingObject::GetBindingOwnerClass() const
 {
 #if !WITH_EDITOR
-	if (BindingOuterClass.IsValid())
+	if (BindingOwnerClass.IsValid())
 	{
-		return BindingOuterClass.Get();
+		return BindingOwnerClass.Get();
 	}
 #endif
 
 	const UObject* Object = this;
 	while (Object != nullptr)
 	{
-		if (Object->IsA<UMDFastBindingContainer>() && Object->GetOuter() != nullptr)
+		if (const UMDFastBindingContainer* Container = Cast<UMDFastBindingContainer>(Object))
 		{
-			UClass* Class = Object->GetOuter()->GetClass();
-			BindingOuterClass = Class;
-			return Class;
+			return Container->GetBindingOwnerClass();
 		}
 
 		Object = Object->GetOuter();

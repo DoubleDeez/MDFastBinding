@@ -24,7 +24,7 @@ public:
 	SLATE_END_ARGS();
 
 	void Construct(const FArguments&, const TWeakPtr<FBlueprintEditor> InBlueprintEditor);
-	void AssignBindingData(UClass* BindingOwnerClass);
+	void AssignBindingData(UBlueprint* BindingOwnerBP);
 	void SelectBinding(UMDFastBindingInstance* InBinding);
 	UMDFastBindingContainer* GetSelectedBindingContainer() const;
 	UMDFastBindingInstance* GetSelectedBinding() const;
@@ -57,13 +57,12 @@ private:
 
 	void OnBlueprintCompiled(UBlueprint* Blueprint);
 
-	void UpdateBindingBeingDebugged(UObject* ObjectBeingDebugged, UBlueprint* Blueprint);
+	void UpdateBindingBeingDebugged(UObject* ObjectBeingDebugged);
 	void UpdateBindingBeingDebugged();
 	
 	FReply OnClearWatches();
 
 	TWeakPtr<FBlueprintEditor> BlueprintEditor;
-	TWeakFieldPtr<FObjectPropertyBase> BindingContainerProperty;
 	TWeakObjectPtr<UMDFastBindingContainer> BindingContainer;
 	TWeakObjectPtr<UMDFastBindingInstance> SelectedBinding;
 	TWeakObjectPtr<UMDFastBindingInstance> NewBinding;

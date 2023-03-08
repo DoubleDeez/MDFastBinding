@@ -1,4 +1,4 @@
-#include "MDFastBindingEditorConfig.h"
+#include "Util/MDFastBindingEditorConfig.h"
 
 UMDFastBindingEditorConfig::UMDFastBindingEditorConfig()
 {

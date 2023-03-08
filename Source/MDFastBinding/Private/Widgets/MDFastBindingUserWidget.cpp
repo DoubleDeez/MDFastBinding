@@ -12,7 +12,9 @@ void UMDFastBindingUserWidget::NativeConstruct()
 	if (Bindings == nullptr)
 	{
 		// Widget instances tend to not get changes to "Instance" UObject properties, so we copy them from the CDO directly
+		PRAGMA_DISABLE_DEPRECATION_WARNINGS
 		if (UMDFastBindingUserWidget* CDO = GetClass()->GetDefaultObject<UMDFastBindingUserWidget>())
+		PRAGMA_ENABLE_DEPRECATION_WARNINGS
 		{
 			if (CDO->Bindings != nullptr)
 			{

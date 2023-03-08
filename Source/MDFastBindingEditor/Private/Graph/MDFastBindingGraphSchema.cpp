@@ -378,7 +378,7 @@ bool UMDFastBindingGraphSchema::CanVariableBeDropped(UEdGraph* InGraph, FPropert
 	{
 		if (UMDFastBindingInstance* Binding = Graph->GetBinding())
 		{
-			if (UClass* OwnerClass = Binding->GetBindingOuterClass())
+			if (UClass* OwnerClass = Binding->GetBindingOwnerClass())
 			{
 				for (TFieldIterator<FProperty> It(OwnerClass); It; ++It)
 				{

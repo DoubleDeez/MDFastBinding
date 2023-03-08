@@ -72,7 +72,7 @@ UStruct* UMDFastBindingDestination_Property::GetPropertyOwnerStruct()
 		return StructProp->Struct;
 	}
 	
-	return GetBindingOuterClass();
+	return GetBindingOwnerClass();
 }
 
 void UMDFastBindingDestination_Property::SetupBindingItems()

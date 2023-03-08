@@ -3,7 +3,6 @@
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 
-class UMDFastBindingContainer;
 class UBlueprint;
 class FBlueprintEditor;
 class FExtender;
@@ -38,11 +37,6 @@ public:
 	virtual void ShutdownModule() override;
 	
 	void OpenBindingEditor(TWeakObjectPtr<UObject> EditorObject) const;
-	
-	static bool DoesObjectHaveFastBindings(const UObject& Object);
-	static bool DoesClassHaveFastBindings(const UStruct* Class);
-
-	static UMDFastBindingContainer* FindBindingContainerCDOInClass(UClass* Class);
 
 private:
 	TSharedRef<FExtender> CheckAddBindingEditorToolbarButtons(const TSharedRef<FUICommandList> Commands, const TArray<UObject*> Objects) const;

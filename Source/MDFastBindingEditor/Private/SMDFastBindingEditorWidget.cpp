@@ -7,7 +7,7 @@
 #include "MDFastBindingContainer.h"
 #include "MDFastBindingEditorDebug.h"
 #include "MDFastBindingEditorModule.h"
-#include "MDFastBindingEditorPersistantData.h"
+#include "Util/MDFastBindingEditorPersistantData.h"
 #include "MDFastBindingEditorStyle.h"
 #include "Graph/MDFastBindingGraphNode.h"
 #include "MDFastBindingInstance.h"
@@ -15,6 +15,10 @@
 #include "ScopedTransaction.h"
 #include "Graph/SMDFastBindingEditorGraphWidget.h"
 #include "SMDFastBindingInstanceRow.h"
+#include "WidgetBlueprint.h"
+#include "Blueprint/WidgetBlueprintGeneratedClass.h"
+#include "Util/MDFastBindingEditorHelpers.h"
+#include "WidgetExtension/MDFastBindingWidgetBlueprintExtension.h"
 #include "Widgets/Layout/SWidgetSwitcher.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Text/SInlineEditableTextBlock.h"
@@ -56,9 +60,9 @@ void SMDFastBindingEditorWidget::Construct(const FArguments&, const TWeakPtr<FBl
 	DetailsView->OnFinishedChangingProperties().AddSP(this, &SMDFastBindingEditorWidget::OnDetailsPanelPropertyChanged);
 
 	UBlueprint* Blueprint = InBlueprintEditor.Pin()->GetBlueprintObj();
-	AssignBindingData(Blueprint->GeneratedClass);
+	AssignBindingData(Blueprint);
 	Blueprint->OnCompiled().AddSP(this, &SMDFastBindingEditorWidget::OnBlueprintCompiled);
-	Blueprint->OnSetObjectBeingDebugged().AddSP(this, &SMDFastBindingEditorWidget::UpdateBindingBeingDebugged, Blueprint);
+	Blueprint->OnSetObjectBeingDebugged().AddSP(this, &SMDFastBindingEditorWidget::UpdateBindingBeingDebugged);
 
 	
 	BindingListView = SNew(SListView<TWeakObjectPtr<UMDFastBindingInstance>>)
@@ -72,7 +76,7 @@ void SMDFastBindingEditorWidget::Construct(const FArguments&, const TWeakPtr<FBl
 		.OnSelectionChanged(this, &SMDFastBindingEditorWidget::OnGraphSelectionChanged);
 	BindingGraphWidget->SetBinding(GetSelectedBinding());
 	
-	UpdateBindingBeingDebugged(Blueprint->GetObjectBeingDebugged(), Blueprint);
+	UpdateBindingBeingDebugged(Blueprint->GetObjectBeingDebugged());
 	
 	WatchList = SNew(SMDFastBindingWatchList);
 	WatchList->SetReferences(GetSelectedBinding(), BindingBeingDebugged.Get());
@@ -209,33 +213,29 @@ void SMDFastBindingEditorWidget::RefreshGraph() const
 	}
 }
 
-void SMDFastBindingEditorWidget::AssignBindingData(UClass* BindingOwnerClass)
+void SMDFastBindingEditorWidget::AssignBindingData(UBlueprint* BindingOwnerBP)
 {
-	BindingContainerProperty.Reset();
 	BindingContainer.Reset();
 
-	if (BindingOwnerClass != nullptr)
+	if (BindingOwnerBP != nullptr)
 	{
-		for (TFieldIterator<FObjectPropertyBase> It(BindingOwnerClass); It; ++It)
+		BindingContainer = MDFastBindingEditorHelpers::FindBindingContainerCDOInBlueprint(BindingOwnerBP);
+		if (BindingContainer.IsValid())
 		{
-			if (It->PropertyClass->IsChildOf(UMDFastBindingContainer::StaticClass()))
+			// If this is a widget's binding container and it didn't come from an extension then we should upgrade the container to be extension based
+			if (const UWidgetBlueprint* WidgetBP = Cast<UWidgetBlueprint>(BindingOwnerBP))
 			{
-				if (UObject* BindingOwnerCDO = BindingOwnerClass->GetDefaultObject())
+				const UMDFastBindingWidgetBlueprintExtension* BPExtension = UMDFastBindingWidgetBlueprintExtension::GetExtension<UMDFastBindingWidgetBlueprintExtension>(WidgetBP);
+				if (BPExtension == nullptr || BPExtension->GetBindingContainer() != BindingContainer)
 				{
-					BindingContainerProperty = *It;
-					if (UMDFastBindingContainer* Container = Cast<UMDFastBindingContainer>(It->GetObjectPropertyValue_InContainer(BindingOwnerCDO)))
-					{
-						BindingContainer = Container;
-					}
-					else
-					{
-						UMDFastBindingContainer* NewContainer = NewObject<UMDFastBindingContainer>(BindingOwnerCDO, NAME_None, RF_Transactional | RF_Public);
-						It->SetObjectPropertyValue_InContainer(BindingOwnerCDO, NewContainer);
-						BindingOwnerCDO->Modify();
-						BindingContainer = NewContainer;
-					}
+					MDFastBindingEditorHelpers::InitBindingContainerInBlueprint(BindingOwnerBP, BindingContainer.Get());
+					MDFastBindingEditorHelpers::ClearBindingContainerCDOInClass(BindingOwnerBP->GeneratedClass);
 				}
 			}
+		}
+		else
+		{
+			MDFastBindingEditorHelpers::InitBindingContainerInBlueprint(BindingOwnerBP);
 		}
 	}
 	
@@ -505,20 +505,20 @@ void SMDFastBindingEditorWidget::OnDetailsPanelPropertyChanged(const FPropertyCh
 void SMDFastBindingEditorWidget::OnBlueprintCompiled(UBlueprint* Blueprint)
 {
 	const int32 SelectedIndex = Bindings.IndexOfByKey(SelectedBinding);
-	AssignBindingData(Blueprint != nullptr ? Blueprint->GeneratedClass : nullptr);
+	AssignBindingData(Blueprint);
 	if (Bindings.IsValidIndex(SelectedIndex))
 	{
 		SelectBinding(Bindings[SelectedIndex].Get());
 	}
 }
 
-void SMDFastBindingEditorWidget::UpdateBindingBeingDebugged(UObject* ObjectBeingDebugged, UBlueprint* Blueprint)
+void SMDFastBindingEditorWidget::UpdateBindingBeingDebugged(UObject* ObjectBeingDebugged)
 {
 	BindingBeingDebugged.Reset();
-	if (Blueprint != nullptr && ObjectBeingDebugged != nullptr && ObjectBeingDebugged->GetClass() == Blueprint->GeneratedClass && BindingContainerProperty.IsValid())
+	if (ObjectBeingDebugged != nullptr)
 	{
 		// Find the debugged binding container
-		if (UMDFastBindingContainer* Container = Cast<UMDFastBindingContainer>(BindingContainerProperty->GetObjectPropertyValue_InContainer(ObjectBeingDebugged)))
+		if (const UMDFastBindingContainer* Container = MDFastBindingEditorHelpers::FindBindingContainerInObject(ObjectBeingDebugged))
 		{
 			const int32 SelectedIndex = Bindings.IndexOfByKey(SelectedBinding);
 			if (Container->GetBindings().IsValidIndex(SelectedIndex))
@@ -544,9 +544,9 @@ void SMDFastBindingEditorWidget::UpdateBindingBeingDebugged()
 {
 	if (BlueprintEditor.IsValid())
 	{
-		if (UBlueprint* Blueprint = BlueprintEditor.Pin()->GetBlueprintObj())
+		if (const UBlueprint* Blueprint = BlueprintEditor.Pin()->GetBlueprintObj())
 		{
-			UpdateBindingBeingDebugged(Blueprint->GetObjectBeingDebugged(), Blueprint);
+			UpdateBindingBeingDebugged(Blueprint->GetObjectBeingDebugged());
 		}
 	}
 }

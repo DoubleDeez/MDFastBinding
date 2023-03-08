@@ -3,7 +3,7 @@
 #include "BlueprintEditor.h"
 #include "EdGraphSchema_K2.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
-#include "MDFastBindingEditorPersistantData.h"
+#include "Util/MDFastBindingEditorPersistantData.h"
 #include "MDFastBindingInstance.h"
 #include "MDFastBindingObject.h"
 #include "Kismet2/KismetDebugUtilities.h"

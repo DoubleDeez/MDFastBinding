@@ -4,13 +4,13 @@
 #include "BindingDestinations/MDFastBindingDestinationBase.h"
 #include "BindingValues/MDFastBindingValueBase.h"
 
-UClass* UMDFastBindingInstance::GetBindingOuterClass() const
+UClass* UMDFastBindingInstance::GetBindingOwnerClass() const
 {
 	if (const UMDFastBindingContainer* BindingContainer = GetBindingContainer())
 	{
 		if (BindingContainer != nullptr)
 		{
-			return BindingContainer->GetOuter()->GetClass();
+			return BindingContainer->GetBindingOwnerClass();
 		}
 	}
 

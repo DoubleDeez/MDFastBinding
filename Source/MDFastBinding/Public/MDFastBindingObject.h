@@ -109,7 +109,7 @@ class MDFASTBINDING_API UMDFastBindingObject : public UObject
 	GENERATED_BODY()
 
 public:
-	UClass* GetBindingOuterClass() const;
+	UClass* GetBindingOwnerClass() const;
 	
 	void SetupBindingItems_Internal();
 
@@ -220,6 +220,6 @@ private:
 	UPROPERTY(Transient)
 	bool bIsObjectDirty = true;
 	
-	mutable TWeakObjectPtr<UClass> BindingOuterClass;
+	mutable TWeakObjectPtr<UClass> BindingOwnerClass;
 	mutable TWeakObjectPtr<UMDFastBindingInstance> OuterBinding;
 };
