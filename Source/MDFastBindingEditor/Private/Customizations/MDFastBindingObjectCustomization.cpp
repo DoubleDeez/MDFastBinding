@@ -1,4 +1,4 @@
-﻿#include "MDFastBindingObjectCustomization.h"
+﻿#include "Customizations/MDFastBindingObjectCustomization.h"
 
 #include "DetailLayoutBuilder.h"
 #include "MDFastBindingObject.h"

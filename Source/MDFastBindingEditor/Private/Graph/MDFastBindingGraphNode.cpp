@@ -1,13 +1,13 @@
-﻿#include "MDFastBindingGraphNode.h"
+﻿#include "Graph/MDFastBindingGraphNode.h"
 
 #include "BindingDestinations/MDFastBindingDestinationBase.h"
 #include "BindingValues/MDFastBindingValueBase.h"
 #include "EdGraphSchema_K2.h"
 #include "MDFastBindingEditorStyle.h"
-#include "MDFastBindingGraph.h"
+#include "Graph/MDFastBindingGraph.h"
 #include "MDFastBindingInstance.h"
 #include "MDFastBindingObject.h"
-#include "SMDFastBindingGraphNodeWidget.h"
+#include "Graph/SMDFastBindingGraphNodeWidget.h"
 #include "BindingDestinations/MDFastBindingDestination_Function.h"
 #include "BindingValues/MDFastBindingValue_Function.h"
 

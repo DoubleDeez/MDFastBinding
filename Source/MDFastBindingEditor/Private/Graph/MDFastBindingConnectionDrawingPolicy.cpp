@@ -1,8 +1,8 @@
-#include "MDFastBindingConnectionDrawingPolicy.h"
+#include "Graph/MDFastBindingConnectionDrawingPolicy.h"
 
 #include "BindingDestinations/MDFastBindingDestinationBase.h"
-#include "MDFastBindingGraph.h"
-#include "MDFastBindingGraphNode.h"
+#include "Graph/MDFastBindingGraph.h"
+#include "Graph/MDFastBindingGraphNode.h"
 #include "MDFastBindingInstance.h"
 #include "MDFastBindingObject.h"
 #include "Misc/App.h"

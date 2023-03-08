@@ -1,10 +1,10 @@
-﻿#include "MDFastBindingGraph.h"
+﻿#include "Graph/MDFastBindingGraph.h"
 
 #include "GraphEditAction.h"
-#include "MDFastBindingGraphNode.h"
+#include "Graph/MDFastBindingGraphNode.h"
 #include "MDFastBindingInstance.h"
 #include "MDFastBindingObject.h"
-#include "SMDFastBindingEditorGraphWidget.h"
+#include "Graph/SMDFastBindingEditorGraphWidget.h"
 #include "BindingValues/MDFastBindingValueBase.h"
 #include "BindingDestinations/MDFastBindingDestinationBase.h"
 

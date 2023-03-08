@@ -1,10 +1,10 @@
-﻿#include "SMDFastBindingGraphNodeWidget.h"
+﻿#include "Graph/SMDFastBindingGraphNodeWidget.h"
 
 #include "BlueprintEditor.h"
 #include "GraphEditorSettings.h"
 #include "MDFastBindingEditorDebug.h"
 #include "MDFastBindingEditorStyle.h"
-#include "MDFastBindingGraphNode.h"
+#include "Graph/MDFastBindingGraphNode.h"
 #include "MDFastBindingObject.h"
 #include "NodeFactory.h"
 #include "SGraphPanel.h"

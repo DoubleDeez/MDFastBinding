@@ -1,4 +1,4 @@
-﻿#include "MDFastBindingFunctionWrapperCustomization.h"
+﻿#include "Customizations/MDFastBindingFunctionWrapperCustomization.h"
 
 #include "DetailWidgetRow.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"

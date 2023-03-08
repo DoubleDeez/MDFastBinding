@@ -1,4 +1,4 @@
-﻿#include "SMDFastBindingEditorGraphWidget.h"
+﻿#include "Graph/SMDFastBindingEditorGraphWidget.h"
 
 #include "Algo/Transform.h"
 #include "BindingDestinations/MDFastBindingDestinationBase.h"
@@ -12,9 +12,9 @@
 #include "HAL/PlatformApplicationMisc.h"
 #include "MDFastBindingEditorCommands.h"
 #include "MDFastBindingEditorPersistantData.h"
-#include "MDFastBindingGraph.h"
-#include "MDFastBindingGraphNode.h"
-#include "MDFastBindingGraphSchema.h"
+#include "Graph/MDFastBindingGraph.h"
+#include "Graph/MDFastBindingGraphNode.h"
+#include "Graph/MDFastBindingGraphSchema.h"
 #include "MDFastBindingInstance.h"
 #include "MDFastBindingObject.h"
 #include "SGraphActionMenu.h"
