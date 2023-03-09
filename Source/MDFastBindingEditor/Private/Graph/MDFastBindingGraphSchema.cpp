@@ -441,4 +441,17 @@ bool UMDFastBindingGraphSchema::RequestVariableDropOnPin(UEdGraph* InGraph, FPro
 	return Super::RequestVariableDropOnPin(InGraph, InVariableToDrop, InPin, InDropPosition, InScreenPosition);
 }
 
+void UMDFastBindingGraphSchema::GetGraphDisplayInformation(const UEdGraph& Graph, FGraphDisplayInfo& DisplayInfo) const
+{
+	Super::GetGraphDisplayInformation(Graph, DisplayInfo);
+
+	if (const UMDFastBindingGraph* BindingGraph = Cast<UMDFastBindingGraph>(&Graph))
+	{
+		if (const UMDFastBindingInstance* BindingInstance = BindingGraph->GetBinding())
+		{
+			DisplayInfo.DisplayName = BindingInstance->GetBindingDisplayName();
+		}
+	}
+}
+
 #undef LOCTEXT_NAMESPACE

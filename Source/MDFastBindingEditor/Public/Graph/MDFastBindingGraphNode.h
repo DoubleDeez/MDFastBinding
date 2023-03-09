@@ -63,9 +63,10 @@ protected:
 	virtual FText GetTooltipText() const override;
 
 private:
-	TWeakObjectPtr<UMDFastBindingObject> BindingObject;
+	UPROPERTY(VisibleAnywhere, Transient, Instanced, Category = "Fast Binding")
+	TObjectPtr<UMDFastBindingObject> BindingObject;
 	TWeakObjectPtr<UMDFastBindingInstance> BindingBeingDebugged;
 
 	UPROPERTY()
-	UMDFastBindingObject* CopiedObject = nullptr;
+	TObjectPtr<UMDFastBindingObject> CopiedObject = nullptr;
 };

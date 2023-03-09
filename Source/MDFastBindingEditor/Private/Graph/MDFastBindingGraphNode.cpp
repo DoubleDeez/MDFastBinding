@@ -39,7 +39,7 @@ void UMDFastBindingGraphNode::SetBindingBeingDebugged(UMDFastBindingInstance* In
 
 UMDFastBindingObject* UMDFastBindingGraphNode::GetBindingObjectBeingDebugged() const
 {
-	if (BindingObject.IsValid() && BindingBeingDebugged.IsValid())
+	if (BindingObject != nullptr && BindingBeingDebugged.IsValid())
 	{
 		return BindingBeingDebugged->FindBindingObjectWithGUID(BindingObject->BindingObjectIdentifier);
 	}

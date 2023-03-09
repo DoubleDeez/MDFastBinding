@@ -21,6 +21,14 @@ public:
 
 	virtual void PostLoad() override;
 
+#if WITH_EDITORONLY_DATA
+	virtual void GetAllGraphs(TArray<UEdGraph*>& Graphs) const
+#if defined(WITH_FASTBINDING_DIFFS) && WITH_FASTBINDING_DIFFS
+	override
+#endif
+	;
+#endif
+
 protected:
 	virtual void HandleBeginCompilation(FWidgetBlueprintCompilerContext& InCreationContext) override;
 	virtual void HandleFinishCompilingClass(UWidgetBlueprintGeneratedClass* Class) override;
@@ -34,6 +42,10 @@ private:
 	void BindContainerOwnerDelegate();
 
 	UClass* GetBindingOwnerClass() const;
+
+	// Temporary graphs that are pinned for use with in the diff tool 
+	UPROPERTY(Transient)
+	mutable TArray<TObjectPtr<class UMDFastBindingGraph>> PinnedGraphs;
 	
 	FWidgetBlueprintCompilerContext* CompilerContext = nullptr;
 };
