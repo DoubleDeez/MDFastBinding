@@ -188,6 +188,8 @@ public:
 	virtual void OnVariableRenamed(UClass* VariableClass, const FName& OldVariableName, const FName& NewVariableName);
 
 	EMDFastBindingUpdateType GetUpdateType() const { return UpdateType; }
+
+	void SetUpdateType(EMDFastBindingUpdateType InUpdateType) { UpdateType = InUpdateType; }
 #endif
 
 protected:

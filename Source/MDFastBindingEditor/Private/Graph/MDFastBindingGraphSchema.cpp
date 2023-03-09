@@ -12,6 +12,8 @@
 #include "MDFastBindingInstance.h"
 #include "ScopedTransaction.h"
 #include "BindingValues/MDFastBindingValue_FieldNotify.h"
+#include "Blueprint/UserWidget.h"
+#include "Blueprint/WidgetTree.h"
 #include "FieldNotification/IFieldValueChanged.h"
 
 #define LOCTEXT_NAMESPACE "MDFastBindingGraphSchema"
@@ -37,6 +39,33 @@ namespace MDFastBindingGraphSchema_Private
 		}
 
 		return false;
+	}
+
+	bool IsPropertyAWidgetInWidgetTree(const FProperty* Prop, UClass* BindingOwnerClass)
+	{
+		const FObjectPropertyBase* ObjectProp = CastField<FObjectPropertyBase>(Prop);
+		const UWidgetBlueprintGeneratedClass* WidgetClass = Cast<UWidgetBlueprintGeneratedClass>(BindingOwnerClass);
+		if (ObjectProp == nullptr || WidgetClass == nullptr || !ObjectProp->PropertyClass->IsChildOf<UWidget>())
+		{
+			return false;
+		}
+
+		const UWidgetTree* WidgetTree = WidgetClass->GetWidgetTreeArchetype();
+		if (WidgetTree == nullptr)
+		{
+			return false;
+		}
+
+		bool bFound = false;
+		WidgetTree->ForEachWidget([ObjectProp, &bFound](UWidget* Widget)
+		{
+			if (!bFound && Widget != nullptr && Widget->bIsVariable && Widget->GetFName() == ObjectProp->GetFName())
+			{
+				bFound = true;
+			}
+		});
+
+		return bFound;
 	}
 }
 
@@ -420,19 +449,30 @@ bool UMDFastBindingGraphSchema::RequestVariableDropOnPin(UEdGraph* InGraph, FPro
 			return InPin->Direction == EGPD_Input ? FVector2D(-200, 0) : FVector2D(200, 0);
 		}();
 
-		UClass* ValueClass = MDFastBindingGraphSchema_Private::IsFieldNotifyProperty(InVariableToDrop) ? UMDFastBindingValue_FieldNotify::StaticClass() : UMDFastBindingValue_Property::StaticClass();
+		const bool bIsFieldNotify = MDFastBindingGraphSchema_Private::IsFieldNotifyProperty(InVariableToDrop);
+		UClass* ValueClass = bIsFieldNotify ? UMDFastBindingValue_FieldNotify::StaticClass() : UMDFastBindingValue_Property::StaticClass();
 		FMDFastBindingSchemaAction_CreateValue CreateAction = FMDFastBindingSchemaAction_CreateValue(ValueClass);
-		if (UMDFastBindingGraphNode* Node = Cast<UMDFastBindingGraphNode>(CreateAction.PerformAction(InGraph, InPin, InDropPosition + NodeOffset)))
+		if (const UMDFastBindingGraphNode* Node = Cast<UMDFastBindingGraphNode>(CreateAction.PerformAction(InGraph, InPin, InDropPosition + NodeOffset)))
 		{
 			if (UMDFastBindingValue_Property* PropertyValue = Cast<UMDFastBindingValue_Property>(Node->GetBindingObject()))
 			{
 				PropertyValue->SetFieldPath({ InVariableToDrop });
+
+				if (!bIsFieldNotify)
+				{
+					// Default widget tree widget's to Update Once since they don't usually change
+					if (MDFastBindingGraphSchema_Private::IsPropertyAWidgetInWidgetTree(InVariableToDrop, PropertyValue->GetBindingOwnerClass()))
+					{
+						PropertyValue->SetUpdateType(EMDFastBindingUpdateType::Once);
+					}
+				}
 			
 				if (UMDFastBindingGraph* Graph = Cast<UMDFastBindingGraph>(InGraph))
 				{
 					Graph->RefreshGraph();
 					Graph->SelectNodeWithBindingObject(PropertyValue);
 				}
+				
 				return true;
 			}
 		}
