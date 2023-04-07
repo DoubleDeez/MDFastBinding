@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "DesignerExtension.h"
+#include "Blueprint/UserWidget.h"
 #include "UObject/StrongObjectPtr.h"
 
 class UMDFastBindingContainer;
@@ -28,12 +29,13 @@ private:
 	void TerminateBindingInstances();
 	
 	void InitializeBindingInstanceForWidget(UUserWidget* Widget);
+	void InitializeBindingContainerForWidget(const UMDFastBindingContainer* CDOBindingContainer, UUserWidget* Widget);
 	
 	void OnShouldRunBindingsAtDesignTimeChanged();
 	
 	UUserWidget* GetPreviewWidget() const;
 	FWidgetBlueprintEditor* FindWidgetEditor() const;
 
-	TMap<TWeakObjectPtr<UUserWidget>, TStrongObjectPtr<UMDFastBindingContainer>> BindingContainers;
+	TMap<TWeakObjectPtr<UUserWidget>, TArray<TStrongObjectPtr<UMDFastBindingContainer>>> BindingContainers;
 	TWeakObjectPtr<UUserWidget> PreviewedWidget = nullptr;
 };

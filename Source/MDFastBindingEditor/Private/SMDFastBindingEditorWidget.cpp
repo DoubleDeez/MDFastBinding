@@ -9,6 +9,7 @@
 #include "MDFastBindingEditorModule.h"
 #include "Util/MDFastBindingEditorPersistantData.h"
 #include "MDFastBindingEditorStyle.h"
+#include "MDFastBindingHelpers.h"
 #include "Graph/MDFastBindingGraphNode.h"
 #include "MDFastBindingInstance.h"
 #include "Misc/MessageDialog.h"
@@ -114,6 +115,31 @@ void SMDFastBindingEditorWidget::Construct(const FArguments&, const TWeakPtr<FBl
 					.Padding(0.f, 4.f)
 					[
 						BindingListView.ToSharedRef()
+					]
+					+SVerticalBox::Slot()
+					.HAlign(HAlign_Fill)
+					.VAlign(VAlign_Top)
+					.AutoHeight()
+					[
+						SNew(SHorizontalBox)
+						.Visibility(this, &SMDFastBindingEditorWidget::GetSuperClassBindingsVisibility)
+						+SHorizontalBox::Slot()
+						.HAlign(HAlign_Left)
+						.VAlign(VAlign_Center)
+						.AutoWidth()
+						.Padding(0, 2.f, 4.f, 4.f)
+						[
+							SNew(SImage)
+							.Image(FAppStyle::Get().GetBrush(TEXT("Icons.Info")))
+						]
+						+SHorizontalBox::Slot()
+						.HAlign(HAlign_Left)
+						.VAlign(VAlign_Center)
+						.AutoWidth()
+						.Padding(0, 2.f, 0, 4.f)
+						[
+							SNew(STextBlock).Text(LOCTEXT("SuperClassHasBindingsWarning", "A Blueprint this Blueprint extends from has bindings."))
+						]
 					]
 					+SVerticalBox::Slot()
 					.HAlign(HAlign_Fill)
@@ -337,6 +363,15 @@ EVisibility SMDFastBindingEditorWidget::GetBindingSelectorVisibility() const
 EVisibility SMDFastBindingEditorWidget::GetBindingTreeVisibility() const
 {
 	return (GetSelectedBindingContainer() != nullptr && SelectedBinding.IsValid()) ? EVisibility::Visible : EVisibility::Collapsed;
+}
+
+EVisibility SMDFastBindingEditorWidget::GetSuperClassBindingsVisibility() const
+{
+	const UBlueprint* Blueprint = GetBlueprint();
+	const bool bDoesClassHaveSuperClassBindings = Blueprint != nullptr
+		&& FMDFastBindingHelpers::DoesClassHaveSuperClassBindings(Cast<UWidgetBlueprintGeneratedClass>(Blueprint->GeneratedClass));
+
+	return bDoesClassHaveSuperClassBindings ? EVisibility::Visible : EVisibility::Collapsed;
 }
 
 void SMDFastBindingEditorWidget::PopulateBindingsList()
@@ -565,6 +600,16 @@ FReply SMDFastBindingEditorWidget::OnClearWatches()
 	}
 	
 	return FReply::Handled();
+}
+
+UBlueprint* SMDFastBindingEditorWidget::GetBlueprint() const
+{
+	if (const TSharedPtr<FBlueprintEditor> BPEditor = BlueprintEditor.Pin())
+	{
+		return BPEditor->GetBlueprintObj();
+	}
+
+	return nullptr;
 }
 
 const FName FMDFastBindingEditorSummoner::TabId = TEXT("MDFastBindingID");

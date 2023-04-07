@@ -21,6 +21,8 @@ public:
 
 	virtual void PostLoad() override;
 
+	bool DoesBlueprintOrSuperClassesHaveBindings() const;
+
 #if WITH_EDITORONLY_DATA
 	virtual void GetAllGraphs(TArray<UEdGraph*>& Graphs) const
 #if defined(WITH_FASTBINDING_DIFFS) && WITH_FASTBINDING_DIFFS

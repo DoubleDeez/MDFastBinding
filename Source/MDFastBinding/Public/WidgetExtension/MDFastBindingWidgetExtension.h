@@ -30,14 +30,19 @@ public:
 
 #if WITH_EDITOR
 	UMDFastBindingContainer* GetBindingContainer() const { return BindingContainer; }
+	const TArray<TObjectPtr<UMDFastBindingContainer>>& GetSuperBindingContainers() const { return SuperBindingContainers; }
 #endif
 
 protected:
 	void SetBindingContainer(const UMDFastBindingContainer* CDOBindingContainer);
+	void AddSuperBindingContainer(const UMDFastBindingContainer* SuperCDOBindingContainer);
 	
 private:
 	UClass* GetBindingOwnerClass() const;
 	
 	UPROPERTY(Instanced)
 	TObjectPtr<UMDFastBindingContainer> BindingContainer = nullptr;
+	
+	UPROPERTY(Instanced)
+	TArray<TObjectPtr<UMDFastBindingContainer>> SuperBindingContainers;
 };

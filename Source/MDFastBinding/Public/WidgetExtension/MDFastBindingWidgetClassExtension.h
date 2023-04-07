@@ -17,9 +17,12 @@ class MDFASTBINDING_API UMDFastBindingWidgetClassExtension : public UWidgetBluep
 public:
 	virtual void Initialize(UUserWidget* UserWidget) override;
 
+	bool HasBindings() const;
+	
+	UMDFastBindingContainer* GetBindingContainer() const { return BindingContainer; }
+
 #if WITH_EDITOR
 	void SetBindingContainer(UMDFastBindingContainer* BPBindingContainer);
-	UMDFastBindingContainer* GetBindingContainer() const { return BindingContainer; }
 #endif
 
 private:

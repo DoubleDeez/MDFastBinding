@@ -22,6 +22,8 @@ public:
 	void TerminateBindings(UObject* SourceObject);
 
 	void SetBindingTickPolicy(UMDFastBindingInstance* Binding, bool bShouldTick);
+
+	bool HasBindings() const { return !Bindings.IsEmpty(); }
 	
 	UClass* GetBindingOwnerClass() const;
 

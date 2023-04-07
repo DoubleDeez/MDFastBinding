@@ -4,6 +4,7 @@
 #include "Modules/ModuleManager.h"
 
 class UBlueprint;
+class UMDFastBindingBlueprintCompilerExtension;
 class FBlueprintEditor;
 class FExtender;
 class FLayoutExtender;
@@ -49,4 +50,6 @@ private:
 	FDelegateHandle RenameHandle;
 	
 	TSharedPtr<class IDesignerExtensionFactory> DesignerExtensionFactory;
+
+	UMDFastBindingBlueprintCompilerExtension* BlueprintCompilerExtension = nullptr;
 };

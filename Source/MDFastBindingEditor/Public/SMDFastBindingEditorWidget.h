@@ -46,6 +46,7 @@ private:
 	
 	EVisibility GetBindingSelectorVisibility() const;
 	EVisibility GetBindingTreeVisibility() const;
+	EVisibility GetSuperClassBindingsVisibility() const;
 	
 	void PopulateBindingsList();
 	TSharedRef<ITableRow> GenerateBindingListRowWidget(TWeakObjectPtr<UMDFastBindingInstance> Binding, const TSharedRef<STableViewBase>& OwnerTable);
@@ -61,6 +62,8 @@ private:
 	void UpdateBindingBeingDebugged();
 	
 	FReply OnClearWatches();
+
+	UBlueprint* GetBlueprint() const;
 
 	TWeakPtr<FBlueprintEditor> BlueprintEditor;
 	TWeakObjectPtr<UMDFastBindingContainer> BindingContainer;

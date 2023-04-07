@@ -2,6 +2,8 @@
 
 #include "CoreMinimal.h"
 
+class UWidgetBlueprintGeneratedClass;
+
 class MDFASTBINDING_API FMDFastBindingHelpers
 {
 public:
@@ -11,4 +13,6 @@ public:
 	static FString PropertyToString(const FProperty& Prop);
 
 	static bool ArePropertyValuesEqual(const FProperty* PropA, const void* ValuePtrA, const FProperty* PropB, const void* ValuePtrB);
+	
+	static bool DoesClassHaveSuperClassBindings(UWidgetBlueprintGeneratedClass* Class);
 };

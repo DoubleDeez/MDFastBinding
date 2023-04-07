@@ -1,11 +1,13 @@
 ﻿#include "MDFastBindingEditorModule.h"
 
+#include "BlueprintCompilationManager.h"
 #include "BlueprintEditorModule.h"
 #include "BlueprintEditorTabs.h"
 #include "Customizations/MDFastBindingFieldPathCustomization.h"
 #include "Customizations/MDFastBindingFunctionWrapperCustomization.h"
 #include "Customizations/MDFastBindingObjectCustomization.h"
 #include "LevelEditor.h"
+#include "MDFastBindingBlueprintCompilerExtension.h"
 #include "MDFastBindingContainer.h"
 #include "MDFastBindingDesignerExtension.h"
 #include "Util/MDFastBindingEditorConfig.h"
@@ -75,10 +77,20 @@ void FMDFastBindingEditorModule::StartupModule()
 	UMGEditorInterface.GetDesignerExtensibilityManager()->AddDesignerExtensionFactory(DesignerExtensionFactory.ToSharedRef());
 
 	RenameHandle = FBlueprintEditorUtils::OnRenameVariableReferencesEvent.AddRaw(this, &FMDFastBindingEditorModule::OnRenameVariable);
+
+	BlueprintCompilerExtension = NewObject<UMDFastBindingBlueprintCompilerExtension>();
+	BlueprintCompilerExtension->AddToRoot();
+	FBlueprintCompilationManager::RegisterCompilerExtension(UWidgetBlueprint::StaticClass(), BlueprintCompilerExtension);
 }
 
 void FMDFastBindingEditorModule::ShutdownModule()
 {
+	if (IsValid(BlueprintCompilerExtension))
+	{
+		BlueprintCompilerExtension->RemoveFromRoot();
+		BlueprintCompilerExtension = nullptr;
+	}
+	
 	FBlueprintEditorUtils::OnRenameVariableReferencesEvent.Remove(RenameHandle);
 	
 	if (FPropertyEditorModule* PropertyModule = FModuleManager::GetModulePtr<FPropertyEditorModule>("PropertyEditor"))

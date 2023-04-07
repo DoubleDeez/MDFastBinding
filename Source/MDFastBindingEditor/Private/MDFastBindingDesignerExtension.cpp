@@ -91,7 +91,7 @@ void FMDFastBindingDesignerExtension::UpdateBindingInstances()
 	{
 		if (UUserWidget* BindingOwner = It.Key().Get())
 		{
-			if (UMDFastBindingContainer* BindingContainer = It.Value().Get())
+			for (const TStrongObjectPtr<UMDFastBindingContainer>& BindingContainer : It.Value())
 			{
 				BindingContainer->UpdateBindings(BindingOwner);
 			}
@@ -110,7 +110,7 @@ void FMDFastBindingDesignerExtension::TerminateBindingInstances()
 	{
 		if (UUserWidget* BindingOwner = It.Key().Get())
 		{
-			if (UMDFastBindingContainer* BindingContainer = It.Value().Get())
+			for (const TStrongObjectPtr<UMDFastBindingContainer>& BindingContainer : It.Value())
 			{
 				BindingContainer->TerminateBindings(BindingOwner);
 			}
@@ -129,27 +129,35 @@ void FMDFastBindingDesignerExtension::InitializeBindingInstanceForWidget(UUserWi
 		return;
 	}
 
-	const UMDFastBindingContainer* CDOBindingContainer = nullptr;
+	bool bDoesHaveExtensionBinding = false;
 	// Widgets Extensions aren't initialized at design-time so we have to go to the class extension 
 	if (UWidgetBlueprintGeneratedClass* BPClass = Cast<UWidgetBlueprintGeneratedClass>(Widget->GetClass()))
 	{
 		if (const UMDFastBindingWidgetClassExtension* Extension = BPClass->GetExtension<UMDFastBindingWidgetClassExtension>())
 		{
-			CDOBindingContainer = Extension->GetBindingContainer();
+			bDoesHaveExtensionBinding = Extension->HasBindings();
+		}
+		
+		while (BPClass != nullptr)
+		{
+			BPClass->ForEachExtension([this, Widget](UWidgetBlueprintGeneratedClassExtension* Extension)
+			{
+				if (const UMDFastBindingWidgetClassExtension* SuperClassExtension = Cast<UMDFastBindingWidgetClassExtension>(Extension))
+				{
+					InitializeBindingContainerForWidget(SuperClassExtension->GetBindingContainer(), Widget);
+				}
+			});
+			BPClass = Cast<UWidgetBlueprintGeneratedClass>(BPClass->GetSuperClass());
 		}
 	}
 
-	if (CDOBindingContainer == nullptr)
+	// Fallback to checking for a legacy property-based binding container
+	if (!bDoesHaveExtensionBinding)
 	{
-		// Fallback to checking for a legacy property-based binding container
-		CDOBindingContainer = MDFastBindingEditorHelpers::FindBindingContainerCDOInClass(Widget->GetClass());
-	}
-	
-	if (CDOBindingContainer != nullptr)
-	{			
-		UMDFastBindingContainer* BindingContainer = DuplicateObject<UMDFastBindingContainer>(CDOBindingContainer, Widget);
-		BindingContainer->InitializeBindings(Widget);
-		BindingContainers.Add(Widget, TStrongObjectPtr<UMDFastBindingContainer>(BindingContainer));
+		if (const UMDFastBindingContainer* LegacyBindingContainer = MDFastBindingEditorHelpers::FindBindingContainerCDOInClass(Widget->GetClass()))
+		{
+			InitializeBindingContainerForWidget(LegacyBindingContainer, Widget);
+		}
 	}
 		
 	if (Widget->WidgetTree != nullptr)
@@ -161,6 +169,15 @@ void FMDFastBindingDesignerExtension::InitializeBindingInstanceForWidget(UUserWi
 				InitializeBindingInstanceForWidget(UserWidget);
 			}
 		});
+	}
+}
+
+void FMDFastBindingDesignerExtension::InitializeBindingContainerForWidget(const UMDFastBindingContainer* CDOBindingContainer, UUserWidget* Widget)
+{
+	if (UMDFastBindingContainer* BindingContainer = DuplicateObject<UMDFastBindingContainer>(CDOBindingContainer, Widget))
+	{
+		BindingContainer->InitializeBindings(Widget);
+		BindingContainers.FindOrAdd(Widget).AddUnique(TStrongObjectPtr<UMDFastBindingContainer>(BindingContainer));
 	}
 }
 

@@ -5,6 +5,8 @@
 #include "UObject/UnrealType.h"
 
 #include "MDFastBinding.h"
+#include "Blueprint/WidgetBlueprintGeneratedClass.h"
+#include "WidgetExtension/MDFastBindingWidgetClassExtension.h"
 
 void FMDFastBindingHelpers::GetFunctionParamProps(const UFunction* Func, TArray<const FProperty*>& OutParams)
 {
@@ -105,4 +107,27 @@ bool FMDFastBindingHelpers::ArePropertyValuesEqual(const FProperty* PropA, const
 	}
 
 	return bResult;
+}
+
+bool FMDFastBindingHelpers::DoesClassHaveSuperClassBindings(UWidgetBlueprintGeneratedClass* Class)
+{
+	if (Class != nullptr)
+	{
+		Class = Cast<UWidgetBlueprintGeneratedClass>(Class->GetSuperClass());
+	}
+	
+	while (Class != nullptr)
+	{
+		if (const UMDFastBindingWidgetClassExtension* Extension = Class->GetExtension<UMDFastBindingWidgetClassExtension>())
+		{
+			if (Extension->HasBindings())
+			{
+				return true;
+			}
+		}
+
+		Class = Cast<UWidgetBlueprintGeneratedClass>(Class->GetSuperClass());
+	}
+
+	return false;
 }

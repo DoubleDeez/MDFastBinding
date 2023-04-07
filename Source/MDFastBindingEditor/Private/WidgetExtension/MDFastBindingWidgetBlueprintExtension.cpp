@@ -1,6 +1,7 @@
 #include "WidgetExtension/MDFastBindingWidgetBlueprintExtension.h"
 
 #include "MDFastBindingContainer.h"
+#include "MDFastBindingHelpers.h"
 #include "MDFastBindingInstance.h"
 #include "Graph/MDFastBindingGraph.h"
 #include "Graph/MDFastBindingGraphSchema.h"
@@ -18,6 +19,21 @@ void UMDFastBindingWidgetBlueprintExtension::PostLoad()
 	Super::PostLoad();
 	
 	BindContainerOwnerDelegate();
+}
+
+bool UMDFastBindingWidgetBlueprintExtension::DoesBlueprintOrSuperClassesHaveBindings() const
+{
+	if (BindingContainer != nullptr && BindingContainer->HasBindings())
+	{
+		return true;
+	}
+
+	if (const UWidgetBlueprint* WidgetBP = GetWidgetBlueprint())
+	{
+		return FMDFastBindingHelpers::DoesClassHaveSuperClassBindings(Cast<UWidgetBlueprintGeneratedClass>(WidgetBP->GeneratedClass.Get()));
+	}
+	
+	return false;
 }
 
 #if WITH_EDITORONLY_DATA
@@ -57,10 +73,13 @@ void UMDFastBindingWidgetBlueprintExtension::HandleFinishCompilingClass(UWidgetB
 {
 	Super::HandleFinishCompilingClass(Class);
 	
-	if (CompilerContext != nullptr && BindingContainer != nullptr && BindingContainer->GetBindings().Num() > 0)
+	if (CompilerContext != nullptr && DoesBlueprintOrSuperClassesHaveBindings())
 	{
 		UMDFastBindingWidgetClassExtension* BindingClass = NewObject<UMDFastBindingWidgetClassExtension>(Class);
-		BindingClass->SetBindingContainer(BindingContainer);
+		if (BindingContainer != nullptr && BindingContainer->GetBindings().Num() > 0)
+		{
+			BindingClass->SetBindingContainer(BindingContainer);
+		}
 
 		// There's a chance we could perform some compile-time steps here that would improve runtime performance
 		

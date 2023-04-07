@@ -66,6 +66,7 @@ UMDFastBindingContainer* MDFastBindingEditorHelpers::FindBindingContainerInObjec
 	{
 		if (const UMDFastBindingWidgetExtension* Extension = Widget->GetExtension<UMDFastBindingWidgetExtension>())
 		{
+			// TODO - Do we need to search SuperBindingContainers?
 			return Extension->GetBindingContainer();
 		}
 	}

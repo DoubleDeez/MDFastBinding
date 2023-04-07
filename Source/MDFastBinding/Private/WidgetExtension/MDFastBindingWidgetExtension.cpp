@@ -7,9 +7,20 @@ void UMDFastBindingWidgetExtension::Construct()
 {
 	Super::Construct();
 
-	if (BindingContainer != nullptr)
+	if (UUserWidget* UserWidget = GetUserWidget())
 	{
-		BindingContainer->InitializeBindings(GetUserWidget());
+		if (BindingContainer != nullptr)
+		{
+			BindingContainer->InitializeBindings(UserWidget);
+		}
+
+		for (UMDFastBindingContainer* SuperBindingContainer : SuperBindingContainers)
+		{
+			if (SuperBindingContainer != nullptr)
+			{
+				SuperBindingContainer->InitializeBindings(UserWidget);
+			}
+		}
 	}
 }
 
@@ -17,9 +28,20 @@ void UMDFastBindingWidgetExtension::Destruct()
 {
 	Super::Destruct();
 
-	if (BindingContainer != nullptr)
+	if (UUserWidget* UserWidget = GetUserWidget())
 	{
-		BindingContainer->TerminateBindings(GetUserWidget());
+		if (BindingContainer != nullptr)
+		{
+			BindingContainer->TerminateBindings(UserWidget);
+		}
+
+		for (UMDFastBindingContainer* SuperBindingContainer : SuperBindingContainers)
+		{
+			if (SuperBindingContainer != nullptr)
+			{
+				SuperBindingContainer->TerminateBindings(UserWidget);
+			}
+		}
 	}
 }
 
@@ -32,9 +54,20 @@ void UMDFastBindingWidgetExtension::Tick(const FGeometry& MyGeometry, float InDe
 
 void UMDFastBindingWidgetExtension::UpdateBindings()
 {
-	if (BindingContainer != nullptr)
+	if (UUserWidget* UserWidget = GetUserWidget())
 	{
-		BindingContainer->UpdateBindings(GetUserWidget());
+		if (BindingContainer != nullptr)
+		{
+			BindingContainer->UpdateBindings(UserWidget);
+		}
+
+		for (UMDFastBindingContainer* SuperBindingContainer : SuperBindingContainers)
+		{
+			if (SuperBindingContainer != nullptr)
+			{
+				SuperBindingContainer->UpdateBindings(UserWidget);
+			}
+		}
 	}
 }
 
@@ -42,6 +75,15 @@ void UMDFastBindingWidgetExtension::SetBindingContainer(const UMDFastBindingCont
 {
 	BindingContainer = DuplicateObject(CDOBindingContainer, this);
 	BindingContainer->GetBindingOwnerClassDelegate.BindUObject(this, &UMDFastBindingWidgetExtension::GetBindingOwnerClass);
+}
+
+void UMDFastBindingWidgetExtension::AddSuperBindingContainer(const UMDFastBindingContainer* SuperCDOBindingContainer)
+{
+	if (UMDFastBindingContainer* SuperBindingContainer = DuplicateObject(SuperCDOBindingContainer, this))
+	{
+		SuperBindingContainer->GetBindingOwnerClassDelegate.BindUObject(this, &UMDFastBindingWidgetExtension::GetBindingOwnerClass);
+		SuperBindingContainers.Add(SuperBindingContainer);
+	}
 }
 
 UClass* UMDFastBindingWidgetExtension::GetBindingOwnerClass() const
