@@ -3,7 +3,7 @@
 #include "BlueprintEditor.h"
 #include "EdGraphSchema_K2.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
-#include "Util/MDFastBindingEditorPersistantData.h"
+#include "Util/MDFastBindingEditorPersistentData.h"
 #include "MDFastBindingInstance.h"
 #include "MDFastBindingObject.h"
 #include "Kismet2/KismetDebugUtilities.h"
@@ -15,7 +15,7 @@ bool FMDFastBindingDebugLineItemBase::HasChildren() const
 	{
 		UpdateCachedChildren();
 	}
-		
+
 	return CachedChildren.GetValue().Num() > 0;
 }
 
@@ -39,11 +39,11 @@ void FMDFastBindingWatchedObjectNodeLineItem::RefreshWatchedObject(UMDFastBindin
 void FMDFastBindingWatchedObjectNodeLineItem::UpdateCachedChildren() const
 {
 	CachedChildren = TArray<FDebugTreeItemPtr>();
-	
+
 	if (UMDFastBindingObject* WatchedObject = WatchedObjectPtr.Get())
 	{
 		TArray<FName> WatchedPins;
-		UMDFastBindingEditorPersistantData::Get().GatherWatchedPins(WatchedObject->BindingObjectIdentifier, WatchedPins);
+		UMDFastBindingEditorPersistentData::Get().GatherWatchedPins(WatchedObject->BindingObjectIdentifier, WatchedPins);
 
 		// Remove unwatched pins
 		for (auto It = CachedPins.CreateIterator(); It; ++It)
@@ -92,7 +92,7 @@ void FMDFastBindingWatchedObjectNodeLineItem::ExtendContextMenu(FMenuBuilder& Me
 			{
 				if (const UMDFastBindingObject* WatchedObject = Obj.Get())
 				{
-					UMDFastBindingEditorPersistantData::Get().RemoveNodeFromWatchList(WatchedObject->BindingObjectIdentifier);
+					UMDFastBindingEditorPersistentData::Get().RemoveNodeFromWatchList(WatchedObject->BindingObjectIdentifier);
 				}
 			}),
 			FCanExecuteAction()
@@ -106,7 +106,7 @@ FText FMDFastBindingWatchedObjectNodeLineItem::GetDisplayName() const
 	{
 		return WatchedObject->DevName.IsEmptyOrWhitespace() ? WatchedObject->GetClass()->GetDisplayNameText() : WatchedObject->DevName;
 	}
-	
+
 	return INVTEXT("[Invalid]");
 }
 
@@ -116,7 +116,7 @@ FText FMDFastBindingWatchedObjectNodeLineItem::GetDescription() const
 	{
 		return WatchedObject->GetDisplayName();
 	}
-	
+
 	return INVTEXT("[Invalid]");
 }
 
@@ -188,7 +188,7 @@ FText FMDFastBindingDebugLineItem::GetDisplayValue() const
 			{
 				UpdateCachedChildren();
 			}
-		
+
 			return FText::Format(INVTEXT("{0} {0}|plural(one=member,other=members)"), FText::AsNumber(CachedChildren.GetValue().Num()));
 		}
 		else
@@ -198,14 +198,14 @@ FText FMDFastBindingDebugLineItem::GetDisplayValue() const
 			return DebugInfo->Value;
 		}
 	}
-	
+
 	return INVTEXT("[No Value]");
 }
 
 void FMDFastBindingDebugLineItem::UpdateCachedChildren() const
 {
 	CachedChildren = TArray<FDebugTreeItemPtr>();
-	
+
 	if (const FProperty* ItemProperty = GetItemProperty())
 	{
 		const TTuple<const FProperty*, void*> PropertyInstance = GetPropertyInstance();
@@ -353,7 +353,7 @@ void FMDFastBindingDebugLineItem::UpdateCachedChildren() const
 			}
 		}
 	}
-	
+
 	CachedPropertyItems.GenerateValueArray(CachedChildren.GetValue());
 }
 
@@ -411,7 +411,7 @@ void FMDFastBindingItemDebugLineItem::ExtendContextMenu(FMenuBuilder& MenuBuilde
 
 	if (const UMDFastBindingObject* DebugObject = DebugObjectPtr.Get())
 	{
-		if (UMDFastBindingEditorPersistantData::Get().IsPinBeingWatched(DebugObject->BindingObjectIdentifier, ItemName))
+		if (UMDFastBindingEditorPersistentData::Get().IsPinBeingWatched(DebugObject->BindingObjectIdentifier, ItemName))
 		{
 			MenuBuilder.AddMenuEntry(
 				INVTEXT("Remove Watch"),
@@ -422,7 +422,7 @@ void FMDFastBindingItemDebugLineItem::ExtendContextMenu(FMenuBuilder& MenuBuilde
 					{
 						if (const UMDFastBindingObject* DebugObject = Obj.Get())
 						{
-							UMDFastBindingEditorPersistantData::Get().RemovePinFromWatchList(DebugObject->BindingObjectIdentifier, PinName);
+							UMDFastBindingEditorPersistentData::Get().RemovePinFromWatchList(DebugObject->BindingObjectIdentifier, PinName);
 						}
 					}),
 					FCanExecuteAction()
@@ -440,7 +440,7 @@ void FMDFastBindingItemDebugLineItem::ExtendContextMenu(FMenuBuilder& MenuBuilde
 					{
 						if (const UMDFastBindingObject* DebugObject = Obj.Get())
 						{
-							UMDFastBindingEditorPersistantData::Get().AddPinToWatchList(DebugObject->BindingObjectIdentifier, PinName);
+							UMDFastBindingEditorPersistentData::Get().AddPinToWatchList(DebugObject->BindingObjectIdentifier, PinName);
 						}
 					}),
 					FCanExecuteAction()
@@ -503,7 +503,7 @@ void SMDFastBindingWatchList::PopulateTreeView()
 		const TArray<UMDFastBindingObject*> Objects = Binding->GatherAllBindingObjects();
 		for (UMDFastBindingObject* Object : Objects)
 		{
-			if (UMDFastBindingEditorPersistantData::Get().IsNodeBeingWatched(Object->BindingObjectIdentifier))
+			if (UMDFastBindingEditorPersistentData::Get().IsNodeBeingWatched(Object->BindingObjectIdentifier))
 			{
 				TSharedPtr<FMDFastBindingWatchedObjectNodeLineItem>& Item = TreeItems.FindOrAdd(Object->BindingObjectIdentifier);
 				if (!Item.IsValid())
@@ -514,7 +514,7 @@ void SMDFastBindingWatchList::PopulateTreeView()
 				{
 					Item->RefreshWatchedObject(Object);
 				}
-				
+
 				AddTreeItemUnique(Item);
 			}
 		}

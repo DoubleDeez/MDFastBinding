@@ -19,7 +19,7 @@
 #include "SGraphActionMenu.h"
 #include "ScopedTransaction.h"
 #include "SequencerSettings.h"
-#include "Util/MDFastBindingEditorPersistantData.h"
+#include "Util/MDFastBindingEditorPersistentData.h"
 #include "UObject/StrongObjectPtr.h"
 #include "UObject/UObjectIterator.h"
 #include "Widgets/Input/SEditableTextBox.h"
@@ -37,19 +37,19 @@ void SMDFastBindingEditorGraphWidget::Construct(const FArguments& InArgs, UBluep
 	GraphObj->AddToRoot();
 	GraphObj->Schema = UMDFastBindingGraphSchema::StaticClass();
 	GraphObj->SetGraphWidget(SharedThis(this));
-	
+
 	SGraphEditor::FGraphEditorEvents GraphEvents;
 	GraphEvents.OnTextCommitted.BindSP(this, &SMDFastBindingEditorGraphWidget::OnNodeTitleChanged);
 	GraphEvents.OnSelectionChanged = InArgs._OnSelectionChanged;
 	GraphEvents.OnCreateNodeOrPinMenu.BindSP(this, &SMDFastBindingEditorGraphWidget::OnCreateNodeOrPinMenu);
 
 	RegisterCommands();
-	
+
 	GraphEditor = SNew(SGraphEditor)
 		.GraphToEdit(GraphObj)
 		.AdditionalCommands(GraphEditorCommands)
 		.GraphEvents(GraphEvents);
-	
+
 	ChildSlot
 	[
 		GraphEditor.ToSharedRef()
@@ -184,7 +184,7 @@ FActionMenuContent SMDFastBindingEditorGraphWidget::OnCreateNodeOrPinMenu(UEdGra
 	{
 		MenuBuilder->AddMenuEntry(FGenericCommands::Get().Rename);
 		MenuBuilder->AddMenuEntry(FGenericCommands::Get().Delete);
-		
+
 		if (UMDFastBindingObject* BindingObject = GraphNode->GetBindingObject())
 		{
 			if (const UMDFastBindingDestinationBase* BindingDest = Cast<UMDFastBindingDestinationBase>(BindingObject))
@@ -229,13 +229,13 @@ FActionMenuContent SMDFastBindingEditorGraphWidget::OnCreateNodeOrPinMenu(UEdGra
 
 						return nullptr;
 					}();
-		
+
 					const UEdGraphNode* EffectiveNode = EffectivePin != nullptr ? EffectivePin->GetOwningNode() : nullptr;
 					if (const UMDFastBindingGraphNode* Node = Cast<UMDFastBindingGraphNode>(EffectiveNode))
 					{
 						if (const UMDFastBindingObject* EffectiveBindingObject = Node->GetBindingObject())
 						{
-							if (UMDFastBindingEditorPersistantData::Get().IsPinBeingWatched(EffectiveBindingObject->BindingObjectIdentifier, EffectivePin->PinName))
+							if (UMDFastBindingEditorPersistentData::Get().IsPinBeingWatched(EffectiveBindingObject->BindingObjectIdentifier, EffectivePin->PinName))
 							{
 								MenuBuilder->AddMenuEntry(
 									FText::Format(LOCTEXT("MDFastBindingEditor_RemovePinWatch", "Remove '{0}' from Watch List"), FText::FromName(EffectivePin->PinName)),
@@ -244,7 +244,7 @@ FActionMenuContent SMDFastBindingEditorGraphWidget::OnCreateNodeOrPinMenu(UEdGra
 									FUIAction(
 										FExecuteAction::CreateLambda([NodeID = EffectiveBindingObject->BindingObjectIdentifier, PinName = EffectivePin->PinName]()
 										{
-											UMDFastBindingEditorPersistantData::Get().RemovePinFromWatchList(NodeID, PinName);
+											UMDFastBindingEditorPersistentData::Get().RemovePinFromWatchList(NodeID, PinName);
 										}),
 										FCanExecuteAction()
 									)
@@ -259,7 +259,7 @@ FActionMenuContent SMDFastBindingEditorGraphWidget::OnCreateNodeOrPinMenu(UEdGra
 									FUIAction(
 									FExecuteAction::CreateLambda([NodeID = EffectiveBindingObject->BindingObjectIdentifier, PinName = EffectivePin->PinName]()
 										{
-											UMDFastBindingEditorPersistantData::Get().AddPinToWatchList(NodeID, PinName);
+											UMDFastBindingEditorPersistentData::Get().AddPinToWatchList(NodeID, PinName);
 										}),
 										FCanExecuteAction()
 									)
@@ -271,7 +271,7 @@ FActionMenuContent SMDFastBindingEditorGraphWidget::OnCreateNodeOrPinMenu(UEdGra
 			}
 		}
 	}
-    	
+
 	return FActionMenuContent(MenuBuilder->MakeWidget());
 }
 
@@ -305,7 +305,7 @@ void SMDFastBindingEditorGraphWidget::DeleteSelectedNodes() const
 
 		return nullptr;
 	});
-	
+
 	for (UObject* SelectedNode : SelectedNodeSet)
 	{
 		if (UMDFastBindingGraphNode* GraphNode = Cast<UMDFastBindingGraphNode>(SelectedNode))
@@ -421,11 +421,11 @@ void SMDFastBindingEditorGraphWidget::PasteNodes() const
 			{
 				BindingObjects.Add(CopiedObject);
 				OrphanObjects.Add(CopiedObject);
-				
+
 				TArray<UMDFastBindingValueBase*> BindingValues;
 				CopiedObject->GatherBindingValues(BindingValues);
 				BindingObjects.Append(BindingValues);
-				
+
 				BindingNode->CleanUpPasting();
 			}
 		}
@@ -483,13 +483,13 @@ void SMDFastBindingEditorGraphWidget::PasteNodes() const
 		if(UMDFastBindingInstance* BindingPtr = Binding.Get())
 		{
 			for (UMDFastBindingObject* BindingObject : OrphanObjects)
-			{				
+			{
 				if (UMDFastBindingDestinationBase* BindingDest = Cast<UMDFastBindingDestinationBase>(BindingObject))
 				{
 					if (UMDFastBindingDestinationBase* NewDest = BindingPtr->SetDestination(BindingDest))
 					{
 						NewObjects.Add(NewDest);
-				
+
 						TArray<UMDFastBindingValueBase*> BindingValues;
 						NewDest->GatherBindingValues(BindingValues);
 						NewObjects.Append(BindingValues);
@@ -500,7 +500,7 @@ void SMDFastBindingEditorGraphWidget::PasteNodes() const
 					if (UMDFastBindingValueBase* NewValue = BindingPtr->AddOrphan(BindingValue))
 					{
 						NewObjects.Add(NewValue);
-				
+
 						TArray<UMDFastBindingValueBase*> BindingValues;
 						NewValue->GatherBindingValues(BindingValues);
 						NewObjects.Append(BindingValues);
@@ -511,7 +511,7 @@ void SMDFastBindingEditorGraphWidget::PasteNodes() const
 	}
 
 	RefreshGraph();
-	
+
 	for (UMDFastBindingObject* Object : NewObjects)
 	{
 		if (UMDFastBindingGraphNode* Node = GraphObj->FindNodeWithBindingObject(Object))
@@ -547,7 +547,7 @@ bool SMDFastBindingEditorGraphWidget::CanSetDestinationActive() const
 	{
 		return false;
 	}
-	
+
 	if (const UMDFastBindingGraphNode* GraphNode = Cast<UMDFastBindingGraphNode>(SelectedNodes.Array()[0]))
 	{
 		if (const UMDFastBindingDestinationBase* BindingDest = Cast<UMDFastBindingDestinationBase>(GraphNode->GetBindingObject()))
@@ -566,7 +566,7 @@ void SMDFastBindingEditorGraphWidget::SetDestinationActive() const
 	{
 		return;
 	}
-	
+
 	if (const UMDFastBindingGraphNode* GraphNode = Cast<UMDFastBindingGraphNode>(SelectedNodes.Array()[0]))
 	{
 		if (UMDFastBindingDestinationBase* BindingDest = Cast<UMDFastBindingDestinationBase>(GraphNode->GetBindingObject()))

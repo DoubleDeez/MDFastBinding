@@ -7,7 +7,7 @@
 #include "MDFastBindingContainer.h"
 #include "MDFastBindingEditorDebug.h"
 #include "MDFastBindingEditorModule.h"
-#include "Util/MDFastBindingEditorPersistantData.h"
+#include "Util/MDFastBindingEditorPersistentData.h"
 #include "MDFastBindingEditorStyle.h"
 #include "MDFastBindingHelpers.h"
 #include "Graph/MDFastBindingGraphNode.h"
@@ -52,7 +52,7 @@ class FMDFastBindingDestinationClassFilter : public IClassViewerFilter
 void SMDFastBindingEditorWidget::Construct(const FArguments&, const TWeakPtr<FBlueprintEditor> InBlueprintEditor)
 {
 	BlueprintEditor = InBlueprintEditor;
-	
+
 	FDetailsViewArgs DetailsViewArgs;
 	DetailsViewArgs.bLockable = false;
 	DetailsViewArgs.bShowPropertyMatrixButton = false;
@@ -65,7 +65,7 @@ void SMDFastBindingEditorWidget::Construct(const FArguments&, const TWeakPtr<FBl
 	Blueprint->OnCompiled().AddSP(this, &SMDFastBindingEditorWidget::OnBlueprintCompiled);
 	Blueprint->OnSetObjectBeingDebugged().AddSP(this, &SMDFastBindingEditorWidget::UpdateBindingBeingDebugged);
 
-	
+
 	BindingListView = SNew(SListView<TWeakObjectPtr<UMDFastBindingInstance>>)
 		.ListItemsSource(&Bindings)
 		.SelectionMode(ESelectionMode::None)
@@ -76,14 +76,14 @@ void SMDFastBindingEditorWidget::Construct(const FArguments&, const TWeakPtr<FBl
 	BindingGraphWidget = SNew(SMDFastBindingEditorGraphWidget, Blueprint)
 		.OnSelectionChanged(this, &SMDFastBindingEditorWidget::OnGraphSelectionChanged);
 	BindingGraphWidget->SetBinding(GetSelectedBinding());
-	
+
 	UpdateBindingBeingDebugged(Blueprint->GetObjectBeingDebugged());
-	
+
 	WatchList = SNew(SMDFastBindingWatchList);
 	WatchList->SetReferences(GetSelectedBinding(), BindingBeingDebugged.Get());
 
-	UMDFastBindingEditorPersistantData::Get().OnWatchListChanged.AddSP(WatchList.Get(), &SMDFastBindingWatchList::RefreshList);
-	
+	UMDFastBindingEditorPersistentData::Get().OnWatchListChanged.AddSP(WatchList.Get(), &SMDFastBindingWatchList::RefreshList);
+
 	ChildSlot
 	[
 		SNew(SSplitter)
@@ -174,7 +174,7 @@ void SMDFastBindingEditorWidget::Construct(const FArguments&, const TWeakPtr<FBl
 				[
 					DetailsView.ToSharedRef()
 				]
-			]	
+			]
 			+SSplitter::Slot()
 			.Value(0.5f)
 			[
@@ -222,7 +222,7 @@ void SMDFastBindingEditorWidget::Construct(const FArguments&, const TWeakPtr<FBl
 							SNew(STextBlock).Text(LOCTEXT("ClearWatchesButtonLabel", "Clear Watches"))
 						]
 					]
-				]	
+				]
 			]
 		]
 		+SSplitter::Slot()
@@ -264,7 +264,7 @@ void SMDFastBindingEditorWidget::AssignBindingData(UBlueprint* BindingOwnerBP)
 			MDFastBindingEditorHelpers::InitBindingContainerInBlueprint(BindingOwnerBP);
 		}
 	}
-	
+
 	PopulateBindingsList();
 }
 
@@ -433,7 +433,7 @@ TOptional<EItemDropZone> SMDFastBindingEditorWidget::OnCanAcceptDropBinding(cons
 
 		BindingDropOp->SetValidTarget(false);
 	}
-		
+
 	return TOptional<EItemDropZone>();
 }
 
@@ -470,17 +470,17 @@ FReply SMDFastBindingEditorWidget::OnAcceptDropBinding(const FDragDropEvent& Dra
 	}
 
 	PopulateBindingsList();
-	
+
 	return FReply::Handled();
 }
 
 FReply SMDFastBindingEditorWidget::OnAddBinding()
-{		
+{
 	if (UMDFastBindingContainer* Container = GetSelectedBindingContainer())
 	{
 		FScopedTransaction Transaction = FScopedTransaction(LOCTEXT("AddBindingTransaction", "Added Binding"));
 		Container->Modify();
-		
+
 		if (UMDFastBindingInstance* Binding = Container->AddBinding())
 		{
 			PopulateBindingsList();
@@ -499,7 +499,7 @@ FReply SMDFastBindingEditorWidget::OnDuplicateBinding(TWeakObjectPtr<UMDFastBind
 	{
 		FScopedTransaction Transaction = FScopedTransaction(LOCTEXT("DuplicateBindingTransaction", "Duplicated Binding"));
 		Container->Modify();
-			
+
 		if (UMDFastBindingInstance* NewBindingPtr = Container->DuplicateBinding(Binding.Get()))
 		{
 			PopulateBindingsList();
@@ -507,7 +507,7 @@ FReply SMDFastBindingEditorWidget::OnDuplicateBinding(TWeakObjectPtr<UMDFastBind
 			BindingListView->SetSelection(SelectedBinding);
 		}
 	}
-	
+
 	return FReply::Handled();
 }
 
@@ -520,7 +520,7 @@ FReply SMDFastBindingEditorWidget::OnDeleteBinding(TWeakObjectPtr<UMDFastBinding
 		{
 			FScopedTransaction Transaction = FScopedTransaction(LOCTEXT("DeleteBindingTransaction", "Deleted Binding"));
 			Container->Modify();
-			
+
 			if (Container->DeleteBinding(Binding.Get()))
 			{
 				PopulateBindingsList();
@@ -528,7 +528,7 @@ FReply SMDFastBindingEditorWidget::OnDeleteBinding(TWeakObjectPtr<UMDFastBinding
 			}
 		}
 	}
-	
+
 	return FReply::Handled();
 }
 
@@ -568,7 +568,7 @@ void SMDFastBindingEditorWidget::UpdateBindingBeingDebugged(UObject* ObjectBeing
 		WatchList->SetReferences(GetSelectedBinding(), BindingBeingDebugged.Get());
 		WatchList->RefreshList();
 	}
-	
+
 	if (BindingGraphWidget.IsValid())
 	{
 		BindingGraphWidget->SetBindingBeingDebugged(BindingBeingDebugged.Get());
@@ -594,11 +594,11 @@ FReply SMDFastBindingEditorWidget::OnClearWatches()
 		{
 			if (Object != nullptr)
 			{
-				UMDFastBindingEditorPersistantData::Get().RemoveNodeFromWatchList(Object->BindingObjectIdentifier);
+				UMDFastBindingEditorPersistentData::Get().RemoveNodeFromWatchList(Object->BindingObjectIdentifier);
 			}
 		}
 	}
-	
+
 	return FReply::Handled();
 }
 
