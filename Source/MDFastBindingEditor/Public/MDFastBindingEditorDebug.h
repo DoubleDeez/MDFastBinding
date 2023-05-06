@@ -14,16 +14,16 @@ class FMDFastBindingDebugLineItemBase : public FDebugLineItem
 {
 public:
 	virtual bool CanHaveChildren() override { return true; }
-	
+
 	virtual bool HasChildren() const override;
-	
+
 	virtual void GatherChildrenBase(TArray<FDebugTreeItemPtr>& OutChildren, const FString& InSearchString, bool bRespectSearch) override;
 
 	virtual void UpdateCachedChildren() const = 0;
 
 protected:
 	using FDebugLineItem::FDebugLineItem;
-	
+
 	mutable TOptional<TArray<FDebugTreeItemPtr>> CachedChildren;
 };
 
@@ -51,19 +51,19 @@ protected:
 	{
 		return GetTypeHash(WatchedObjectPtr.Get());
 	}
-	
+
 	virtual FDebugLineItem* Duplicate() const override
 	{
 		return new FMDFastBindingWatchedObjectNodeLineItem(WatchedObjectPtr.Get());
 	}
 
 	virtual UObject* GetParentObject() override;
-	
+
 	virtual void ExtendContextMenu(class FMenuBuilder& MenuBuilder, bool bInDebuggerTab) override;
-	
+
 	virtual FText GetDisplayName() const override;
 	virtual FText GetDescription() const override;
-	
+
 private:
 	TWeakObjectPtr<UMDFastBindingObject> WatchedObjectPtr;
 	mutable TMap<FName, FDebugTreeItemPtr> CachedPins;
@@ -96,7 +96,7 @@ protected:
 	}
 
 	virtual TTuple<const FProperty*, void*> GetPropertyInstance() const = 0;
-	
+
 	virtual const FProperty* GetItemProperty() const;
 
 	virtual FText GetDisplayValue() const;
@@ -137,9 +137,9 @@ protected:
 	}
 
 	virtual TTuple<const FProperty*, void*> GetPropertyInstance() const override;
-	
+
 	virtual UObject* GetParentObject() override;
-	
+
 	virtual void ExtendContextMenu(class FMenuBuilder& MenuBuilder, bool bInDebuggerTab) override;
 
 private:
@@ -164,12 +164,12 @@ public:
 		{
 			return DisplayNameOverride;
 		}
-		
+
 		if (const FProperty* Property = PropertyPtr.Get())
 		{
 			return Property->GetDisplayNameText();
 		}
-		
+
 		return INVTEXT("[Invalid]");
 	}
 
@@ -180,7 +180,7 @@ public:
 protected:
 	virtual FDebugLineItem* Duplicate() const override
 	{
-		return new FMDFastBindingPropertyDebugLineItem(PropertyPtr.Get(), ValuePtr);
+		return new FMDFastBindingPropertyDebugLineItem(PropertyPtr.Get(), ValuePtr, DisplayNameOverride);
 	}
 
 	virtual TTuple<const FProperty*, void*> GetPropertyInstance() const override;

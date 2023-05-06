@@ -12,6 +12,7 @@
 #include "MDFastBindingHelpers.h"
 #include "Graph/MDFastBindingGraphNode.h"
 #include "MDFastBindingInstance.h"
+#include "PropertyEditorModule.h"
 #include "Misc/MessageDialog.h"
 #include "ScopedTransaction.h"
 #include "Graph/SMDFastBindingEditorGraphWidget.h"

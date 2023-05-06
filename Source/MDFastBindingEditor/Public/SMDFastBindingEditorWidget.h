@@ -3,7 +3,11 @@
 #include "WorkflowOrientedApp/WorkflowTabFactory.h"
 #include "EditorUndoClient.h"
 #include "UObject/WeakFieldPtr.h"
+#include "Widgets/Views/SListView.h"
 
+enum class EItemDropZone;
+class STableViewBase;
+class ITableRow;
 class UMDFastBindingContainer;
 class UMDFastBindingInstance;
 class FBlueprintEditor;
@@ -28,14 +32,14 @@ public:
 	void SelectBinding(UMDFastBindingInstance* InBinding);
 	UMDFastBindingContainer* GetSelectedBindingContainer() const;
 	UMDFastBindingInstance* GetSelectedBinding() const;
-	
+
 	UMDFastBindingInstance* GetNewBinding() const;
 	void ResetNewBinding();
-	
+
 	FReply OnAddBinding();
 	FReply OnDuplicateBinding(TWeakObjectPtr<UMDFastBindingInstance> Binding);
 	FReply OnDeleteBinding(TWeakObjectPtr<UMDFastBindingInstance> Binding);
-	
+
 	virtual void PostUndo(bool bSuccess) override;
 	virtual void PostRedo(bool bSuccess) override;
 
@@ -43,11 +47,11 @@ public:
 
 private:
 	void OnGraphSelectionChanged(const FGraphPanelSelectionSet& Selection);
-	
+
 	EVisibility GetBindingSelectorVisibility() const;
 	EVisibility GetBindingTreeVisibility() const;
 	EVisibility GetSuperClassBindingsVisibility() const;
-	
+
 	void PopulateBindingsList();
 	TSharedRef<ITableRow> GenerateBindingListRowWidget(TWeakObjectPtr<UMDFastBindingInstance> Binding, const TSharedRef<STableViewBase>& OwnerTable);
 
@@ -60,7 +64,7 @@ private:
 
 	void UpdateBindingBeingDebugged(UObject* ObjectBeingDebugged);
 	void UpdateBindingBeingDebugged();
-	
+
 	FReply OnClearWatches();
 
 	UBlueprint* GetBlueprint() const;
@@ -73,7 +77,7 @@ private:
 	TArray<TWeakObjectPtr<UMDFastBindingInstance>> Bindings;
 	TSharedPtr<IDetailsView> DetailsView;
 	TSharedPtr<SWidgetSwitcher> DetailSwitcher;
-	
+
 	TSharedPtr<SListView<TWeakObjectPtr<UMDFastBindingInstance>>> BindingListView;
 	TSharedPtr<SMDFastBindingEditorGraphWidget> BindingGraphWidget;
 	TSharedPtr<SMDFastBindingWatchList> WatchList;
@@ -82,7 +86,7 @@ private:
 struct FMDFastBindingEditorSummoner : public FWorkflowTabFactory
 {
 	FMDFastBindingEditorSummoner(TSharedPtr<FBlueprintEditor> BlueprintEditor);
-	
+
 	virtual const FSlateBrush* GetTabIcon(const FWorkflowTabSpawnInfo& Info) const override;
 	virtual const FSlateIcon& GetTabSpawnerIcon(const FWorkflowTabSpawnInfo& Info) const override;
 	virtual TSharedRef<SWidget> CreateTabBody(const FWorkflowTabSpawnInfo& Info) const override;
