@@ -18,10 +18,12 @@ public:
 	virtual void Initialize(UUserWidget* UserWidget) override;
 
 	bool HasBindings() const;
-	
+
 	UMDFastBindingContainer* GetBindingContainer() const { return BindingContainer; }
 
 #if WITH_EDITOR
+	virtual void Construct(UUserWidget* UserWidget) override;
+
 	void SetBindingContainer(UMDFastBindingContainer* BPBindingContainer);
 #endif
 

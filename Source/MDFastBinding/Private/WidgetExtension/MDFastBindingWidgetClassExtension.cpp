@@ -3,6 +3,7 @@
 #include "Blueprint/UserWidget.h"
 #include "MDFastBindingContainer.h"
 #include "MDFastBindingHelpers.h"
+#include "Blueprint/WidgetBlueprintGeneratedClass.h"
 #include "WidgetExtension/MDFastBindingWidgetExtension.h"
 
 void UMDFastBindingWidgetClassExtension::Initialize(UUserWidget* UserWidget)
@@ -51,6 +52,17 @@ bool UMDFastBindingWidgetClassExtension::HasBindings() const
 }
 
 #if WITH_EDITOR
+void UMDFastBindingWidgetClassExtension::Construct(UUserWidget* UserWidget)
+{
+	Super::Construct(UserWidget);
+
+	// Initialize isn't called in editor Debug mode so we force it here
+	if (IsValid(UserWidget) && UserWidget->IsPreviewTime())
+	{
+		Initialize(UserWidget);
+	}
+}
+
 void UMDFastBindingWidgetClassExtension::SetBindingContainer(UMDFastBindingContainer* BPBindingContainer)
 {
 	BindingContainer = DuplicateObject(BPBindingContainer, this);
