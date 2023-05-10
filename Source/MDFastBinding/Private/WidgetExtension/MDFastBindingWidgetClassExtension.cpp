@@ -56,11 +56,13 @@ void UMDFastBindingWidgetClassExtension::Construct(UUserWidget* UserWidget)
 {
 	Super::Construct(UserWidget);
 
+#if ENGINE_MAJOR_VERSION > 5 || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 2)
 	// Initialize isn't called in editor Debug mode so we force it here
 	if (IsValid(UserWidget) && UserWidget->IsPreviewTime())
 	{
 		Initialize(UserWidget);
 	}
+#endif
 }
 
 void UMDFastBindingWidgetClassExtension::SetBindingContainer(UMDFastBindingContainer* BPBindingContainer)
