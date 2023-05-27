@@ -614,6 +614,7 @@ UBlueprint* SMDFastBindingEditorWidget::GetBlueprint() const
 }
 
 const FName FMDFastBindingEditorSummoner::TabId = TEXT("MDFastBindingID");
+const FName FMDFastBindingEditorSummoner::DrawerId = TEXT("MDFastBindingDrawerID");
 
 FMDFastBindingEditorSummoner::FMDFastBindingEditorSummoner(TSharedPtr<FBlueprintEditor> BlueprintEditor)
 	: FWorkflowTabFactory(TabId, BlueprintEditor)

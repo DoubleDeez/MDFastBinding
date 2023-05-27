@@ -92,6 +92,7 @@ struct FMDFastBindingEditorSummoner : public FWorkflowTabFactory
 	virtual TSharedRef<SWidget> CreateTabBody(const FWorkflowTabSpawnInfo& Info) const override;
 
 	static const FName TabId;
+	static const FName DrawerId;
 
 protected:
 	TWeakPtr<FBlueprintEditor> WeakBlueprintEditor;

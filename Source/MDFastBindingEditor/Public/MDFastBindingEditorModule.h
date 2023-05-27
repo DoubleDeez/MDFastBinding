@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 
+class FWidgetBlueprintApplicationMode;
 class UBlueprint;
 class FBlueprintEditor;
 class FExtender;
@@ -43,6 +44,10 @@ private:
 	void AddBindingEditorToolbarButtons(FToolBarBuilder& ToolBarBuilder, TWeakObjectPtr<UObject> EditorObject) const;
 
 	void OnRenameVariable(UBlueprint* Blueprint, UClass* VariableClass, const FName& OldVariableName, const FName& NewVariableName);
+	void HandleRegisterBlueprintEditorTab(const FWidgetBlueprintApplicationMode& ApplicationMode, FWorkflowAllowedTabSet& TabFactories);
+
+	void HandleActivateMode(FWidgetBlueprintApplicationMode& InDesignerMode);
+	void HandleDeactivateMode(FWidgetBlueprintApplicationMode& InDesignerMode);
 
 	TSharedPtr<FMDFastBindingEditorTabBinding> TabBinding;
 

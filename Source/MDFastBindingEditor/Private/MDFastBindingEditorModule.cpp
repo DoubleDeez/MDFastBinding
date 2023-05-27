@@ -23,6 +23,10 @@
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "Modules/ModuleManager.h"
 #include "WidgetBlueprint.h"
+#include "WidgetDrawerConfig.h"
+#include "BlueprintModes/WidgetBlueprintApplicationMode.h"
+#include "BlueprintModes/WidgetBlueprintApplicationModes.h"
+#include "Framework/Application/SlateApplication.h"
 #include "Util/MDFastBindingEditorHelpers.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "WorkflowOrientedApp/WorkflowTabManager.h"
@@ -72,6 +76,7 @@ void FMDFastBindingEditorModule::StartupModule()
 	DesignerExtensionFactory = FMDFastBindingDesignerExtension::MakeFactory();
 	IUMGEditorModule& UMGEditorInterface = FModuleManager::GetModuleChecked<IUMGEditorModule>("UMGEditor");
 	UMGEditorInterface.GetDesignerExtensibilityManager()->AddDesignerExtensionFactory(DesignerExtensionFactory.ToSharedRef());
+	UMGEditorInterface.OnRegisterTabsForEditor().AddRaw(this, &FMDFastBindingEditorModule::HandleRegisterBlueprintEditorTab);
 
 	RenameHandle = FBlueprintEditorUtils::OnRenameVariableReferencesEvent.AddRaw(this, &FMDFastBindingEditorModule::OnRenameVariable);
 }
@@ -90,6 +95,7 @@ void FMDFastBindingEditorModule::ShutdownModule()
 	if (IUMGEditorModule* UMGEditorInterface = FModuleManager::GetModulePtr<IUMGEditorModule>("UMGEditor"))
 	{
 		UMGEditorInterface->GetDesignerExtensibilityManager()->RemoveDesignerExtensionFactory(DesignerExtensionFactory.ToSharedRef());
+		UMGEditorInterface->OnRegisterTabsForEditor().RemoveAll(this);
 	}
 
 	FMDFastBindingEditorStyle::Shutdown();
@@ -194,6 +200,77 @@ void FMDFastBindingEditorModule::OnRenameVariable(UBlueprint* Blueprint, UClass*
 				}
 			}
 		}
+	}
+}
+
+void FMDFastBindingEditorModule::HandleRegisterBlueprintEditorTab(const FWidgetBlueprintApplicationMode& ApplicationMode, FWorkflowAllowedTabSet& TabFactories)
+{
+	if (ApplicationMode.LayoutExtender)
+	{
+		/*const FName RelativeTab = ApplicationMode.GetModeName() == FWidgetBlueprintApplicationModes::DesignerMode
+			? TEXT("Animations")
+			: FBlueprintEditorTabs::FindResultsID;
+		const FTabManager::FTab NewTab(FTabId(FMDFastBindingEditorSummoner::TabId, ETabIdFlags::SaveLayout), ETabState::ClosedTab);
+		ApplicationMode.LayoutExtender->ExtendLayout(RelativeTab, ELayoutExtensionPosition::After, NewTab);*/
+
+		ApplicationMode.OnPostActivateMode.AddRaw(this, &FMDFastBindingEditorModule::HandleActivateMode);
+		ApplicationMode.OnPreDeactivateMode.AddRaw(this, &FMDFastBindingEditorModule::HandleDeactivateMode);
+	}
+}
+
+void FMDFastBindingEditorModule::HandleActivateMode(FWidgetBlueprintApplicationMode& InDesignerMode)
+{
+	if (TSharedPtr<FWidgetBlueprintEditor> BP = InDesignerMode.GetBlueprintEditor())
+	{
+		if (!BP->GetExternalEditorWidget(FMDFastBindingEditorSummoner::DrawerId))
+		{
+			const FMDFastBindingEditorSummoner BindingDrawerSummoner(BP);
+			const FWorkflowTabSpawnInfo SpawnInfo;
+			BP->AddExternalEditorWidget(FMDFastBindingEditorSummoner::DrawerId, BindingDrawerSummoner.CreateTabBody(SpawnInfo));
+		}
+
+		FWidgetDrawerConfig BindingDrawer(FMDFastBindingEditorSummoner::DrawerId);
+		TWeakPtr<FWidgetBlueprintEditor> WeakBP = BP;
+		BindingDrawer.GetDrawerContentDelegate.BindLambda([WeakBP]()
+		{
+			if (TSharedPtr<FWidgetBlueprintEditor> BP = WeakBP.Pin())
+			{
+				if (const TSharedPtr<SWidget> DrawerWidgetContent = BP->GetExternalEditorWidget(FMDFastBindingEditorSummoner::DrawerId))
+				{
+					return DrawerWidgetContent.ToSharedRef();
+				}
+			}
+
+			return SNullWidget::NullWidget;
+		});
+		BindingDrawer.OnDrawerOpenedDelegate.BindLambda([WeakBP](FName StatusBarWithDrawerName)
+		{
+			if (TSharedPtr<FWidgetBlueprintEditor> BP = WeakBP.Pin())
+			{
+				FSlateApplication::Get().SetUserFocus(FSlateApplication::Get().GetUserIndexForKeyboard(), BP->GetExternalEditorWidget(FMDFastBindingEditorSummoner::DrawerId));
+			}
+		});
+		BindingDrawer.OnDrawerDismissedDelegate.BindLambda([WeakBP](const TSharedPtr<SWidget>& NewlyFocusedWidget)
+		{
+			if (TSharedPtr<FWidgetBlueprintEditor> BP = WeakBP.Pin())
+			{
+				BP->SetKeyboardFocus();
+			}
+		});
+		BindingDrawer.ButtonText = LOCTEXT("BindingEditor", "Binding Editor");
+		BindingDrawer.ToolTipText = LOCTEXT("BindingEditorToolTip", "Opens the binding editor drawer for this asset");
+		BindingDrawer.Icon = FMDFastBindingEditorStyle::Get().GetBrush(TEXT("Icon.FastBinding_16x"));
+		BP->RegisterDrawer(MoveTemp(BindingDrawer), INDEX_NONE);
+	}
+}
+
+void FMDFastBindingEditorModule::HandleDeactivateMode(FWidgetBlueprintApplicationMode& InDesignerMode)
+{
+	TSharedPtr<FWidgetBlueprintEditor> BP = InDesignerMode.GetBlueprintEditor();
+	if (BP && BP->IsEditorClosing())
+	{
+		InDesignerMode.OnPostActivateMode.RemoveAll(this);
+		InDesignerMode.OnPreDeactivateMode.RemoveAll(this);
 	}
 }
 
