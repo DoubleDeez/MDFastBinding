@@ -1,9 +1,9 @@
-#include "MDFastBindingBlueprintCompilerExtension.h"
+#include "BlueprintExtension/MDFastBindingBlueprintCompilerExtension.h"
 
-#include "MDFastBindingHelpers.h"
 #include "Blueprint/WidgetBlueprintGeneratedClass.h"
+#include "BlueprintExtension/MDFastBindingWidgetBlueprintExtension.h"
+#include "MDFastBindingHelpers.h"
 #include "WidgetBlueprint.h"
-#include "WidgetExtension/MDFastBindingWidgetBlueprintExtension.h"
 #include "WidgetExtension/MDFastBindingWidgetClassExtension.h"
 
 void UMDFastBindingBlueprintCompilerExtension::ProcessBlueprintCompiled(const FKismetCompilerContext& CompilationContext, const FBlueprintCompiledData& Data)
@@ -16,7 +16,7 @@ void UMDFastBindingBlueprintCompilerExtension::ProcessBlueprintCompiled(const FK
 		{
 			return Extension != nullptr && Extension->IsA<UMDFastBindingWidgetBlueprintExtension>();
 		});
-		
+
 		if (!bAlreadyHasExtension)
 		{
 			if (UWidgetBlueprintGeneratedClass* WidgetClass = Cast<UWidgetBlueprintGeneratedClass>(CompilationContext.NewClass))

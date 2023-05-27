@@ -10,18 +10,18 @@ class SMDFastBindingGraphNodeWidget;
 class UMDFastBindingGraphNode;
 class UMDFastBindingObject;
 
-class MDFASTBINDINGEDITOR_API SMDFastBindingSelfGraphPinWidget : public SGraphPinObject
+class MDFASTBINDINGBLUEPRINT_API SMDFastBindingSelfGraphPinWidget : public SGraphPinObject
 {
 public:
 	using SGraphPinObject::Construct;
-	
+
 	virtual bool ShouldDisplayAsSelfPin() const override { return true; }
 };
 
 /**
- * 
+ *
  */
-class MDFASTBINDINGEDITOR_API SMDFastBindingGraphNodeWidget : public SGraphNode
+class MDFASTBINDINGBLUEPRINT_API SMDFastBindingGraphNodeWidget : public SGraphNode
 {
 public:
 	SLATE_BEGIN_ARGS(SMDFastBindingGraphNodeWidget)
@@ -31,9 +31,9 @@ public:
 	SLATE_END_ARGS()
 
 	void Construct(const FArguments& InArgs, UMDFastBindingGraphNode* InNode);
-	
+
 	virtual void MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty = true) override;
-	
+
 	virtual void GetOverlayBrushes(bool bSelected, const FVector2D WidgetSize, TArray<FOverlayBrushInfo>& Brushes) const override;
 
 	UMDFastBindingGraphNode* GetGraphNode() const;
@@ -46,7 +46,7 @@ protected:
 	virtual void UpdateErrorInfo() override;
 
 	virtual TSharedPtr<SGraphPin> CreatePinWidget(UEdGraphPin* Pin) const override;
-	
+
 	virtual void CreateBelowPinControls(TSharedPtr<SVerticalBox> MainBox) override;
 
 	virtual void CreateInputSideAddButton(TSharedPtr<SVerticalBox> InputBox) override;
@@ -71,5 +71,5 @@ private:
 	double UnhoveredTooltipCloseTime = 0.0;
 
 	constexpr static double CloseTooltipGracePeriod = 0.4;
-	
+
 };

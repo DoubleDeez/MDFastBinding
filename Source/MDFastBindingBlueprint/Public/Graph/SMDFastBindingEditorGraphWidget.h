@@ -13,9 +13,9 @@ struct FEdGraphSchemaAction;
 struct FGraphActionListBuilderBase;
 
 /**
- * 
+ *
  */
-class MDFASTBINDINGEDITOR_API SMDFastBindingEditorGraphWidget : public SCompoundWidget
+class MDFASTBINDINGBLUEPRINT_API SMDFastBindingEditorGraphWidget : public SCompoundWidget
 {
 public:
 	SLATE_BEGIN_ARGS(SMDFastBindingEditorGraphWidget)
@@ -41,7 +41,7 @@ private:
 	void OnNodeTitleChanged(const FText& InText, ETextCommit::Type Type, UEdGraphNode* Node);
 
 	void RegisterCommands();
-	
+
 	const TArray<TSubclassOf<UMDFastBindingValueBase>>& GetValueClasses();
 	const TArray<TSubclassOf<UMDFastBindingDestinationBase>>& GetDestinationClasses();
 
@@ -49,22 +49,22 @@ private:
 
 	bool CanDeleteSelectedNodes() const;
 	void DeleteSelectedNodes() const;
-	
+
 	void RenameSelectedNode() const;
-	
+
 	void CopySelectedNodes() const;
-	
+
 	void PasteNodes() const;
 	bool CanPasteNodes() const;
-	
+
 	void CutSelectedNodes() const;
 	bool CanCutSelectedNodes() const;
-	
+
 	bool CanSetDestinationActive() const;
 	void SetDestinationActive() const;
 
 	void RemoveExtendablePin(TWeakObjectPtr<UMDFastBindingObject> BindingObject, int32 ItemIndex) const;
-	
+
 	TSharedPtr<SGraphEditor> GraphEditor;
 
 	UMDFastBindingGraph* GraphObj = nullptr;
@@ -75,6 +75,6 @@ private:
 	TArray<TSubclassOf<UMDFastBindingValueBase>> ValueClasses;
 
 	TArray<TSubclassOf<UMDFastBindingDestinationBase>> DestinationClasses;
-	
+
 	TSharedPtr<FUICommandList> GraphEditorCommands;
 };

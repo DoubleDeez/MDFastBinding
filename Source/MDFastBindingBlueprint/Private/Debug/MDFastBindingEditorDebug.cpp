@@ -1,12 +1,12 @@
-#include "MDFastBindingEditorDebug.h"
+#include "Debug/MDFastBindingEditorDebug.h"
 
 #include "BlueprintEditor.h"
+#include "Debug/MDFastBindingDebugPersistentData.h"
 #include "EdGraphSchema_K2.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
-#include "Util/MDFastBindingEditorPersistentData.h"
+#include "Kismet2/KismetDebugUtilities.h"
 #include "MDFastBindingInstance.h"
 #include "MDFastBindingObject.h"
-#include "Kismet2/KismetDebugUtilities.h"
 
 
 bool FMDFastBindingDebugLineItemBase::HasChildren() const
@@ -43,7 +43,7 @@ void FMDFastBindingWatchedObjectNodeLineItem::UpdateCachedChildren() const
 	if (UMDFastBindingObject* WatchedObject = WatchedObjectPtr.Get())
 	{
 		TArray<FName> WatchedPins;
-		UMDFastBindingEditorPersistentData::Get().GatherWatchedPins(WatchedObject->BindingObjectIdentifier, WatchedPins);
+		UMDFastBindingDebugPersistentData::Get().GatherWatchedPins(WatchedObject->BindingObjectIdentifier, WatchedPins);
 
 		// Remove unwatched pins
 		for (auto It = CachedPins.CreateIterator(); It; ++It)
@@ -92,7 +92,7 @@ void FMDFastBindingWatchedObjectNodeLineItem::ExtendContextMenu(FMenuBuilder& Me
 			{
 				if (const UMDFastBindingObject* WatchedObject = Obj.Get())
 				{
-					UMDFastBindingEditorPersistentData::Get().RemoveNodeFromWatchList(WatchedObject->BindingObjectIdentifier);
+					UMDFastBindingDebugPersistentData::Get().RemoveNodeFromWatchList(WatchedObject->BindingObjectIdentifier);
 				}
 			}),
 			FCanExecuteAction()
@@ -411,7 +411,7 @@ void FMDFastBindingItemDebugLineItem::ExtendContextMenu(FMenuBuilder& MenuBuilde
 
 	if (const UMDFastBindingObject* DebugObject = DebugObjectPtr.Get())
 	{
-		if (UMDFastBindingEditorPersistentData::Get().IsPinBeingWatched(DebugObject->BindingObjectIdentifier, ItemName))
+		if (UMDFastBindingDebugPersistentData::Get().IsPinBeingWatched(DebugObject->BindingObjectIdentifier, ItemName))
 		{
 			MenuBuilder.AddMenuEntry(
 				INVTEXT("Remove Watch"),
@@ -422,7 +422,7 @@ void FMDFastBindingItemDebugLineItem::ExtendContextMenu(FMenuBuilder& MenuBuilde
 					{
 						if (const UMDFastBindingObject* DebugObject = Obj.Get())
 						{
-							UMDFastBindingEditorPersistentData::Get().RemovePinFromWatchList(DebugObject->BindingObjectIdentifier, PinName);
+							UMDFastBindingDebugPersistentData::Get().RemovePinFromWatchList(DebugObject->BindingObjectIdentifier, PinName);
 						}
 					}),
 					FCanExecuteAction()
@@ -440,7 +440,7 @@ void FMDFastBindingItemDebugLineItem::ExtendContextMenu(FMenuBuilder& MenuBuilde
 					{
 						if (const UMDFastBindingObject* DebugObject = Obj.Get())
 						{
-							UMDFastBindingEditorPersistentData::Get().AddPinToWatchList(DebugObject->BindingObjectIdentifier, PinName);
+							UMDFastBindingDebugPersistentData::Get().AddPinToWatchList(DebugObject->BindingObjectIdentifier, PinName);
 						}
 					}),
 					FCanExecuteAction()
@@ -503,7 +503,7 @@ void SMDFastBindingWatchList::PopulateTreeView()
 		const TArray<UMDFastBindingObject*> Objects = Binding->GatherAllBindingObjects();
 		for (UMDFastBindingObject* Object : Objects)
 		{
-			if (UMDFastBindingEditorPersistentData::Get().IsNodeBeingWatched(Object->BindingObjectIdentifier))
+			if (UMDFastBindingDebugPersistentData::Get().IsNodeBeingWatched(Object->BindingObjectIdentifier))
 			{
 				TSharedPtr<FMDFastBindingWatchedObjectNodeLineItem>& Item = TreeItems.FindOrAdd(Object->BindingObjectIdentifier);
 				if (!Item.IsValid())

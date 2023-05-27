@@ -24,6 +24,11 @@
 			"Name": "MDFastBindingEditor",
 			"Type": "Editor",
 			"LoadingPhase": "PostEngineInit"
+		},
+		{
+			"Name": "MDFastBindingBlueprint",
+			"Type": "UncookedOnly",
+			"LoadingPhase": "Default"
 		}
 	]
 }

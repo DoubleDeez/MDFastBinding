@@ -213,7 +213,7 @@ protected:
 };
 
 
-class SMDFastBindingWatchList : public SPinValueInspector
+class MDFASTBINDINGBLUEPRINT_API SMDFastBindingWatchList : public SPinValueInspector
 {
 public:
 	using SPinValueInspector::Construct;

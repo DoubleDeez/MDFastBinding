@@ -1,20 +1,21 @@
 ﻿#include "Graph/MDFastBindingGraphSchema.h"
 
 #include "BlueprintConnectionDrawingPolicy.h"
+#include "Blueprint/UserWidget.h"
+#include "Blueprint/WidgetBlueprintGeneratedClass.h"
+#include "Blueprint/WidgetTree.h"
 #include "BindingDestinations/MDFastBindingDestinationBase.h"
 #include "BindingValues/MDFastBindingValueBase.h"
+#include "BindingValues/MDFastBindingValue_FieldNotify.h"
 #include "BindingValues/MDFastBindingValue_Property.h"
 #include "EdGraphSchema_K2.h"
+#include "FieldNotification/IFieldValueChanged.h"
 #include "Graph/MDFastBindingConnectionDrawingPolicy.h"
-#include "MDFastBindingEditorStyle.h"
 #include "Graph/MDFastBindingGraph.h"
 #include "Graph/MDFastBindingGraphNode.h"
 #include "MDFastBindingInstance.h"
 #include "ScopedTransaction.h"
-#include "BindingValues/MDFastBindingValue_FieldNotify.h"
-#include "Blueprint/UserWidget.h"
-#include "Blueprint/WidgetTree.h"
-#include "FieldNotification/IFieldValueChanged.h"
+#include "Styling/SlateStyleRegistry.h"
 
 #define LOCTEXT_NAMESPACE "MDFastBindingGraphSchema"
 
@@ -124,7 +125,7 @@ UEdGraphNode* FMDFastBindingSchemaAction_CreateValue::PerformAction(UEdGraph* Pa
 		{
 			if (UMDFastBindingGraphNode* NewNode = InitValueAndNode(OrphanValue))
 			{
-				// Connect output pin to first binding item in new node 
+				// Connect output pin to first binding item in new node
 				if (FromPin != nullptr && FromPin->Direction == EGPD_Output && FromBindingObject != nullptr && NewNode->Pins.Num() > 0)
 				{
 					if (const UMDFastBindingGraphSchema* Schema = Cast<const UMDFastBindingGraphSchema>(Graph->GetSchema()))
@@ -178,7 +179,7 @@ UEdGraphNode* FMDFastBindingSchemaAction_SetDestination::PerformAction(UEdGraph*
 			Graph->SelectNodeWithBindingObject(NewDestination);
 			if (UMDFastBindingGraphNode* NewNode =  Graph->FindNodeWithBindingObject(NewDestination))
 			{
-				// Connect output pin to first binding item in new node 
+				// Connect output pin to first binding item in new node
 				if (FromPin != nullptr && FromPin->Direction == EGPD_Output && FromBindingObject != nullptr && NewNode->Pins.Num() > 0)
 				{
 					if (const UMDFastBindingGraphSchema* Schema = Cast<const UMDFastBindingGraphSchema>(Graph->GetSchema()))
@@ -197,11 +198,12 @@ UEdGraphNode* FMDFastBindingSchemaAction_SetDestination::PerformAction(UEdGraph*
 
 FLinearColor UMDFastBindingGraphSchema::GetPinTypeColor(const FEdGraphPinType& PinType) const
 {
-	if (PinType.PinCategory == NAME_None)
+	const ISlateStyle* FastBindingStyle = FSlateStyleRegistry::FindSlateStyle(TEXT("MDFastBindingEditorStyle"));
+	if (PinType.PinCategory == NAME_None && FastBindingStyle != nullptr)
 	{
-		return FMDFastBindingEditorStyle::Get().GetColor(TEXT("InvalidPinColor"));
+		return FastBindingStyle->GetColor(TEXT("InvalidPinColor"));
 	}
-	
+
 	return GetDefault<UEdGraphSchema_K2>()->GetPinTypeColor(PinType);
 }
 
@@ -218,7 +220,7 @@ void UMDFastBindingGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder&
 	{
 		static const FString CreateValueCategory = TEXT("Create Value Node...");
 		TArray<TSubclassOf<UMDFastBindingValueBase>> ValueClasses;
-	
+
 		for (TObjectIterator<UClass> ClassIt; ClassIt; ++ClassIt)
 		{
 			if (ClassIt->IsChildOf(UMDFastBindingValueBase::StaticClass()) && !ClassIt->HasAnyClassFlags(CLASS_Abstract | CLASS_Deprecated | CLASS_Hidden))
@@ -244,7 +246,7 @@ void UMDFastBindingGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder&
 		{
 			static const FString SetDestinationCategory = TEXT("Set Destination Node...");
 			TArray<TSubclassOf<UMDFastBindingDestinationBase>> DestinationClasses;
-			
+
 			for (TObjectIterator<UClass> ClassIt; ClassIt; ++ClassIt)
 			{
 				if (ClassIt->IsChildOf(UMDFastBindingDestinationBase::StaticClass()) && !ClassIt->HasAnyClassFlags(CLASS_Abstract | CLASS_Deprecated | CLASS_Hidden))
@@ -257,7 +259,7 @@ void UMDFastBindingGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder&
 			{
 				return A->GetDisplayNameText().CompareTo(B->GetDisplayNameText()) < 0;
 			});
-			
+
 			for (const TSubclassOf<UMDFastBindingDestinationBase>& DestinationClass : DestinationClasses)
 			{
 				ContextMenuBuilder.AddAction(MakeShared<FMDFastBindingSchemaAction_SetDestination>(DestinationClass), SetDestinationCategory);
@@ -274,7 +276,7 @@ void UMDFastBindingGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSend
 		{
 			return;
 		}
-		
+
 		if (UMDFastBindingObject* BindingObject = Node->GetBindingObject())
 		{
 			BindingObject->OrphanBindingItem(BindingName);
@@ -282,7 +284,7 @@ void UMDFastBindingGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSend
 	};
 
 	FScopedTransaction Transaction = FScopedTransaction(LOCTEXT("BreakBindingPinLink", "Break Pin Link"));
-	
+
 	// Use the input pin(s) to determine what to orphan
 	if (TargetPin.Direction == EGPD_Input)
 	{
@@ -295,7 +297,7 @@ void UMDFastBindingGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSend
 			OrphanValue(Cast<UMDFastBindingGraphNode>(ConnectedPin->GetOwningNode()), ConnectedPin->GetFName());
 		}
 	}
-	
+
 	Super::BreakPinLinks(TargetPin, bSendsNodeNotification);
 
 	if (TargetPin.GetOwningNode())
@@ -313,24 +315,24 @@ const FPinConnectionResponse UMDFastBindingGraphSchema::CanCreateConnection(cons
 	{
 		const bool bAHasConnections = A->LinkedTo.Num() > 0;
 		const bool bBHasConnections = B->LinkedTo.Num() > 0;
-		
+
 		if (bAHasConnections && bBHasConnections)
 		{
 			return FPinConnectionResponse(CONNECT_RESPONSE_BREAK_OTHERS_AB, TEXT("Replace connections"));
 		}
-		
+
 		if (bAHasConnections)
 		{
 			return FPinConnectionResponse(CONNECT_RESPONSE_BREAK_OTHERS_A, TEXT("Replace connection"));
 		}
-		
+
 		if (bBHasConnections)
 		{
 			return FPinConnectionResponse(CONNECT_RESPONSE_BREAK_OTHERS_B, TEXT("Replace connection"));
 		}
 
 		return FPinConnectionResponse(CONNECT_RESPONSE_MAKE, TEXT(""));
-		
+
 	}
 
 	return Super::CanCreateConnection(A, B);
@@ -342,7 +344,7 @@ bool UMDFastBindingGraphSchema::TryCreateConnection(UEdGraphPin* A, UEdGraphPin*
 	UEdGraphPin* OutputPin = (A->Direction == EGPD_Output) ? A : B;
 
 	TArray<UEdGraphPin*> OldOutputLinkedTo = OutputPin->LinkedTo;
-	
+
 	if (Super::TryCreateConnection(A, B))
 	{
 		const UMDFastBindingGraphNode* ValueNode = Cast<UMDFastBindingGraphNode>(OutputPin->GetOwningNode());
@@ -350,7 +352,7 @@ bool UMDFastBindingGraphSchema::TryCreateConnection(UEdGraphPin* A, UEdGraphPin*
 		{
 			return false;
 		}
-		
+
 		UMDFastBindingValueBase* ValueObject = Cast<UMDFastBindingValueBase>(ValueNode->GetBindingObject());
 		if (ValueObject == nullptr)
 		{
@@ -362,7 +364,7 @@ bool UMDFastBindingGraphSchema::TryCreateConnection(UEdGraphPin* A, UEdGraphPin*
 		{
 			return false;
 		}
-		
+
 		UMDFastBindingObject* InputObject = InputNode->GetBindingObject();
 		if (InputObject == nullptr)
 		{
@@ -394,7 +396,7 @@ bool UMDFastBindingGraphSchema::TryCreateConnection(UEdGraphPin* A, UEdGraphPin*
 		{
 			Graph->RefreshGraph();
 		}
-		
+
 		return true;
 	}
 
@@ -420,7 +422,7 @@ bool UMDFastBindingGraphSchema::CanVariableBeDropped(UEdGraph* InGraph, FPropert
 			}
 		}
 	}
-	
+
 	return Super::CanVariableBeDropped(InGraph, InVariableToDrop);
 }
 
@@ -466,18 +468,18 @@ bool UMDFastBindingGraphSchema::RequestVariableDropOnPin(UEdGraph* InGraph, FPro
 						PropertyValue->SetUpdateType(EMDFastBindingUpdateType::Once);
 					}
 				}
-			
+
 				if (UMDFastBindingGraph* Graph = Cast<UMDFastBindingGraph>(InGraph))
 				{
 					Graph->RefreshGraph();
 					Graph->SelectNodeWithBindingObject(PropertyValue);
 				}
-				
+
 				return true;
 			}
 		}
 	}
-	
+
 	return Super::RequestVariableDropOnPin(InGraph, InVariableToDrop, InPin, InDropPosition, InScreenPosition);
 }
 

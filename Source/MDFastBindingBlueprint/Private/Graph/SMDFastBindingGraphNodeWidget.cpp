@@ -1,13 +1,13 @@
 ﻿#include "Graph/SMDFastBindingGraphNodeWidget.h"
 
 #include "BlueprintEditor.h"
+#include "Debug/MDFastBindingEditorDebug.h"
 #include "GraphEditorSettings.h"
-#include "MDFastBindingEditorDebug.h"
-#include "MDFastBindingEditorStyle.h"
 #include "Graph/MDFastBindingGraphNode.h"
 #include "MDFastBindingObject.h"
 #include "NodeFactory.h"
 #include "SGraphPanel.h"
+#include "Styling/SlateStyleRegistry.h"
 #include "Widgets/SBoxPanel.h"
 
 #define LOCTEXT_NAMESPACE "MDFastBindingGraphNodeWidget"
@@ -57,14 +57,14 @@ void SMDFastBindingGraphNodeWidget::UpdateErrorInfo()
 {
 	ErrorColor = FLinearColor(0,0,0);
 	ErrorMsg.Empty();
-	
+
 	if (UMDFastBindingObject* BindingObject = GetBindingObject())
 	{
 		TArray<FText> Errors;
 		if (BindingObject->IsDataValid(Errors) == EDataValidationResult::Invalid)
 		{
 			ErrorColor = FAppStyle::GetColor("ErrorReporting.BackgroundColor");
-			
+
 			if (Errors.Num() == 0)
 			{
 				ErrorMsg = LOCTEXT("InvalidWithoutErrors", "Unknown Error").ToString();
@@ -87,7 +87,7 @@ TSharedPtr<SGraphPin> SMDFastBindingGraphNodeWidget::CreatePinWidget(UEdGraphPin
 	{
 		return K2Pin;
 	}
-	
+
 	return SGraphNode::CreatePinWidget(Pin);
 }
 
@@ -140,7 +140,7 @@ FReply SMDFastBindingGraphNodeWidget::OnAddPin()
 		}
 		return FReply::Handled();
 	}
-	
+
 	return SGraphNode::OnAddPin();
 }
 
@@ -157,20 +157,23 @@ void SMDFastBindingGraphNodeWidget::GetOverlayBrushes(bool bSelected, const FVec
 	{
 		FOverlayBrushInfo UpdateTypeBrush;
 
-		switch (BindingObject->GetUpdateType())
+		if (const ISlateStyle* FastBindingStyle = FSlateStyleRegistry::FindSlateStyle(TEXT("MDFastBindingEditorStyle")))
 		{
-		case EMDFastBindingUpdateType::Once:
-			UpdateTypeBrush.Brush = FMDFastBindingEditorStyle::Get().GetBrush(TEXT("Icon.UpdateType.Once"));
-			break;
-		case EMDFastBindingUpdateType::EventBased:
-			UpdateTypeBrush.Brush = FMDFastBindingEditorStyle::Get().GetBrush(TEXT("Icon.UpdateType.EventBased"));
-			break;
-		case EMDFastBindingUpdateType::IfUpdatesNeeded:
-			UpdateTypeBrush.Brush = FMDFastBindingEditorStyle::Get().GetBrush(TEXT("Icon.UpdateType.IfUpdatesNeeded"));
-			break;
-		case EMDFastBindingUpdateType::Always:
-			UpdateTypeBrush.Brush = FMDFastBindingEditorStyle::Get().GetBrush(TEXT("Icon.UpdateType.Always"));
-			break;
+			switch (BindingObject->GetUpdateType())
+			{
+			case EMDFastBindingUpdateType::Once:
+				UpdateTypeBrush.Brush = FastBindingStyle->GetBrush(TEXT("Icon.UpdateType.Once"));
+				break;
+			case EMDFastBindingUpdateType::EventBased:
+				UpdateTypeBrush.Brush = FastBindingStyle->GetBrush(TEXT("Icon.UpdateType.EventBased"));
+				break;
+			case EMDFastBindingUpdateType::IfUpdatesNeeded:
+				UpdateTypeBrush.Brush = FastBindingStyle->GetBrush(TEXT("Icon.UpdateType.IfUpdatesNeeded"));
+				break;
+			case EMDFastBindingUpdateType::Always:
+				UpdateTypeBrush.Brush = FastBindingStyle->GetBrush(TEXT("Icon.UpdateType.Always"));
+				break;
+			}
 		}
 
 		if (UpdateTypeBrush.Brush != nullptr)
@@ -178,7 +181,7 @@ void SMDFastBindingGraphNodeWidget::GetOverlayBrushes(bool bSelected, const FVec
 			UpdateTypeBrush.OverlayOffset.X = (WidgetSize.X - (UpdateTypeBrush.Brush->ImageSize.X / 2.f)) - 3.f;
 			UpdateTypeBrush.OverlayOffset.Y = (UpdateTypeBrush.Brush->ImageSize.Y / -2.f) + 2.f;
 		}
-		
+
 		Brushes.Add(UpdateTypeBrush);
 	}
 }
@@ -206,14 +209,14 @@ void SMDFastBindingGraphNodeWidget::UpdateDebugTooltip(double InCurrentTime)
 
 		return false;
 	};
-	
+
 	if (IsTooltipHovered())
 	{
 		// Don't update while interacting with the tooltip
 		UnhoveredTooltipCloseTime = InCurrentTime + CloseTooltipGracePeriod;
 		return;
 	}
-	
+
 	if (UMDFastBindingObject* DebugObject = GetBindingObjectBeingDebugged())
 	{
 		for (const TSharedRef<SGraphPin>& Pin : InputPins)
@@ -275,7 +278,7 @@ void SMDFastBindingGraphNodeWidget::SetDebugTooltipPin(const FGeometry& PinGeome
 		PinValueInspector->SetReferences(Pin, DebugObject);
 		PinValueInspectorPtr = PinValueInspector;
 		PinValueInspectorTooltip = FPinValueInspectorTooltip::SummonTooltip(Pin, PinValueInspector);
-		
+
 		const TSharedPtr<FPinValueInspectorTooltip> ValueTooltip = PinValueInspectorTooltip.Pin();
 		if (ValueTooltip.IsValid())
 		{
@@ -283,7 +286,7 @@ void SMDFastBindingGraphNodeWidget::SetDebugTooltipPin(const FGeometry& PinGeome
 			FVector2D PinOffset = FVector2D(PinGeometry.AbsolutePosition) / PinGeometry.Scale - GetUnscaledPosition();
 			PinOffset.X = 5.f;
 			PinOffset.Y += PinGeometry.Size.Y * 0.5f;
-			
+
 			FVector2D TooltipLocation;
 			CalculatePinTooltipLocation(PinOffset, TooltipLocation);
 			ValueTooltip->MoveTooltip(TooltipLocation);
@@ -310,7 +313,7 @@ void SMDFastBindingGraphNodeWidget::CalculatePinTooltipLocation(const FVector2D&
 	{
 		// Reset to the pin's location in graph space.
 		OutTooltipLocation = GetPosition() + Offset;
-		
+
 		// Shift the desired location to the right edge of the pin's geometry.
 		OutTooltipLocation.X += GetTickSpaceGeometry().Size.X;
 

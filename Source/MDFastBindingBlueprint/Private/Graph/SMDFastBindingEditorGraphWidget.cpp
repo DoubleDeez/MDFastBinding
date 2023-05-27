@@ -3,6 +3,7 @@
 #include "Algo/Transform.h"
 #include "BindingDestinations/MDFastBindingDestinationBase.h"
 #include "BindingValues/MDFastBindingValueBase.h"
+#include "Debug/MDFastBindingDebugPersistentData.h"
 #include "EdGraphUtilities.h"
 #include "Engine/Blueprint.h"
 #include "Engine/World.h"
@@ -10,7 +11,7 @@
 #include "Framework/Commands/GenericCommands.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "HAL/PlatformApplicationMisc.h"
-#include "MDFastBindingEditorCommands.h"
+#include "Graph/MDFastBindingEditorCommands.h"
 #include "Graph/MDFastBindingGraph.h"
 #include "Graph/MDFastBindingGraphNode.h"
 #include "Graph/MDFastBindingGraphSchema.h"
@@ -19,7 +20,6 @@
 #include "SGraphActionMenu.h"
 #include "ScopedTransaction.h"
 #include "SequencerSettings.h"
-#include "Util/MDFastBindingEditorPersistentData.h"
 #include "UObject/StrongObjectPtr.h"
 #include "UObject/UObjectIterator.h"
 #include "Widgets/Input/SEditableTextBox.h"
@@ -235,7 +235,7 @@ FActionMenuContent SMDFastBindingEditorGraphWidget::OnCreateNodeOrPinMenu(UEdGra
 					{
 						if (const UMDFastBindingObject* EffectiveBindingObject = Node->GetBindingObject())
 						{
-							if (UMDFastBindingEditorPersistentData::Get().IsPinBeingWatched(EffectiveBindingObject->BindingObjectIdentifier, EffectivePin->PinName))
+							if (UMDFastBindingDebugPersistentData::Get().IsPinBeingWatched(EffectiveBindingObject->BindingObjectIdentifier, EffectivePin->PinName))
 							{
 								MenuBuilder->AddMenuEntry(
 									FText::Format(LOCTEXT("MDFastBindingEditor_RemovePinWatch", "Remove '{0}' from Watch List"), FText::FromName(EffectivePin->PinName)),
@@ -244,7 +244,7 @@ FActionMenuContent SMDFastBindingEditorGraphWidget::OnCreateNodeOrPinMenu(UEdGra
 									FUIAction(
 										FExecuteAction::CreateLambda([NodeID = EffectiveBindingObject->BindingObjectIdentifier, PinName = EffectivePin->PinName]()
 										{
-											UMDFastBindingEditorPersistentData::Get().RemovePinFromWatchList(NodeID, PinName);
+											UMDFastBindingDebugPersistentData::Get().RemovePinFromWatchList(NodeID, PinName);
 										}),
 										FCanExecuteAction()
 									)
@@ -259,7 +259,7 @@ FActionMenuContent SMDFastBindingEditorGraphWidget::OnCreateNodeOrPinMenu(UEdGra
 									FUIAction(
 									FExecuteAction::CreateLambda([NodeID = EffectiveBindingObject->BindingObjectIdentifier, PinName = EffectivePin->PinName]()
 										{
-											UMDFastBindingEditorPersistentData::Get().AddPinToWatchList(NodeID, PinName);
+											UMDFastBindingDebugPersistentData::Get().AddPinToWatchList(NodeID, PinName);
 										}),
 										FCanExecuteAction()
 									)

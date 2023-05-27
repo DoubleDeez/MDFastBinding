@@ -4,7 +4,6 @@
 #include "Modules/ModuleManager.h"
 
 class UBlueprint;
-class UMDFastBindingBlueprintCompilerExtension;
 class FBlueprintEditor;
 class FExtender;
 class FLayoutExtender;
@@ -20,7 +19,7 @@ public:
 	FMDFastBindingEditorTabBinding();
 
 	~FMDFastBindingEditorTabBinding();
-	
+
 	void RegisterBlueprintEditorLayout(FLayoutExtender& Extender);
 	void RegisterBlueprintEditorTab(FWorkflowAllowedTabSet& TabFactories, FName InModeName, TSharedPtr<FBlueprintEditor> BlueprintEditor);
 
@@ -36,20 +35,18 @@ public:
 	/** IModuleInterface implementation */
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
-	
+
 	void OpenBindingEditor(TWeakObjectPtr<UObject> EditorObject) const;
 
 private:
 	TSharedRef<FExtender> CheckAddBindingEditorToolbarButtons(const TSharedRef<FUICommandList> Commands, const TArray<UObject*> Objects) const;
 	void AddBindingEditorToolbarButtons(FToolBarBuilder& ToolBarBuilder, TWeakObjectPtr<UObject> EditorObject) const;
-	
+
 	void OnRenameVariable(UBlueprint* Blueprint, UClass* VariableClass, const FName& OldVariableName, const FName& NewVariableName);
-	
+
 	TSharedPtr<FMDFastBindingEditorTabBinding> TabBinding;
 
 	FDelegateHandle RenameHandle;
-	
-	TSharedPtr<class IDesignerExtensionFactory> DesignerExtensionFactory;
 
-	UMDFastBindingBlueprintCompilerExtension* BlueprintCompilerExtension = nullptr;
+	TSharedPtr<class IDesignerExtensionFactory> DesignerExtensionFactory;
 };

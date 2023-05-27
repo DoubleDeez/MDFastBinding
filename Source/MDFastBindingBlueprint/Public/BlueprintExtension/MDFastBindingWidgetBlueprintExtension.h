@@ -10,7 +10,7 @@ class UMDFastBindingContainer;
  * Holds the design time BindingContainer and compiles it to a MDFastBindingWidgetClassExtension
  */
 UCLASS()
-class MDFASTBINDINGEDITOR_API UMDFastBindingWidgetBlueprintExtension : public UWidgetBlueprintExtension
+class MDFASTBINDINGBLUEPRINT_API UMDFastBindingWidgetBlueprintExtension : public UWidgetBlueprintExtension
 {
 	GENERATED_BODY()
 
@@ -45,9 +45,9 @@ private:
 
 	UClass* GetBindingOwnerClass() const;
 
-	// Temporary graphs that are pinned for use with in the diff tool 
+	// Temporary graphs that are pinned for use with in the diff tool
 	UPROPERTY(Transient)
 	mutable TArray<TObjectPtr<class UMDFastBindingGraph>> PinnedGraphs;
-	
+
 	FWidgetBlueprintCompilerContext* CompilerContext = nullptr;
 };

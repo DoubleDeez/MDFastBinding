@@ -1,10 +1,10 @@
-#include "WidgetExtension/MDFastBindingWidgetBlueprintExtension.h"
+#include "BlueprintExtension/MDFastBindingWidgetBlueprintExtension.h"
 
+#include "Graph/MDFastBindingGraph.h"
+#include "Graph/MDFastBindingGraphSchema.h"
 #include "MDFastBindingContainer.h"
 #include "MDFastBindingHelpers.h"
 #include "MDFastBindingInstance.h"
-#include "Graph/MDFastBindingGraph.h"
-#include "Graph/MDFastBindingGraphSchema.h"
 #include "WidgetExtension/MDFastBindingWidgetClassExtension.h"
 
 void UMDFastBindingWidgetBlueprintExtension::SetBindingContainer(UMDFastBindingContainer* InContainer)
@@ -17,7 +17,7 @@ void UMDFastBindingWidgetBlueprintExtension::SetBindingContainer(UMDFastBindingC
 void UMDFastBindingWidgetBlueprintExtension::PostLoad()
 {
 	Super::PostLoad();
-	
+
 	BindContainerOwnerDelegate();
 }
 
@@ -32,7 +32,7 @@ bool UMDFastBindingWidgetBlueprintExtension::DoesBlueprintOrSuperClassesHaveBind
 	{
 		return FMDFastBindingHelpers::DoesClassHaveSuperClassBindings(Cast<UWidgetBlueprintGeneratedClass>(WidgetBP->GeneratedClass.Get()));
 	}
-	
+
 	return false;
 }
 
@@ -63,7 +63,7 @@ void UMDFastBindingWidgetBlueprintExtension::GetAllGraphs(TArray<UEdGraph*>& Gra
 void UMDFastBindingWidgetBlueprintExtension::HandleBeginCompilation(FWidgetBlueprintCompilerContext& InCreationContext)
 {
 	Super::HandleBeginCompilation(InCreationContext);
-	
+
 	PinnedGraphs.Empty();
 
 	CompilerContext = &InCreationContext;
@@ -72,7 +72,7 @@ void UMDFastBindingWidgetBlueprintExtension::HandleBeginCompilation(FWidgetBluep
 void UMDFastBindingWidgetBlueprintExtension::HandleFinishCompilingClass(UWidgetBlueprintGeneratedClass* Class)
 {
 	Super::HandleFinishCompilingClass(Class);
-	
+
 	if (CompilerContext != nullptr && DoesBlueprintOrSuperClassesHaveBindings())
 	{
 		UMDFastBindingWidgetClassExtension* BindingClass = NewObject<UMDFastBindingWidgetClassExtension>(Class);
@@ -82,7 +82,7 @@ void UMDFastBindingWidgetBlueprintExtension::HandleFinishCompilingClass(UWidgetB
 		}
 
 		// There's a chance we could perform some compile-time steps here that would improve runtime performance
-		
+
 		CompilerContext->AddExtension(Class, BindingClass);
 	}
 }
@@ -99,7 +99,7 @@ bool UMDFastBindingWidgetBlueprintExtension::HandleValidateGeneratedClass(UWidge
 	{
 		return false;
 	}
-	
+
 	return Super::HandleValidateGeneratedClass(Class);
 }
 
@@ -124,6 +124,6 @@ UClass* UMDFastBindingWidgetBlueprintExtension::GetBindingOwnerClass() const
 	{
 		return WidgetBP->GeneratedClass;
 	}
-	
+
 	return nullptr;
 }

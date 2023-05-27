@@ -1,13 +1,11 @@
 ﻿#include "MDFastBindingEditorModule.h"
 
-#include "BlueprintCompilationManager.h"
 #include "BlueprintEditorModule.h"
 #include "BlueprintEditorTabs.h"
 #include "Customizations/MDFastBindingFieldPathCustomization.h"
 #include "Customizations/MDFastBindingFunctionWrapperCustomization.h"
 #include "Customizations/MDFastBindingObjectCustomization.h"
 #include "LevelEditor.h"
-#include "MDFastBindingBlueprintCompilerExtension.h"
 #include "MDFastBindingContainer.h"
 #include "MDFastBindingDesignerExtension.h"
 #include "Util/MDFastBindingEditorConfig.h"
@@ -26,7 +24,6 @@
 #include "Modules/ModuleManager.h"
 #include "WidgetBlueprint.h"
 #include "Util/MDFastBindingEditorHelpers.h"
-#include "WidgetExtension/MDFastBindingWidgetBlueprintExtension.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "WorkflowOrientedApp/WorkflowTabManager.h"
 
@@ -61,14 +58,14 @@ void FMDFastBindingEditorTabBinding::RegisterBlueprintEditorTab(FWorkflowAllowed
 void FMDFastBindingEditorModule::StartupModule()
 {
 	FMDFastBindingEditorStyle::Initialize();
-	
+
 	TabBinding = MakeShared<FMDFastBindingEditorTabBinding>();
-	
+
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	PropertyModule.RegisterCustomPropertyTypeLayout(FMDFastBindingFieldPath::StaticStruct()->GetFName(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FMDFastBindingFieldPathCustomization::MakeInstance));
 	PropertyModule.RegisterCustomPropertyTypeLayout(FMDFastBindingFunctionWrapper::StaticStruct()->GetFName(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FMDFastBindingFunctionWrapperCustomization::MakeInstance));
 	PropertyModule.RegisterCustomClassLayout(UMDFastBindingObject::StaticClass()->GetFName(), FOnGetDetailCustomizationInstance::CreateStatic(&FMDFastBindingObjectCustomization::MakeInstance));
-	
+
 	FBlueprintEditorModule& BlueprintEditorModule = FModuleManager::LoadModuleChecked<FBlueprintEditorModule>("Kismet");
 	BlueprintEditorModule.GetMenuExtensibilityManager()->GetExtenderDelegates().Add(FAssetEditorExtender::CreateRaw(this, &FMDFastBindingEditorModule::CheckAddBindingEditorToolbarButtons));
 
@@ -77,22 +74,12 @@ void FMDFastBindingEditorModule::StartupModule()
 	UMGEditorInterface.GetDesignerExtensibilityManager()->AddDesignerExtensionFactory(DesignerExtensionFactory.ToSharedRef());
 
 	RenameHandle = FBlueprintEditorUtils::OnRenameVariableReferencesEvent.AddRaw(this, &FMDFastBindingEditorModule::OnRenameVariable);
-
-	BlueprintCompilerExtension = NewObject<UMDFastBindingBlueprintCompilerExtension>();
-	BlueprintCompilerExtension->AddToRoot();
-	FBlueprintCompilationManager::RegisterCompilerExtension(UWidgetBlueprint::StaticClass(), BlueprintCompilerExtension);
 }
 
 void FMDFastBindingEditorModule::ShutdownModule()
 {
-	if (IsValid(BlueprintCompilerExtension))
-	{
-		BlueprintCompilerExtension->RemoveFromRoot();
-		BlueprintCompilerExtension = nullptr;
-	}
-	
 	FBlueprintEditorUtils::OnRenameVariableReferencesEvent.Remove(RenameHandle);
-	
+
 	if (FPropertyEditorModule* PropertyModule = FModuleManager::GetModulePtr<FPropertyEditorModule>("PropertyEditor"))
 	{
 		PropertyModule->UnregisterCustomPropertyTypeLayout(FMDFastBindingFieldPath::StaticStruct()->GetFName());
@@ -104,7 +91,7 @@ void FMDFastBindingEditorModule::ShutdownModule()
 	{
 		UMGEditorInterface->GetDesignerExtensibilityManager()->RemoveDesignerExtensionFactory(DesignerExtensionFactory.ToSharedRef());
 	}
-	
+
 	FMDFastBindingEditorStyle::Shutdown();
 
 	TabBinding.Reset();
@@ -122,10 +109,10 @@ TSharedRef<FExtender> FMDFastBindingEditorModule::CheckAddBindingEditorToolbarBu
 		{
 			Extender->AddToolBarExtension(TEXT("Asset"), EExtensionHook::After, Commands
 				, FToolBarExtensionDelegate::CreateRaw(this, &FMDFastBindingEditorModule::AddBindingEditorToolbarButtons, MakeWeakObjectPtr(EditorObject)));
-		}	
+		}
 	}
-	
-	return Extender;	
+
+	return Extender;
 }
 
 void FMDFastBindingEditorModule::AddBindingEditorToolbarButtons(FToolBarBuilder& ToolBarBuilder, TWeakObjectPtr<UObject> EditorObject) const
@@ -180,7 +167,7 @@ void FMDFastBindingEditorModule::OpenBindingEditor(TWeakObjectPtr<UObject> Edito
 				WorkflowApp->SetCurrentMode(TEXT("GraphName"));
 			}
 		}
-		
+
 		TSharedPtr<FTabManager> TabManager = Editor->GetAssociatedTabManager();
 		if (TabManager.IsValid() && TabManager->HasTabSpawner(FMDFastBindingEditorSummoner::TabId))
 		{
@@ -211,5 +198,5 @@ void FMDFastBindingEditorModule::OnRenameVariable(UBlueprint* Blueprint, UClass*
 }
 
 #undef LOCTEXT_NAMESPACE
-	
+
 IMPLEMENT_MODULE(FMDFastBindingEditorModule, MDFastBindingEditor)

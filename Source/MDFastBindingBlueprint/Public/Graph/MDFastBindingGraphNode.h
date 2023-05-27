@@ -8,23 +8,23 @@ class UMDFastBindingInstance;
 class UMDFastBindingObject;
 
 /**
- * 
+ *
  */
 UCLASS()
-class MDFASTBINDINGEDITOR_API UMDFastBindingGraphNode : public UEdGraphNode
+class MDFASTBINDINGBLUEPRINT_API UMDFastBindingGraphNode : public UEdGraphNode
 {
 	GENERATED_BODY()
 
 public:
 	UMDFastBindingGraphNode();
-	
+
 	virtual void AllocateDefaultPins() override;
-	
+
 	void SetBindingObject(UMDFastBindingObject* InObject);
 
 	UMDFastBindingObject* GetBindingObject() const { return BindingObject.Get(); }
 	UMDFastBindingObject* GetCopiedBindingObject() const { return CopiedObject; }
-	
+
 	void SetBindingBeingDebugged(UMDFastBindingInstance* InBinding);
 	UMDFastBindingObject* GetBindingObjectBeingDebugged() const;
 
@@ -51,7 +51,7 @@ protected:
 	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
 
 	virtual TSharedPtr<SGraphNode> CreateVisualWidget() override;
-	
+
 	virtual void OnRenameNode(const FString& NewName) override;
 
 	virtual void OnUpdateCommentText(const FString& NewComment) override;
@@ -59,7 +59,7 @@ protected:
 	virtual void OnCommentBubbleToggled(bool bInCommentBubbleVisible) override;
 
 	virtual FLinearColor GetNodeTitleColor() const override;
-	
+
 	virtual FText GetTooltipText() const override;
 
 private:

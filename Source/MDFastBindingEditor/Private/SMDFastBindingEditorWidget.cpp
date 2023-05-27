@@ -1,13 +1,14 @@
 ﻿#include "SMDFastBindingEditorWidget.h"
 #include "BindingDestinations/MDFastBindingDestinationBase.h"
+#include "BlueprintExtension/MDFastBindingWidgetBlueprintExtension.h"
 #include "BlueprintEditor.h"
 #include "ClassViewerFilter.h"
 #include "ClassViewerModule.h"
+#include "Debug/MDFastBindingEditorDebug.h"
+#include "Debug/MDFastBindingDebugPersistentData.h"
 #include "Kismet2/SClassPickerDialog.h"
 #include "MDFastBindingContainer.h"
-#include "MDFastBindingEditorDebug.h"
 #include "MDFastBindingEditorModule.h"
-#include "Util/MDFastBindingEditorPersistentData.h"
 #include "MDFastBindingEditorStyle.h"
 #include "MDFastBindingHelpers.h"
 #include "Graph/MDFastBindingGraphNode.h"
@@ -20,7 +21,6 @@
 #include "WidgetBlueprint.h"
 #include "Blueprint/WidgetBlueprintGeneratedClass.h"
 #include "Util/MDFastBindingEditorHelpers.h"
-#include "WidgetExtension/MDFastBindingWidgetBlueprintExtension.h"
 #include "Widgets/Layout/SWidgetSwitcher.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Text/SInlineEditableTextBlock.h"
@@ -83,7 +83,7 @@ void SMDFastBindingEditorWidget::Construct(const FArguments&, const TWeakPtr<FBl
 	WatchList = SNew(SMDFastBindingWatchList);
 	WatchList->SetReferences(GetSelectedBinding(), BindingBeingDebugged.Get());
 
-	UMDFastBindingEditorPersistentData::Get().OnWatchListChanged.AddSP(WatchList.Get(), &SMDFastBindingWatchList::RefreshList);
+	UMDFastBindingDebugPersistentData::Get().OnWatchListChanged.AddSP(WatchList.Get(), &SMDFastBindingWatchList::RefreshList);
 
 	ChildSlot
 	[
@@ -595,7 +595,7 @@ FReply SMDFastBindingEditorWidget::OnClearWatches()
 		{
 			if (Object != nullptr)
 			{
-				UMDFastBindingEditorPersistentData::Get().RemoveNodeFromWatchList(Object->BindingObjectIdentifier);
+				UMDFastBindingDebugPersistentData::Get().RemoveNodeFromWatchList(Object->BindingObjectIdentifier);
 			}
 		}
 	}

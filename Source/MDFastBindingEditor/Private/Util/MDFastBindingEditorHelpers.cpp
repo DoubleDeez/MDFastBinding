@@ -1,9 +1,9 @@
 #include "Util/MDFastBindingEditorHelpers.h"
 
+#include "BlueprintExtension/MDFastBindingWidgetBlueprintExtension.h"
 #include "MDFastBindingContainer.h"
 #include "WidgetBlueprint.h"
 #include "WidgetBlueprintExtension.h"
-#include "WidgetExtension/MDFastBindingWidgetBlueprintExtension.h"
 #include "WidgetExtension/MDFastBindingWidgetExtension.h"
 
 
@@ -24,7 +24,7 @@ bool MDFastBindingEditorHelpers::DoesClassSupportFastBindings(const UStruct* Cla
 		// All UserWidgets support fast bindings
 		return true;
 	}
-	
+
 	TSet<const UStruct*> VisitedClasses;
 	TArray<const UStruct*> ClassesToVisit = { Class };
 
@@ -32,7 +32,7 @@ bool MDFastBindingEditorHelpers::DoesClassSupportFastBindings(const UStruct* Cla
 	{
 		const UStruct* ClassToVisit = ClassesToVisit.Pop();
 		VisitedClasses.Add(ClassToVisit);
-		
+
 		for (TFieldIterator<FProperty> It(ClassToVisit); It; ++It)
 		{
 			if (const FObjectPropertyBase* ObjectProp = CastField<const FObjectPropertyBase>(*It))
@@ -41,7 +41,7 @@ bool MDFastBindingEditorHelpers::DoesClassSupportFastBindings(const UStruct* Cla
 				{
 					return true;
 				}
-				
+
 				if (!VisitedClasses.Contains(ObjectProp->PropertyClass))
 				{
 					ClassesToVisit.Push(ObjectProp->PropertyClass);
@@ -56,7 +56,7 @@ bool MDFastBindingEditorHelpers::DoesClassSupportFastBindings(const UStruct* Cla
 			}
 		}
 	}
-	
+
 	return false;
 }
 
@@ -82,7 +82,7 @@ UMDFastBindingContainer* MDFastBindingEditorHelpers::FindBindingContainerInObjec
 					return Container;
 				}
 			}
-		}	
+		}
 	}
 
 	return nullptr;
@@ -91,7 +91,7 @@ UMDFastBindingContainer* MDFastBindingEditorHelpers::FindBindingContainerInObjec
 UMDFastBindingContainer* MDFastBindingEditorHelpers::FindBindingContainerCDOInClass(UClass* Class)
 {
 	if (Class != nullptr)
-	{		
+	{
 		for (TFieldIterator<FObjectPropertyBase> It(Class); It; ++It)
 		{
 			if (It->PropertyClass->IsChildOf(UMDFastBindingContainer::StaticClass()))
@@ -124,7 +124,7 @@ UMDFastBindingContainer* MDFastBindingEditorHelpers::FindBindingContainerCDOInBl
 
 		return FindBindingContainerCDOInClass(Blueprint->GeneratedClass);
 	}
-	
+
 	return nullptr;
 }
 
@@ -139,20 +139,20 @@ UMDFastBindingContainer* MDFastBindingEditorHelpers::InitBindingContainerInBluep
 				? NewObject<UMDFastBindingContainer>(FastBindingExtension, NAME_None, RF_Transactional | RF_Public)
 				: DuplicateObject(InitialContainer, FastBindingExtension);
 			FastBindingExtension->SetBindingContainer(Container);
-			
+
 			return Container;
 		}
 
 		return InitBindingContainerInClass(Blueprint->GeneratedClass);
 	}
-	
+
 	return nullptr;
 }
 
 UMDFastBindingContainer* MDFastBindingEditorHelpers::InitBindingContainerInClass(UClass* Class)
 {
 	if (Class != nullptr)
-	{		
+	{
 		for (TFieldIterator<FObjectPropertyBase> It(Class); It; ++It)
 		{
 			if (It->PropertyClass->IsChildOf(UMDFastBindingContainer::StaticClass()))
@@ -173,7 +173,7 @@ UMDFastBindingContainer* MDFastBindingEditorHelpers::InitBindingContainerInClass
 void MDFastBindingEditorHelpers::ClearBindingContainerCDOInClass(UClass* Class)
 {
 	if (Class != nullptr)
-	{		
+	{
 		for (TFieldIterator<FObjectPropertyBase> It(Class); It; ++It)
 		{
 			if (It->PropertyClass->IsChildOf(UMDFastBindingContainer::StaticClass()))

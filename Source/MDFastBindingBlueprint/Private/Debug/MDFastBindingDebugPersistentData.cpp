@@ -1,6 +1,6 @@
-#include "Util/MDFastBindingEditorPersistentData.h"
+#include "Debug/MDFastBindingDebugPersistentData.h"
 
-bool UMDFastBindingEditorPersistentData::IsNodeBeingWatched(const FGuid& NodeId) const
+bool UMDFastBindingDebugPersistentData::IsNodeBeingWatched(const FGuid& NodeId) const
 {
 	if (const FMDFastBindingEditorPinWatchList* WatchList = NodePinWatchList.Find(NodeId))
 	{
@@ -10,13 +10,13 @@ bool UMDFastBindingEditorPersistentData::IsNodeBeingWatched(const FGuid& NodeId)
 	return false;
 }
 
-bool UMDFastBindingEditorPersistentData::IsPinBeingWatched(const FGuid& NodeId, const FName& PinName) const
+bool UMDFastBindingDebugPersistentData::IsPinBeingWatched(const FGuid& NodeId, const FName& PinName) const
 {
 	const FMDFastBindingEditorPinWatchList* WatchList = NodePinWatchList.Find(NodeId);
 	return WatchList != nullptr && WatchList->Pins.Contains(PinName);
 }
 
-void UMDFastBindingEditorPersistentData::GatherWatchedPins(const FGuid& NodeId, TArray<FName>& Pins) const
+void UMDFastBindingDebugPersistentData::GatherWatchedPins(const FGuid& NodeId, TArray<FName>& Pins) const
 {
 	if (const FMDFastBindingEditorPinWatchList* WatchList = NodePinWatchList.Find(NodeId))
 	{
@@ -24,7 +24,7 @@ void UMDFastBindingEditorPersistentData::GatherWatchedPins(const FGuid& NodeId, 
 	}
 }
 
-void UMDFastBindingEditorPersistentData::AddPinToWatchList(const FGuid& NodeId, const FName& PinName)
+void UMDFastBindingDebugPersistentData::AddPinToWatchList(const FGuid& NodeId, const FName& PinName)
 {
 	NodePinWatchList.FindOrAdd(NodeId).Pins.Add(PinName);
 
@@ -33,7 +33,7 @@ void UMDFastBindingEditorPersistentData::AddPinToWatchList(const FGuid& NodeId, 
 	OnWatchListChanged.Broadcast();
 }
 
-void UMDFastBindingEditorPersistentData::RemovePinFromWatchList(const FGuid& NodeId, const FName& PinName)
+void UMDFastBindingDebugPersistentData::RemovePinFromWatchList(const FGuid& NodeId, const FName& PinName)
 {
 	if (FMDFastBindingEditorPinWatchList* WatchList = NodePinWatchList.Find(NodeId))
 	{
@@ -46,7 +46,7 @@ void UMDFastBindingEditorPersistentData::RemovePinFromWatchList(const FGuid& Nod
 	}
 }
 
-void UMDFastBindingEditorPersistentData::RemoveNodeFromWatchList(const FGuid& NodeId)
+void UMDFastBindingDebugPersistentData::RemoveNodeFromWatchList(const FGuid& NodeId)
 {
 	if (NodePinWatchList.Remove(NodeId) > 0)
 	{

@@ -1,4 +1,4 @@
-﻿#include "MDFastBindingEditorCommands.h"
+﻿#include "Graph/MDFastBindingEditorCommands.h"
 
 
 #define LOCTEXT_NAMESPACE "MDFastBindingEditorCommands"

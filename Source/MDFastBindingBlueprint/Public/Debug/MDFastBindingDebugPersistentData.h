@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
-#include "MDFastBindingEditorPersistentData.generated.h"
+#include "MDFastBindingDebugPersistentData.generated.h"
 
 USTRUCT()
 struct FMDFastBindingEditorPinWatchList
@@ -18,12 +18,12 @@ public:
  *
  */
 UCLASS(config = "FastBindingEditor")
-class MDFASTBINDINGEDITOR_API UMDFastBindingEditorPersistentData : public UObject
+class MDFASTBINDINGBLUEPRINT_API UMDFastBindingDebugPersistentData : public UObject
 {
 	GENERATED_BODY()
 
 public:
-	static UMDFastBindingEditorPersistentData& Get() { return *GetMutableDefault<UMDFastBindingEditorPersistentData>(); }
+	static UMDFastBindingDebugPersistentData& Get() { return *GetMutableDefault<UMDFastBindingDebugPersistentData>(); }
 
 	bool IsNodeBeingWatched(const FGuid& NodeId) const;
 	bool IsPinBeingWatched(const FGuid& NodeId, const FName& PinName) const;

@@ -5,10 +5,10 @@
 #include "Framework/Commands/Commands.h"
 
 
-class MDFASTBINDINGEDITOR_API FMDFastBindingEditorCommands : public TCommands<FMDFastBindingEditorCommands>
+class FMDFastBindingEditorCommands : public TCommands<FMDFastBindingEditorCommands>
 {
 public:
-	
+
 	FMDFastBindingEditorCommands()
 		: TCommands<FMDFastBindingEditorCommands>( TEXT("MDFastBindingEditorCommands"), NSLOCTEXT("MDFastBindingEditorCommands", "FastBindingCommands", "Fast Binding Commands"), NAME_None, FCoreStyle::Get().GetStyleSetName() )
 	{
@@ -18,7 +18,7 @@ public:
 	{
 	}
 
-	virtual void RegisterCommands() override;	
+	virtual void RegisterCommands() override;
 
 	TSharedPtr<FUICommandInfo> SetDestinationActive;
 };

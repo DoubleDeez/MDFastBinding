@@ -8,32 +8,32 @@ public class MDFastBindingEditor : ModuleRules
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 		OptimizeCode = CodeOptimization.Never;
-		
+
 		PublicIncludePaths.AddRange(
 			new string[] {
 			}
 			);
-				
-		
+
+
 		PrivateIncludePaths.AddRange(
 			new string[] {
 			}
 			);
-			
-		
+
+
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
 				"Core",
 				"DeveloperSettings",
 				"GraphEditor",
-				"MDFastBinding", 
+				"MDFastBinding",
 				"PropertyEditor",
 				"UMGEditor"
 			}
 			);
-			
-		
+
+
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
@@ -44,6 +44,7 @@ public class MDFastBindingEditor : ModuleRules
 				"Engine",
 				"InputCore",
 				"Kismet",
+				"MDFastBindingBlueprint",
 				"Projects",
 				"Slate",
 				"SlateCore",
@@ -51,8 +52,8 @@ public class MDFastBindingEditor : ModuleRules
 				"UnrealEd"
 			}
 			);
-		
-		
+
+
 		DynamicallyLoadedModuleNames.AddRange(
 			new string[]
 			{
