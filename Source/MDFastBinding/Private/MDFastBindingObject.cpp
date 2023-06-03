@@ -28,7 +28,7 @@ FMDFastBindingItem::~FMDFastBindingItem()
 TTuple<const FProperty*, void*> FMDFastBindingItem::GetValue(UObject* SourceObject, bool& OutDidUpdate, bool bAllowDefaults)
 {
 	OutDidUpdate = false;
-	
+
 	if (Value != nullptr)
 	{
 		const TTuple<const FProperty*, void*> Result = Value->GetValue(SourceObject, OutDidUpdate);
@@ -40,18 +40,18 @@ TTuple<const FProperty*, void*> FMDFastBindingItem::GetValue(UObject* SourceObje
 #endif
 		return Result;
 	}
-	
+
 	if (!bAllowDefaults)
 	{
 		return {};
 	}
-	
+
 	const FProperty* ItemProp = ItemProperty.Get();
 	if (ItemProp == nullptr)
 	{
 		return {};
 	}
-	
+
 	if (AllocatedDefaultValue != nullptr)
 	{
 		return TTuple<const FProperty*, void*>{ ItemProp, AllocatedDefaultValue };
@@ -116,7 +116,7 @@ TTuple<const FProperty*, void*> FMDFastBindingItem::GetCachedValue() const
 	{
 		return Value->GetCachedValue();
 	}
-	
+
 	if (const FProperty* ItemProp = ItemProperty.Get())
 	{
 		if (AllocatedDefaultValue != nullptr)
@@ -143,7 +143,9 @@ UClass* UMDFastBindingObject::GetBindingOwnerClass() const
 	{
 		if (const UMDFastBindingContainer* Container = Cast<UMDFastBindingContainer>(Object))
 		{
-			return Container->GetBindingOwnerClass();
+			UClass* Class = Container->GetBindingOwnerClass();
+			BindingOwnerClass = Class;
+			return Class;
 		}
 
 		Object = Object->GetOuter();
@@ -162,7 +164,7 @@ void UMDFastBindingObject::SetupBindingItems_Internal()
 		{
 			SetupExtendablePinBindingItem(i);
 		}
-		
+
 		// Remove items that go over ExtendablePinListCount
 		for (int32 i = BindingItems.Num() - 1; i >= 0; --i)
 		{
@@ -322,7 +324,7 @@ bool UMDFastBindingObject::DoesObjectRequireTick() const
 	{
 		return true;
 	}
-	
+
 	for (const FMDFastBindingItem& Item : BindingItems)
 	{
 		if (Item.Value != nullptr && Item.Value->DoesObjectRequireTick())
@@ -330,7 +332,7 @@ bool UMDFastBindingObject::DoesObjectRequireTick() const
 			return true;
 		}
 	}
-	
+
 	return false;
 }
 
@@ -367,9 +369,9 @@ void UMDFastBindingObject::PostLoad()
 		BindingObjectIdentifier = FGuid::NewGuid();
 	}
 #endif
-	
+
 	SetupBindingItems_Internal();
-	
+
 }
 
 void UMDFastBindingObject::PostInitProperties()
@@ -389,7 +391,7 @@ void UMDFastBindingObject::EnsureBindingItemExists(const FName& ItemName, const 
 		BindingItems.Add(MoveTemp(Item));
 		BindingItem = BindingItems.FindByKey(ItemName);
 	}
-	
+
 	BindingItem->bAllowNullValue = bIsOptional;
 	BindingItem->ItemProperty = ItemProperty;
 	BindingItem->ToolTip = ItemDescription;
@@ -435,7 +437,7 @@ TTuple<const FProperty*, void*> UMDFastBindingObject::GetBindingItemValue(UObjec
 	{
 		return Item->GetValue(SourceObject, OutDidUpdate, !DoesBindingItemDefaultToSelf(Name));
 	}
-	
+
 	return {};
 }
 
@@ -445,7 +447,7 @@ TTuple<const FProperty*, void*> UMDFastBindingObject::GetBindingItemValue(UObjec
 	{
 		return BindingItems[Index].GetValue(SourceObject, OutDidUpdate, !DoesBindingItemDefaultToSelf(BindingItems[Index].ItemName));
 	}
-	
+
 	return {};
 }
 
@@ -453,7 +455,7 @@ TTuple<const FProperty*, void*> UMDFastBindingObject::GetBindingItemValue(UObjec
 EDataValidationResult UMDFastBindingObject::IsDataValid(TArray<FText>& ValidationErrors)
 {
 	SetupBindingItems_Internal();
-	
+
 	for (const FMDFastBindingItem& BindingItem : BindingItems)
 	{
 		const FProperty* ItemProp = BindingItem.ResolveOutputProperty();
@@ -554,7 +556,7 @@ UMDFastBindingValueBase* UMDFastBindingObject::SetBindingItem_Internal(const FNa
 		{
 			OrphanBindingItem(BindingItem->Value);
 		}
-		
+
 		BindingItem->Value = InValue;
 		BindingItem->ClearDefaultValues();
 		return InValue;
