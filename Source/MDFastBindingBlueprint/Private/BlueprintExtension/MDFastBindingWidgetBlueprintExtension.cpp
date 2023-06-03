@@ -11,14 +11,6 @@ void UMDFastBindingWidgetBlueprintExtension::SetBindingContainer(UMDFastBindingC
 {
 	check(InContainer && InContainer->GetOuter() == this);
 	BindingContainer = InContainer;
-	BindContainerOwnerDelegate();
-}
-
-void UMDFastBindingWidgetBlueprintExtension::PostLoad()
-{
-	Super::PostLoad();
-
-	BindContainerOwnerDelegate();
 }
 
 bool UMDFastBindingWidgetBlueprintExtension::DoesBlueprintOrSuperClassesHaveBindings() const
@@ -108,14 +100,6 @@ void UMDFastBindingWidgetBlueprintExtension::HandleEndCompilation()
 	Super::HandleEndCompilation();
 
 	CompilerContext = nullptr;
-}
-
-void UMDFastBindingWidgetBlueprintExtension::BindContainerOwnerDelegate()
-{
-	if (BindingContainer != nullptr)
-	{
-		BindingContainer->GetBindingOwnerClassDelegate.BindUObject(this, &UMDFastBindingWidgetBlueprintExtension::GetBindingOwnerClass);
-	}
 }
 
 UClass* UMDFastBindingWidgetBlueprintExtension::GetBindingOwnerClass() const

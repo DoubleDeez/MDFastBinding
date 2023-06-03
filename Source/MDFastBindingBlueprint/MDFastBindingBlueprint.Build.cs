@@ -11,7 +11,8 @@ public class MDFastBindingBlueprint : ModuleRules
             {
                 "Core",
                 "Kismet",
-                "UMGEditor"
+                "MDFastBinding",
+                "UMGEditor",
             }
         );
 
@@ -23,7 +24,6 @@ public class MDFastBindingBlueprint : ModuleRules
                 "CoreUObject",
                 "Engine",
                 "GraphEditor",
-                "MDFastBinding",
                 "Slate",
                 "SlateCore",
                 "UMG",

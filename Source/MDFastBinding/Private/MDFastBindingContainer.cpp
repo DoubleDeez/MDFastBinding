@@ -1,6 +1,7 @@
 ﻿#include "MDFastBindingContainer.h"
 #include "MDFastBindingInstance.h"
 #include "MDFastBindingLog.h"
+#include "MDFastBindingOwnerInterface.h"
 #include "BindingDestinations/MDFastBindingDestinationBase.h"
 #include "Blueprint/UserWidget.h"
 
@@ -10,14 +11,14 @@ void UMDFastBindingContainer::InitializeBindings(UObject* SourceObject)
 	{
 		UE_CLOG(!OuterWidget->IsDesignTime(), LogMDFastBinding, Warning, TEXT("[%s] uses a deprecated property-based MDFastBindingContainer, resave it to automatically upgrade it to a widget extension"), *GetNameSafe(OuterWidget->GetClass()));
 	}
-	
+
 	for (int32 i = 0; i < Bindings.Num(); ++i)
 	{
 		if (UMDFastBindingInstance* Binding = Bindings[i])
 		{
 			Binding->InitializeBinding(SourceObject);
 			Binding->UpdateBinding(SourceObject);
-		
+
 			BindingTickPolicyLookUpMap.Add(i, Binding->ShouldBindingTick());
 		}
 	}
@@ -62,16 +63,16 @@ void UMDFastBindingContainer::SetBindingTickPolicy(UMDFastBindingInstance* Bindi
 
 UClass* UMDFastBindingContainer::GetBindingOwnerClass() const
 {
-	if (GetBindingOwnerClassDelegate.IsBound())
-	{
-		return GetBindingOwnerClassDelegate.Execute();
-	}
-	
 	if (const UObject* Outer = GetOuter())
 	{
+		if (const IMDFastBindingOwnerInterface* OwnerInterface = Cast<IMDFastBindingOwnerInterface>(Outer))
+		{
+			return OwnerInterface->GetBindingOwnerClass();
+		}
+
 		return Outer->GetClass();
 	}
-	
+
 	return nullptr;
 }
 
@@ -98,7 +99,7 @@ UMDFastBindingInstance* UMDFastBindingContainer::DuplicateBinding(UMDFastBinding
 					Object->BindingObjectIdentifier = FGuid::NewGuid();
 				}
 			}
-			
+
 			Bindings.Insert(NewBinding, CurrentIdx + 1);
 			return NewBinding;
 		}

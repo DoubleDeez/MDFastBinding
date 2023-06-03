@@ -74,14 +74,12 @@ void UMDFastBindingWidgetExtension::UpdateBindings()
 void UMDFastBindingWidgetExtension::SetBindingContainer(const UMDFastBindingContainer* CDOBindingContainer)
 {
 	BindingContainer = DuplicateObject(CDOBindingContainer, this);
-	BindingContainer->GetBindingOwnerClassDelegate.BindUObject(this, &UMDFastBindingWidgetExtension::GetBindingOwnerClass);
 }
 
 void UMDFastBindingWidgetExtension::AddSuperBindingContainer(const UMDFastBindingContainer* SuperCDOBindingContainer)
 {
 	if (UMDFastBindingContainer* SuperBindingContainer = DuplicateObject(SuperCDOBindingContainer, this))
 	{
-		SuperBindingContainer->GetBindingOwnerClassDelegate.BindUObject(this, &UMDFastBindingWidgetExtension::GetBindingOwnerClass);
 		SuperBindingContainers.Add(SuperBindingContainer);
 	}
 }

@@ -1,6 +1,7 @@
 #include "WidgetExtension/MDFastBindingWidgetClassExtension.h"
 
 #include "Blueprint/UserWidget.h"
+#include "Launch/Resources/Version.h"
 #include "MDFastBindingContainer.h"
 #include "MDFastBindingHelpers.h"
 #include "Blueprint/WidgetBlueprintGeneratedClass.h"
@@ -44,6 +45,11 @@ void UMDFastBindingWidgetClassExtension::Initialize(UUserWidget* UserWidget)
 			BPClass = Cast<UWidgetBlueprintGeneratedClass>(BPClass->GetSuperClass());
 		}
 	}
+}
+
+UClass* UMDFastBindingWidgetClassExtension::GetBindingOwnerClass() const
+{
+	return Cast<UClass>(GetOuter());
 }
 
 bool UMDFastBindingWidgetClassExtension::HasBindings() const

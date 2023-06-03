@@ -7,7 +7,7 @@
 class UMDFastBindingInstance;
 
 /**
- * 
+ *
  */
 UCLASS(DefaultToInstanced, EditInlineNew, meta = (DisplayName = "Binding Container"))
 class MDFASTBINDING_API UMDFastBindingContainer : public UObject
@@ -16,7 +16,7 @@ class MDFASTBINDING_API UMDFastBindingContainer : public UObject
 
 public:
 	void InitializeBindings(UObject* SourceObject);
-	
+
 	void UpdateBindings(UObject* SourceObject);
 
 	void TerminateBindings(UObject* SourceObject);
@@ -24,12 +24,11 @@ public:
 	void SetBindingTickPolicy(UMDFastBindingInstance* Binding, bool bShouldTick);
 
 	bool HasBindings() const { return !Bindings.IsEmpty(); }
-	
+
 	UClass* GetBindingOwnerClass() const;
 
-	// Use this redirect the binding owner from the actual outer of this UObject
-	DECLARE_DELEGATE_RetVal(UClass*, FGetBindingOwnerClass);
-	FGetBindingOwnerClass GetBindingOwnerClassDelegate;
+	UE_DEPRECATED(all, "GetBindingOwnerClassDelegate is deprecated, the binding's outer object should implement IMDFastBindingOwnerInterface instead")
+	FSimpleDelegate GetBindingOwnerClassDelegate;
 
 // Editor only operations
 #if WITH_EDITORONLY_DATA
