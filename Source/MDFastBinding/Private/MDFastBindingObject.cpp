@@ -69,13 +69,10 @@ TTuple<const FProperty*, void*> FMDFastBindingItem::GetValue(UObject* SourceObje
 		bHasRetrievedDefaultValue = true;
 		return TTuple<const FProperty*, void*>{ ItemProp, &DefaultString };
 	}
-	else if (!DefaultString.IsEmpty())
+	else if (ItemProp->IsA<FTextProperty>())
 	{
 		bHasRetrievedDefaultValue = true;
-		AllocatedDefaultValue = FMemory::Malloc(ItemProp->GetSize(), ItemProp->GetMinAlignment());
-		ItemProp->InitializeValue(AllocatedDefaultValue);
-		ItemProp->ImportText_Direct(*DefaultString, AllocatedDefaultValue, nullptr, PPF_None);
-		return TTuple<const FProperty*, void*>{ ItemProp, AllocatedDefaultValue };
+		return TTuple<const FProperty*, void*>{ ItemProp, &DefaultText };
 	}
 	else if (const FObjectPropertyBase* ObjectProp = CastField<const FObjectPropertyBase>(ItemProp))
 	{
@@ -85,10 +82,13 @@ TTuple<const FProperty*, void*> FMDFastBindingItem::GetValue(UObject* SourceObje
 		ObjectProp->SetObjectPropertyValue(AllocatedDefaultValue, DefaultObject);
 		return TTuple<const FProperty*, void*>{ ObjectProp, AllocatedDefaultValue };
 	}
-	else if (ItemProp->IsA<FTextProperty>())
+	else if (!DefaultString.IsEmpty())
 	{
 		bHasRetrievedDefaultValue = true;
-		return TTuple<const FProperty*, void*>{ ItemProp, &DefaultText };
+		AllocatedDefaultValue = FMemory::Malloc(ItemProp->GetSize(), ItemProp->GetMinAlignment());
+		ItemProp->InitializeValue(AllocatedDefaultValue);
+		ItemProp->ImportText_Direct(*DefaultString, AllocatedDefaultValue, nullptr, PPF_None);
+		return TTuple<const FProperty*, void*>{ ItemProp, AllocatedDefaultValue };
 	}
 
 	return {};
