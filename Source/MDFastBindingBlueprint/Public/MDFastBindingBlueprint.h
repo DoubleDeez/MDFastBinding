@@ -2,6 +2,8 @@
 
 #include "Modules/ModuleManager.h"
 
+#include "UObject/WeakObjectPtr.h"
+
 class UMDFastBindingBlueprintCompilerExtension;
 
 class FMDFastBindingBlueprintModule : public IModuleInterface
@@ -11,5 +13,5 @@ public:
     virtual void ShutdownModule() override;
 
 private:
-	UMDFastBindingBlueprintCompilerExtension* BlueprintCompilerExtension = nullptr;
+	TWeakObjectPtr<UMDFastBindingBlueprintCompilerExtension> BlueprintCompilerExtensionPtr;
 };

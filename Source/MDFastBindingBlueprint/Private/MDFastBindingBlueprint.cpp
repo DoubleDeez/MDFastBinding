@@ -8,15 +8,15 @@
 
 void FMDFastBindingBlueprintModule::StartupModule()
 {
-	BlueprintCompilerExtension = NewObject<UMDFastBindingBlueprintCompilerExtension>();
-	BlueprintCompilerExtension->AddToRoot();
+	BlueprintCompilerExtensionPtr = NewObject<UMDFastBindingBlueprintCompilerExtension>();
+	BlueprintCompilerExtensionPtr->AddToRoot();
 
-	FBlueprintCompilationManager::RegisterCompilerExtension(UWidgetBlueprint::StaticClass(), BlueprintCompilerExtension);
+	FBlueprintCompilationManager::RegisterCompilerExtension(UWidgetBlueprint::StaticClass(), BlueprintCompilerExtensionPtr.Get());
 }
 
 void FMDFastBindingBlueprintModule::ShutdownModule()
 {
-	if (IsValid(BlueprintCompilerExtension))
+	if (UMDFastBindingBlueprintCompilerExtension* BlueprintCompilerExtension = BlueprintCompilerExtensionPtr.Get())
 	{
 		BlueprintCompilerExtension->RemoveFromRoot();
 		BlueprintCompilerExtension = nullptr;
