@@ -35,7 +35,7 @@ FText UMDFastBindingValue_Property::GetDisplayName()
 	{
 		return FText::FromString(PropertyPath.ToString());
 	}
-	
+
 	return Super::GetDisplayName();
 }
 #endif
@@ -44,7 +44,7 @@ UObject* UMDFastBindingValue_Property::GetPropertyOwner(UObject* SourceObject)
 {
 	bool bDidUpdate = false;
 	const TTuple<const FProperty*, void*> PathRoot = GetBindingItemValue(SourceObject, MDFastBindingValue_Property_Private::PathRootName, bDidUpdate);
-	
+
 	if (PathRoot.Value != nullptr)
 	{
 		return *static_cast<UObject**>(PathRoot.Value);
@@ -54,7 +54,7 @@ UObject* UMDFastBindingValue_Property::GetPropertyOwner(UObject* SourceObject)
 		// null value, but key is valid so it failed to get a value, just return null as the owner
 		return nullptr;
 	}
-	
+
 	return SourceObject;
 }
 
@@ -69,7 +69,7 @@ UStruct* UMDFastBindingValue_Property::GetPropertyOwnerStruct()
 	{
 		return StructProp->Struct;
 	}
-	
+
 	return GetBindingOwnerClass();
 }
 
@@ -87,7 +87,7 @@ void UMDFastBindingValue_Property::PostInitProperties()
 {
 	PropertyPath.OwnerStructGetter.BindUObject(this, &UMDFastBindingValue_Property::GetPropertyOwnerStruct);
 	PropertyPath.OwnerGetter.BindUObject(this, &UMDFastBindingValue_Property::GetPropertyOwner);
-	
+
 	Super::PostInitProperties();
 }
 
@@ -138,6 +138,11 @@ void UMDFastBindingValue_Property::SetFieldPath(const TArray<FFieldVariant>& Pat
 	}
 
 	PropertyPath.BuildPath();
+}
+
+const TArray<FFieldVariant>& UMDFastBindingValue_Property::GetFieldPath()
+{
+	return PropertyPath.GetFieldPath();
 }
 #endif
 

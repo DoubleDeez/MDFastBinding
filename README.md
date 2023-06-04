@@ -44,6 +44,14 @@ Here's a screenshot binding 2 health variables to a progress bar widget's percen
 
 ![Example of binding a health bar percentage](Resources/readme-binding-example.png)
 
+### Binding Widget Properties
+
+You can use the normal property binding menu in the Widget Designer to create Fast Bindings. This will auto populate a binding that sets the property you selected and opens the binding editor drawer. The widget you have selected must have `Is Variable` checked for the binding menu to display.
+
+When a property has an existing binding, the binding menu will show the binding's status (Error or Performance rating) and the binding's name.
+
+![Example of creating and deleting fast bindings in details view](Resources/readme-umg-property-bindings.gif)
+
 ## Performance
 Check out the [Performance](https://github.com/DoubleDeez/MDFastBinding/wiki/Performance) wiki page for details on how to make performant bindings.
 

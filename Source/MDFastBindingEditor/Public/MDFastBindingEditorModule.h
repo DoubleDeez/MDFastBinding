@@ -54,4 +54,5 @@ private:
 	FDelegateHandle RenameHandle;
 
 	TSharedPtr<class IDesignerExtensionFactory> DesignerExtensionFactory;
+	TSharedPtr<class FMDFastBindingPropertyBindingExtension> PropertyBindingExtension;
 };

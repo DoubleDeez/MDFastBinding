@@ -34,7 +34,7 @@ void UMDFastBindingDestination_Property::UpdateDestination_Internal(UObject* Sou
 	const TTuple<const FProperty*, void*> Property = PropertyPath.ResolvePath(SourceObject);
 
 	if (UpdateType != EMDFastBindingUpdateType::IfUpdatesNeeded || bDidUpdate || !bHasEverUpdated || bNeedsUpdate)
-	{	
+	{
 		FMDFastBindingModule::SetProperty(Property.Key, Property.Value, Value.Key, Value.Value);
 	}
 }
@@ -43,7 +43,7 @@ void UMDFastBindingDestination_Property::PostInitProperties()
 {
 	PropertyPath.OwnerStructGetter.BindUObject(this, &UMDFastBindingDestination_Property::GetPropertyOwnerStruct);
 	PropertyPath.OwnerGetter.BindUObject(this, &UMDFastBindingDestination_Property::GetPropertyOwner);
-	
+
 	Super::PostInitProperties();
 }
 
@@ -71,7 +71,7 @@ UStruct* UMDFastBindingDestination_Property::GetPropertyOwnerStruct()
 	{
 		return StructProp->Struct;
 	}
-	
+
 	return GetBindingOwnerClass();
 }
 
@@ -92,7 +92,7 @@ void UMDFastBindingDestination_Property::SetupBindingItems()
 EDataValidationResult UMDFastBindingDestination_Property::IsDataValid(TArray<FText>& ValidationErrors)
 {
 	EDataValidationResult Result = Super::IsDataValid(ValidationErrors);
-	
+
 	const FProperty* RootProp = GetBindingItemValueProperty(MDFastBindingDestination_Property_Private::PathRootName);
 	if (RootProp != nullptr && !RootProp->IsA<FObjectPropertyBase>() && !RootProp->IsA<FStructProperty>())
 	{
@@ -121,6 +121,32 @@ void UMDFastBindingDestination_Property::OnVariableRenamed(UClass* VariableClass
 
 	PropertyPath.OnVariableRenamed(VariableClass, OldVariableName, NewVariableName);
 }
+
+void UMDFastBindingDestination_Property::SetFieldPath(const TArray<FFieldVariant>& Path)
+{
+	PropertyPath.FieldPathMembers.Empty();
+	for (const FFieldVariant& Field : Path)
+	{
+		FMDFastBindingMemberReference& MemberRef = PropertyPath.FieldPathMembers.AddDefaulted_GetRef();
+		if (Field.IsA<UFunction>())
+		{
+			MemberRef.SetFromField<UFunction>(Field.Get<UFunction>(), false);
+			MemberRef.bIsFunction = true;
+		}
+		else
+		{
+			MemberRef.SetFromField<FProperty>(Field.Get<FProperty>(), false);
+			MemberRef.bIsFunction = false;
+		}
+	}
+
+	PropertyPath.BuildPath();
+}
+
+const TArray<FFieldVariant>& UMDFastBindingDestination_Property::GetFieldPath()
+{
+	return PropertyPath.GetFieldPath();
+}
 #endif
 
 #if WITH_EDITORONLY_DATA
@@ -130,7 +156,7 @@ FText UMDFastBindingDestination_Property::GetDisplayName()
 	{
 		return FText::FromString(PropertyPath.ToString());
 	}
-	
+
 	return Super::GetDisplayName();
 }
 #endif

@@ -41,7 +41,7 @@ UClass* UMDFastBindingDestination_Function::GetFunctionOwnerClass()
 	{
 		return ObjectProp->PropertyClass;
 	}
-	
+
 	return GetBindingOwnerClass();
 }
 
@@ -105,7 +105,7 @@ void UMDFastBindingDestination_Function::PostInitProperties()
 	Function.OwnerGetter.BindUObject(this, &UMDFastBindingDestination_Function::GetFunctionOwner);
 	Function.ParamPopulator.BindUObject(this, &UMDFastBindingDestination_Function::PopulateFunctionParam);
 	Function.ShouldCallFunction.BindUObject(this, &UMDFastBindingDestination_Function::ShouldCallFunction);
-	
+
 	Super::PostInitProperties();
 }
 
@@ -150,6 +150,12 @@ UFunction* UMDFastBindingDestination_Function::GetFunction()
 {
 	return Function.GetFunctionPtr();
 }
+
+void UMDFastBindingDestination_Function::SetFunction(UFunction* Func)
+{
+	Function.FunctionMember.bIsFunction = true;
+	Function.FunctionMember.SetFromField<UFunction>(Func, false);
+}
 #endif
 
 #if WITH_EDITORONLY_DATA
@@ -159,7 +165,7 @@ FText UMDFastBindingDestination_Function::GetDisplayName()
 	{
 		return Func->GetDisplayNameText();
 	}
-	
+
 	return Super::GetDisplayName();
 }
 #endif

@@ -48,6 +48,7 @@ public class MDFastBindingEditor : ModuleRules
 				"Projects",
 				"Slate",
 				"SlateCore",
+				"StatusBar",
 				"UMG",
 				"UnrealEd"
 			}

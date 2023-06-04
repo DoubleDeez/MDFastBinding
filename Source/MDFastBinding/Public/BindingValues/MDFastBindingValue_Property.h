@@ -15,19 +15,20 @@ class MDFASTBINDING_API UMDFastBindingValue_Property : public UMDFastBindingValu
 
 public:
 	UMDFastBindingValue_Property();
-	
+
 	virtual const FProperty* GetOutputProperty() override;
 	virtual bool DoesBindingItemDefaultToSelf(const FName& InItemName) const override;
-	
+
 #if WITH_EDITORONLY_DATA
 	virtual FText GetDisplayName() override;
 #endif
 #if WITH_EDITOR
 	virtual EDataValidationResult IsDataValid(TArray<FText>& ValidationErrors) override;
-	
+
 	virtual void OnVariableRenamed(UClass* VariableClass, const FName& OldVariableName, const FName& NewVariableName) override;
 
 	void SetFieldPath(const TArray<FFieldVariant>& Path);
+	const TArray<FFieldVariant>& GetFieldPath();
 #endif
 
 protected:
@@ -36,11 +37,11 @@ protected:
 	virtual UStruct* GetPropertyOwnerStruct();
 
 	virtual const FProperty* GetPathRootProperty() const { return nullptr; }
-	
+
 	virtual void SetupBindingItems() override;
 
 	virtual void PostInitProperties() override;
-	
+
 	// Path to the property you want to get
 	UPROPERTY(EditDefaultsOnly, Category = "Binding")
 	FMDFastBindingFieldPath PropertyPath;

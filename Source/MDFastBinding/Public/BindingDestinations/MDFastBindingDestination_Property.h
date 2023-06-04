@@ -15,13 +15,16 @@ class MDFASTBINDING_API UMDFastBindingDestination_Property : public UMDFastBindi
 
 public:
 	UMDFastBindingDestination_Property();
-	
+
 	virtual bool DoesBindingItemDefaultToSelf(const FName& InItemName) const override;
 
 #if WITH_EDITOR
 	virtual EDataValidationResult IsDataValid(TArray<FText>& ValidationErrors) override;
-	
+
 	virtual void OnVariableRenamed(UClass* VariableClass, const FName& OldVariableName, const FName& NewVariableName) override;
+
+	void SetFieldPath(const TArray<FFieldVariant>& Path);
+	const TArray<FFieldVariant>& GetFieldPath();
 #endif
 
 #if WITH_EDITORONLY_DATA
@@ -36,9 +39,9 @@ protected:
 
 	virtual UObject* GetPropertyOwner(UObject* SourceObject);
 	virtual UStruct* GetPropertyOwnerStruct();
-	
+
 	virtual void SetupBindingItems() override;
-	
+
 	// Path to the property you want to set
 	UPROPERTY(EditDefaultsOnly, Category = "Binding")
 	FMDFastBindingFieldPath PropertyPath;

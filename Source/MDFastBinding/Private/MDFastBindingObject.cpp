@@ -548,6 +548,16 @@ UMDFastBindingValueBase* UMDFastBindingObject::SetBindingItem(const FName& ItemN
 	return SetBindingItem_Internal(ItemName, DuplicateObject(InValue, this));
 }
 
+UMDFastBindingValueBase* UMDFastBindingObject::FindBindingItemValue(const FName& ItemName) const
+{
+	if (const FMDFastBindingItem* Item = FindBindingItem(ItemName))
+	{
+		return Item->Value;
+	}
+
+	return nullptr;
+}
+
 UMDFastBindingValueBase* UMDFastBindingObject::SetBindingItem_Internal(const FName& ItemName, UMDFastBindingValueBase* InValue)
 {
 	if (FMDFastBindingItem* BindingItem = BindingItems.FindByKey(ItemName))

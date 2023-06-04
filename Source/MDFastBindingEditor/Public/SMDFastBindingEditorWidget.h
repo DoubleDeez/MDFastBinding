@@ -47,6 +47,7 @@ public:
 
 private:
 	void OnGraphSelectionChanged(const FGraphPanelSelectionSet& Selection);
+	void OnBindingsExternallyModified();
 
 	EVisibility GetBindingSelectorVisibility() const;
 	EVisibility GetBindingTreeVisibility() const;

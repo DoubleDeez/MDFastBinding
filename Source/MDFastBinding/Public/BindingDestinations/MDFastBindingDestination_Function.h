@@ -15,13 +15,14 @@ class MDFASTBINDING_API UMDFastBindingDestination_Function : public UMDFastBindi
 
 public:
 	virtual bool DoesBindingItemDefaultToSelf(const FName& InItemName) const override;
-	
+
 #if WITH_EDITOR
 	virtual EDataValidationResult IsDataValid(TArray<FText>& ValidationErrors) override;
-	
+
 	virtual void OnVariableRenamed(UClass* VariableClass, const FName& OldVariableName, const FName& NewVariableName) override;
 
 	UFunction* GetFunction();
+	void SetFunction(UFunction* Func);
 #endif
 
 #if WITH_EDITORONLY_DATA
@@ -35,7 +36,7 @@ protected:
 	virtual UObject* GetFunctionOwner(UObject* SourceObject);
 	virtual UClass* GetFunctionOwnerClass();
 	virtual void PopulateFunctionParam(UObject* SourceObject, const FProperty* Param, void* ValuePtr);
-	
+
 	virtual void SetupBindingItems() override;
 
 	virtual void PostInitProperties() override;

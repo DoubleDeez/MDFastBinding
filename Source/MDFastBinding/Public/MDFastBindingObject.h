@@ -32,10 +32,10 @@ struct MDFASTBINDING_API FMDFastBindingItem
 
 public:
 	~FMDFastBindingItem();
-	
+
 	UPROPERTY(VisibleAnywhere, Category = "Bindings")
 	FName ItemName = NAME_None;
-	
+
 	UPROPERTY(EditDefaultsOnly, Instanced, Category = "Bindings")
 	UMDFastBindingValueBase* Value = nullptr;
 
@@ -88,7 +88,7 @@ public:
 
 	// Resolves wildcard binding items (where ItemProperty is null, the output property of Value is used instead)
 	const FProperty* ResolveOutputProperty() const;
-	
+
 #if WITH_EDITOR
 	TTuple<const FProperty*, void*> GetCachedValue() const;
 #endif
@@ -101,7 +101,7 @@ private:
 };
 
 /**
- * 
+ *
  */
 UCLASS()
 class MDFASTBINDING_API UMDFastBindingObject : public UObject
@@ -110,7 +110,7 @@ class MDFASTBINDING_API UMDFastBindingObject : public UObject
 
 public:
 	UClass* GetBindingOwnerClass() const;
-	
+
 	void SetupBindingItems_Internal();
 
 	virtual bool DoesBindingItemDefaultToSelf(const FName& InItemName) const { return false; }
@@ -128,11 +128,11 @@ public:
 	void MarkObjectDirty();
 
 	virtual bool DoesObjectRequireTick() const;
-	
+
 	const FMDFastBindingItem* FindBindingItemWithValue(const UMDFastBindingValueBase* Value) const;
 	const FMDFastBindingItem* FindBindingItem(const FName& ItemName) const;
 	FMDFastBindingItem* FindBindingItem(const FName& ItemName);
-	
+
 	static FName CreateExtendableItemName(const FName& Base, int32 Index)
 	{
 		return *FString::Printf(TEXT("%s %d"), *Base.ToString(), Index);
@@ -142,13 +142,13 @@ public:
 #if WITH_EDITORONLY_DATA
 	UPROPERTY()
 	FIntPoint NodePos = FIntPoint::ZeroValue;
-	
+
 	UPROPERTY()
 	FText DevName;
 
 	UPROPERTY()
 	FString DevComment;
-	
+
 	UPROPERTY()
 	bool bIsCommentBubbleVisible = false;
 
@@ -163,11 +163,12 @@ public:
 	void RemoveBindingItem(const FName& ItemName);
 	UMDFastBindingValueBase* SetBindingItem(const FName& ItemName, TSubclassOf<UMDFastBindingValueBase> ValueClass);
 	UMDFastBindingValueBase* SetBindingItem(const FName& ItemName, UMDFastBindingValueBase* InValue);
+	UMDFastBindingValueBase* FindBindingItemValue(const FName& ItemName) const;
 	void ClearBindingItemValue(const FName& ItemName);
 	void ClearBindingItemValuePtrs();
 
 	void GatherBindingValues(TArray<UMDFastBindingValueBase*>& OutValues) const;
-	
+
 	void OrphanBindingItem(const FName& ItemName);
 	void OrphanBindingItem(UMDFastBindingValueBase* InValue);
 	void OrphanAllBindingItems(const TSet<UObject*>& OrphanExclusionSet);
@@ -195,14 +196,14 @@ public:
 protected:
 	virtual void PostLoad() override;
 	virtual void PostInitProperties() override;
-	
+
 	virtual void SetupBindingItems() {}
 
 	virtual void SetupExtendablePinBindingItem(int32 ItemIndex) {}
-	
+
 	void EnsureBindingItemExists(const FName& ItemName, const FProperty* ItemProperty, const FText& ItemDescription, bool bIsOptional = false);
 	void EnsureExtendableBindingItemExists(const FName& ItemName, const FProperty* ItemProperty, const FText& ItemDescription, int32 ItemIndex, bool bIsOptional = false);
-	
+
 	const FProperty* ResolveBindingItemProperty(const FName& Name) const;
 	const FProperty* GetBindingItemValueProperty(const FName& Name) const;
 	TTuple<const FProperty*, void*> GetBindingItemValue(UObject* SourceObject, const FName& Name, bool& OutDidUpdate);
@@ -213,7 +214,7 @@ protected:
 
 	UPROPERTY()
 	int32 ExtendablePinListCount = 0;
-	
+
 	// Values are cached, this setting determines when to grab a new value or use the cached value
 	UPROPERTY(EditAnywhere, Category = "Performance")
 	EMDFastBindingUpdateType UpdateType = EMDFastBindingUpdateType::IfUpdatesNeeded;
@@ -221,7 +222,7 @@ protected:
 private:
 	UPROPERTY(Transient)
 	bool bIsObjectDirty = true;
-	
+
 	mutable TWeakObjectPtr<UClass> BindingOwnerClass;
 	mutable TWeakObjectPtr<UMDFastBindingInstance> OuterBinding;
 };

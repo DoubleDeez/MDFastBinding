@@ -5,6 +5,7 @@
 #include "Customizations/MDFastBindingFieldPathCustomization.h"
 #include "Customizations/MDFastBindingFunctionWrapperCustomization.h"
 #include "Customizations/MDFastBindingObjectCustomization.h"
+#include "Customizations/MDFastBindingPropertyBindingExtension.h"
 #include "LevelEditor.h"
 #include "MDFastBindingContainer.h"
 #include "MDFastBindingDesignerExtension.h"
@@ -25,7 +26,6 @@
 #include "WidgetBlueprint.h"
 #include "WidgetDrawerConfig.h"
 #include "BlueprintModes/WidgetBlueprintApplicationMode.h"
-#include "BlueprintModes/WidgetBlueprintApplicationModes.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Util/MDFastBindingEditorHelpers.h"
 #include "Widgets/Docking/SDockTab.h"
@@ -78,6 +78,9 @@ void FMDFastBindingEditorModule::StartupModule()
 	UMGEditorInterface.GetDesignerExtensibilityManager()->AddDesignerExtensionFactory(DesignerExtensionFactory.ToSharedRef());
 	UMGEditorInterface.OnRegisterTabsForEditor().AddRaw(this, &FMDFastBindingEditorModule::HandleRegisterBlueprintEditorTab);
 
+	PropertyBindingExtension = MakeShared<FMDFastBindingPropertyBindingExtension>();
+	UMGEditorInterface.GetPropertyBindingExtensibilityManager()->AddExtension(PropertyBindingExtension.ToSharedRef());
+
 	RenameHandle = FBlueprintEditorUtils::OnRenameVariableReferencesEvent.AddRaw(this, &FMDFastBindingEditorModule::OnRenameVariable);
 }
 
@@ -96,10 +99,12 @@ void FMDFastBindingEditorModule::ShutdownModule()
 	{
 		UMGEditorInterface->GetDesignerExtensibilityManager()->RemoveDesignerExtensionFactory(DesignerExtensionFactory.ToSharedRef());
 		UMGEditorInterface->OnRegisterTabsForEditor().RemoveAll(this);
+		UMGEditorInterface->GetPropertyBindingExtensibilityManager()->RemoveExtension(PropertyBindingExtension.ToSharedRef());
 	}
 
 	FMDFastBindingEditorStyle::Shutdown();
 
+	PropertyBindingExtension.Reset();
 	TabBinding.Reset();
 	DesignerExtensionFactory.Reset();
 }
@@ -207,12 +212,6 @@ void FMDFastBindingEditorModule::HandleRegisterBlueprintEditorTab(const FWidgetB
 {
 	if (ApplicationMode.LayoutExtender)
 	{
-		/*const FName RelativeTab = ApplicationMode.GetModeName() == FWidgetBlueprintApplicationModes::DesignerMode
-			? TEXT("Animations")
-			: FBlueprintEditorTabs::FindResultsID;
-		const FTabManager::FTab NewTab(FTabId(FMDFastBindingEditorSummoner::TabId, ETabIdFlags::SaveLayout), ETabState::ClosedTab);
-		ApplicationMode.LayoutExtender->ExtendLayout(RelativeTab, ELayoutExtensionPosition::After, NewTab);*/
-
 		ApplicationMode.OnPostActivateMode.AddRaw(this, &FMDFastBindingEditorModule::HandleActivateMode);
 		ApplicationMode.OnPreDeactivateMode.AddRaw(this, &FMDFastBindingEditorModule::HandleDeactivateMode);
 	}

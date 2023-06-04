@@ -25,7 +25,7 @@
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Text/SInlineEditableTextBlock.h"
 
-#define LOCTEXT_NAMESPACE "MDFastBindingEdtiorWidget"
+#define LOCTEXT_NAMESPACE "MDFastBindingEditorWidget"
 
 namespace SMDFastBindingEditorWidget_Private
 {
@@ -264,6 +264,15 @@ void SMDFastBindingEditorWidget::AssignBindingData(UBlueprint* BindingOwnerBP)
 		{
 			MDFastBindingEditorHelpers::InitBindingContainerInBlueprint(BindingOwnerBP);
 		}
+
+		if (const UWidgetBlueprint* WidgetBP = Cast<UWidgetBlueprint>(BindingOwnerBP))
+		{
+			UMDFastBindingWidgetBlueprintExtension* BPExtension = UMDFastBindingWidgetBlueprintExtension::GetExtension<UMDFastBindingWidgetBlueprintExtension>(WidgetBP);
+			if (IsValid(BPExtension))
+			{
+				BPExtension->OnBindingsUpdatedExternally.AddSP(this, &SMDFastBindingEditorWidget::OnBindingsExternallyModified);
+			}
+		}
 	}
 
 	PopulateBindingsList();
@@ -271,6 +280,11 @@ void SMDFastBindingEditorWidget::AssignBindingData(UBlueprint* BindingOwnerBP)
 
 void SMDFastBindingEditorWidget::SelectBinding(UMDFastBindingInstance* InBinding)
 {
+	if (!Bindings.Contains(InBinding))
+	{
+		return;
+	}
+
 	SelectedBinding = InBinding;
 	if (BindingGraphWidget.IsValid())
 	{
@@ -354,6 +368,11 @@ void SMDFastBindingEditorWidget::OnGraphSelectionChanged(const FGraphPanelSelect
 			DetailSwitcher->SetActiveWidgetIndex(SMDFastBindingEditorWidget_Private::NodeDetailsIndex);
 		}
 	}
+}
+
+void SMDFastBindingEditorWidget::OnBindingsExternallyModified()
+{
+	PopulateBindingsList();
 }
 
 EVisibility SMDFastBindingEditorWidget::GetBindingSelectorVisibility() const
