@@ -1,6 +1,5 @@
 #pragma once
 
-#include "CoreMinimal.h"
 #include "DragAndDrop/DecoratedDragDropOp.h"
 #include "Widgets/SCompoundWidget.h"
 #include "Widgets/Views/STableRow.h"
@@ -25,11 +24,11 @@ public:
 	static EItemDropZone CalculateDropZoneRelativeToGeometry(const FVector2D& ScreenSpacePos, const FGeometry& Geometry);
 
 	static int32 CalculateDropIndex(EItemDropZone DropZone, int32 TargetIndex);
-	
+
 	static int32 CalculateDropIndex(const FVector2D& ScreenSpacePos, const FGeometry& Geometry, int32 TargetIndex);
-	
+
 	static int32 CalculateDropResultIndex(EItemDropZone DropZone, int32 TargetIndex, int32 DraggedIndex);
-	
+
 	TWeakObjectPtr<UMDFastBindingInstance> CachedBindingPtr;
 };
 
@@ -52,17 +51,17 @@ public:
 
 private:
 	void SetBindingDisplayName(const FText& InName, ETextCommit::Type CommitType);
-	
+
 	FText GetBindingValidationTooltip() const;
 	const FSlateBrush* GetBindingValidationBrush() const;
 
 	FText GetBindingPerformanceTooltip() const;
 	const FSlateBrush* GetBindingPerformanceBrush() const;
-	
+
 	const FSlateBrush* GetBorder() const;
 
 	EVisibility GetHandleVisibility() const;
-	
+
 	TSharedPtr<SInlineEditableTextBlock> TitleText;
 	TWeakObjectPtr<UMDFastBindingInstance> CachedBindingPtr;
 	TWeakPtr<SMDFastBindingEditorWidget> CachedEditorWidget;

@@ -1,12 +1,11 @@
 ﻿#pragma once
 
-#include "CoreMinimal.h"
 #include "IDetailCustomization.h"
 
 struct FPropertyAndParent;
 
 /**
- * 
+ *
  */
 class MDFASTBINDINGEDITOR_API FMDFastBindingObjectCustomization : public IDetailCustomization
 {
@@ -14,7 +13,7 @@ class MDFASTBINDINGEDITOR_API FMDFastBindingObjectCustomization : public IDetail
 public:
 
 	static TSharedRef<IDetailCustomization> MakeInstance() { return MakeShared<FMDFastBindingObjectCustomization>(); }
-	
+
 	virtual void CustomizeDetails(IDetailLayoutBuilder& DetailBuilder) override;
 	virtual void CustomizeDetails(const TSharedPtr<IDetailLayoutBuilder>& DetailBuilder) override;
 

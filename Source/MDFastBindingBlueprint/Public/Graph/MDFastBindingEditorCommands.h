@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#include "CoreMinimal.h"
 #include "Styling/CoreStyle.h"
 #include "Framework/Commands/Commands.h"
 

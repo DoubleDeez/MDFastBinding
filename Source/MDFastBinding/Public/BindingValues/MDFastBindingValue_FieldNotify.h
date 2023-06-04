@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#include "CoreMinimal.h"
 #include "MDFastBindingValue_Property.h"
 #include "FieldNotification/FieldId.h"
 #include "UObject/WeakInterfacePtr.h"
@@ -15,12 +14,12 @@ UCLASS(meta = (DisplayName = "Field Notify"))
 class MDFASTBINDING_API UMDFastBindingValue_FieldNotify : public UMDFastBindingValue_Property
 {
 	GENERATED_BODY()
-	
+
 public:
 	UMDFastBindingValue_FieldNotify();
 
 	virtual void PostInitProperties() override;
-	
+
 #if WITH_EDITOR
 	virtual EDataValidationResult IsDataValid(TArray<FText>& ValidationErrors) override;
 #endif
@@ -29,7 +28,7 @@ protected:
 	virtual void InitializeValue_Internal(UObject* SourceObject) override;
 	virtual TTuple<const FProperty*, void*> GetValue_Internal(UObject* SourceObject) override;
 	virtual void TerminateValue_Internal(UObject* SourceObject) override;
-	
+
 	virtual const FProperty* GetPathRootProperty() const override;
 
 	virtual void OnFieldNotifyValueChanged(UObject* Object, UE::FieldNotification::FFieldId FieldId);
@@ -41,7 +40,7 @@ protected:
 
 	UE::FieldNotification::FFieldId GetFieldId();
 	UE::FieldNotification::FFieldId GetFieldId(UObject* SourceObject);
-	
+
 	UPROPERTY(Transient)
 	TScriptInterface<INotifyFieldValueChanged> FieldNotifyInterface;
 

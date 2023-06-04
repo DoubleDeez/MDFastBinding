@@ -1,6 +1,5 @@
 #pragma once
 
-#include "CoreMinimal.h"
 #include "MDFastBindingContainer.h"
 
 class UMDFastBindingContainer;
@@ -9,7 +8,7 @@ namespace MDFastBindingEditorHelpers
 {
 	bool DoesObjectSupportFastBindings(const UObject& Object);
 	bool DoesClassSupportFastBindings(const UStruct* Class);
-	
+
 	UMDFastBindingContainer* FindBindingContainerInObject(UObject* Object);
 
 	UMDFastBindingContainer* FindBindingContainerCDOInClass(UClass* Class);

@@ -1,13 +1,12 @@
 ﻿#pragma once
 
-#include "CoreMinimal.h"
 #include "MDFastBindingObject.h"
 #include "MDFastBindingValueBase.generated.h"
 
 class UMDFastBindingInstance;
 
 /**
- * 
+ *
  */
 UCLASS(Abstract, EditInlineNew, DefaultToInstanced)
 class MDFASTBINDING_API UMDFastBindingValueBase : public UMDFastBindingObject
@@ -16,15 +15,15 @@ class MDFASTBINDING_API UMDFastBindingValueBase : public UMDFastBindingObject
 
 public:
 	virtual void BeginDestroy() override;
-	
+
 	void InitializeValue(UObject* SourceObject);
 	void TerminateValue(UObject* SourceObject);
-	
+
 	TTuple<const FProperty*, void*> GetValue(UObject* SourceObject, bool& OutDidUpdate);
 #if WITH_EDITOR
 	TTuple<const FProperty*, void*> GetCachedValue() const { return CachedValue; }
 #endif
-	
+
 	virtual bool CheckNeedsUpdate() const override;
 
 	virtual bool DoesObjectRequireTick() const override;
@@ -40,5 +39,5 @@ protected:
 
 private:
 	TTuple<const FProperty*, void*> CachedValue;
-	
+
 };

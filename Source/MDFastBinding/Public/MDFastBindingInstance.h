@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#include "CoreMinimal.h"
 #include "UObject/Object.h"
 #include "MDFastBindingInstance.generated.h"
 
@@ -10,7 +9,7 @@ class UMDFastBindingObject;
 class UMDFastBindingValueBase;
 
 /**
- * 
+ *
  */
 UCLASS(DefaultToInstanced, EditInlineNew)
 class MDFASTBINDING_API UMDFastBindingInstance : public UObject
@@ -21,7 +20,7 @@ public:
 	UClass* GetBindingOwnerClass() const;
 
 	UMDFastBindingContainer* GetBindingContainer() const;
-	
+
 	void InitializeBinding(UObject* SourceObject);
 	void UpdateBinding(UObject* SourceObject);
 	void TerminateBinding(UObject* SourceObject);
@@ -43,7 +42,7 @@ public:
 	int32 GetBindingIndex() const;
 	void MoveToIndex(int32 Index);
 #endif
-	
+
 #if WITH_EDITORONLY_DATA
 	UMDFastBindingValueBase* AddOrphan(UMDFastBindingValueBase* InValue);
 	void RemoveOrphan(UMDFastBindingValueBase* InValue);
@@ -58,10 +57,10 @@ public:
 
 	UMDFastBindingObject* FindBindingObjectWithGUID(const FGuid& Guid) const;
 	TArray<UMDFastBindingObject*> GatherAllBindingObjects() const;
-	
+
 	UPROPERTY(Instanced)
 	TArray<UMDFastBindingValueBase*> OrphanedValues;
-	
+
 	UPROPERTY(Instanced)
 	TArray<UMDFastBindingDestinationBase*> InactiveDestinations;
 

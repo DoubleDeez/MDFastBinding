@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#include "CoreMinimal.h"
 #include "MDFastBindingValueBase.h"
 #include "MDFastBindingValue_FormatText.generated.h"
 
@@ -18,11 +17,11 @@ public:
 #if WITH_EDITORONLY_DATA
 	virtual FText GetDisplayName() override;
 #endif
-	
+
 protected:
 	virtual TTuple<const FProperty*, void*> GetValue_Internal(UObject* SourceObject) override;
 	virtual void SetupBindingItems() override;
-	
+
 	UPROPERTY(EditAnywhere, Category = "Binding")
 	FText FormatText = INVTEXT("{InputString}");
 
@@ -36,6 +35,6 @@ private:
 	TArray<FName> Arguments;
 
 	const FProperty* TextProp = nullptr;
-	
+
 	FFormatNamedArguments Args;
 };

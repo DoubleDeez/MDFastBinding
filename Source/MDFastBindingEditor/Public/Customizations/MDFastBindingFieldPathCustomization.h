@@ -1,7 +1,6 @@
 ﻿
 #pragma once
 
-#include "CoreMinimal.h"
 #include "IPropertyTypeCustomization.h"
 #include "MDFastBindingFieldPath.h"
 
@@ -34,7 +33,7 @@ private:
 	void SetFieldPath(TArray<FFieldVariant> Path) const;
 
 	void UpdateComboButton() const;
-	
+
 	TSharedPtr<IPropertyHandle> FieldPathHandle;
 	TSharedPtr<IPropertyHandleArray> FieldPathMembersHandle;
 	TSharedPtr<SBox> ComboButtonContent;

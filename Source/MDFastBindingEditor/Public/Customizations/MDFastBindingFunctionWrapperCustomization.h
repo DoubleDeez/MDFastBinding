@@ -1,7 +1,6 @@
 ﻿
 #pragma once
 
-#include "CoreMinimal.h"
 #include "IPropertyTypeCustomization.h"
 #include "MDFastBindingFunctionWrapper.h"
 
@@ -23,7 +22,7 @@ private:
 	FMDFastBindingFunctionWrapper* ResolveFunctionWrapper() const;
 
 	TSharedRef<SWidget> GetPathSelectorContent();
-	
+
 	TSharedRef<SWidget> BuildFunctionWidget(UFunction* Function) const;
 
 	void GatherPossibleFunctions();
@@ -31,7 +30,7 @@ private:
 	void UpdateComboButton();
 
 	void OnFunctionSelected(UFunction* Function);
-	
+
 	TSharedPtr<IPropertyHandle> FunctionWrapperHandle;
 	TSharedPtr<IPropertyHandle> FunctionWrapperMemberHandle;
 	TSharedPtr<SBox> ComboButtonContent;

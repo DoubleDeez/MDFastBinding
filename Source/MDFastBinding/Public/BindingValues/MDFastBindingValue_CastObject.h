@@ -1,11 +1,10 @@
 ﻿#pragma once
 
-#include "CoreMinimal.h"
 #include "MDFastBindingValueBase.h"
 #include "MDFastBindingValue_CastObject.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS(meta = (DisplayName = "Cast Object"))
 class MDFASTBINDING_API UMDFastBindingValue_CastObject : public UMDFastBindingValueBase
@@ -22,7 +21,7 @@ public:
 protected:
 	virtual TTuple<const FProperty*, void*> GetValue_Internal(UObject* SourceObject) override;
 	virtual void SetupBindingItems() override;
-	
+
 	UPROPERTY(EditDefaultsOnly, Category = "Binding", meta = (AllowAbstract))
 	TSubclassOf<UObject> ObjectClass;
 

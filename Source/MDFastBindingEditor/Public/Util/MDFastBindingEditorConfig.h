@@ -1,6 +1,5 @@
 #pragma once
 
-#include "CoreMinimal.h"
 #include "Engine/DeveloperSettings.h"
 #include "MDFastBindingEditorConfig.generated.h"
 
@@ -11,14 +10,14 @@ class MDFASTBINDINGEDITOR_API UMDFastBindingEditorConfig : public UDeveloperSett
 
 public:
 	UMDFastBindingEditorConfig();
-	
+
 	virtual FName GetContainerName() const override { return TEXT("Editor"); }
-	
+
 	bool ShouldRunBindingsAtDesignTime() const { return bShouldRunBindingsAtDesignTime; }
 	void ToggleShouldRunBindingsAtDesignTime();
 
 	mutable FSimpleMulticastDelegate OnShouldRunBindingsAtDesignTimeChanged;
-	
+
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif

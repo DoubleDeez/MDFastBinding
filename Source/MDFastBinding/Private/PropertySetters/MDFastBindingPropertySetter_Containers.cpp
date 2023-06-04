@@ -1,6 +1,7 @@
 ﻿#include "PropertySetters/MDFastBindingPropertySetter_Containers.h"
 
 #include "MDFastBinding.h"
+#include "UObject/UnrealType.h"
 
 
 FMDFastBindingPropertySetter_Containers::FMDFastBindingPropertySetter_Containers()
@@ -55,7 +56,7 @@ void FMDFastBindingPropertySetter_Containers::SetProperty(const FProperty& Desti
 			void* DestValuePtr = DestHelper.GetElementPtr(i);
 			FMDFastBindingModule::SetProperty(DestSetProp->ElementProp, DestValuePtr, SrcSetProp->ElementProp, SrcValuePtr);
 		}
-		
+
 		DestHelper.Rehash();
 		return;
 	}
@@ -73,16 +74,16 @@ void FMDFastBindingPropertySetter_Containers::SetProperty(const FProperty& Desti
 		for (int32 i = 0; i < NumSrcElements; ++i)
 		{
 			DestHelper.AddDefaultValue_Invalid_NeedsRehash();
-			
+
 			const void* SrcKeyPtr = SrcHelper.GetKeyPtr(i);
 			void* DestKeyPtr = DestHelper.GetKeyPtr(i);
 			FMDFastBindingModule::SetProperty(DestSetProp->ElementProp, DestKeyPtr, SrcSetProp->ElementProp, SrcKeyPtr);
-			
+
 			const void* SrcValuePtr = SrcHelper.GetValuePtr(i);
 			void* DestValuePtr = DestHelper.GetValuePtr(i);
 			FMDFastBindingModule::SetProperty(DestSetProp->ElementProp, DestValuePtr, SrcSetProp->ElementProp, SrcValuePtr);
 		}
-		
+
 		DestHelper.Rehash();
 	}
 }

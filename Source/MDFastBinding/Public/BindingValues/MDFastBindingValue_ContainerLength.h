@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#include "CoreMinimal.h"
 #include "MDFastBindingValueBase.h"
 #include "MDFastBindingValue_ContainerLength.generated.h"
 
@@ -21,7 +20,7 @@ public:
 #if WITH_EDITOR
 	virtual EDataValidationResult IsDataValid(TArray<FText>& ValidationErrors) override;
 #endif
-	
+
 protected:
 	virtual TTuple<const FProperty*, void*> GetValue_Internal(UObject* SourceObject) override;
 	virtual void SetupBindingItems() override;

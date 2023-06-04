@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#include "CoreMinimal.h"
 #include "MDFastBindingFunctionWrapper.h"
 #include "MDFastBindingValueBase.h"
 #include "MDFastBindingValue_Function.generated.h"
@@ -15,7 +14,7 @@ class MDFASTBINDING_API UMDFastBindingValue_Function : public UMDFastBindingValu
 
 public:
 	UMDFastBindingValue_Function();
-	
+
 	virtual const FProperty* GetOutputProperty() override;
 	virtual bool DoesBindingItemDefaultToSelf(const FName& InItemName) const override;
 
@@ -24,7 +23,7 @@ public:
 #endif
 #if WITH_EDITOR
 	virtual EDataValidationResult IsDataValid(TArray<FText>& ValidationErrors) override;
-	
+
 	virtual void OnVariableRenamed(UClass* VariableClass, const FName& OldVariableName, const FName& NewVariableName) override;
 
 	UFunction* GetFunction();
@@ -36,13 +35,13 @@ protected:
 	virtual UClass* GetFunctionOwnerClass();
 	virtual void PopulateFunctionParam(UObject* SourceObject, const FProperty* Param, void* ValuePtr);
 	virtual bool IsFunctionValid(UFunction* Func, const FProperty* ReturnValue, const TArray<const FProperty*>& Params) const;
-	
+
 	virtual void SetupBindingItems() override;
 
 	virtual void PostInitProperties() override;
 
 	virtual bool ShouldCallFunction();
-	
+
 	UPROPERTY(EditDefaultsOnly, Category = "Binding")
 	FMDFastBindingFunctionWrapper Function;
 
@@ -51,7 +50,7 @@ protected:
 
 	UPROPERTY(Transient)
 	bool bAddPathRootBindingItem = true;
-	
+
 	UPROPERTY(Transient)
 	bool bNeedsUpdate = false;
 };

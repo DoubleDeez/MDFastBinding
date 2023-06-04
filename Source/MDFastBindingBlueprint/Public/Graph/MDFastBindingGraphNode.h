@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#include "CoreMinimal.h"
 #include "EdGraph/EdGraphNode.h"
 #include "MDFastBindingGraphNode.generated.h"
 

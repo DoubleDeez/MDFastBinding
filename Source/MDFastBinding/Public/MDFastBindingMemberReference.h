@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#include "CoreMinimal.h"
 #include "Engine/MemberReference.h"
 #include "MDFastBindingMemberReference.generated.h"
 
@@ -15,5 +14,5 @@ struct MDFASTBINDING_API FMDFastBindingMemberReference : public FMemberReference
 public:
 	UPROPERTY()
 	bool bIsFunction = false;
-	
+
 };

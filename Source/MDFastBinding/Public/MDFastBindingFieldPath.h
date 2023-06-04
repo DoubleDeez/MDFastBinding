@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#include "CoreMinimal.h"
 #include "MDFastBindingMemberReference.h"
 #include "MDFastBindingFieldPath.generated.h"
 
@@ -9,7 +8,7 @@ DECLARE_DELEGATE_RetVal(UStruct*, FMDGetFieldPathOwnerStruct);
 DECLARE_DELEGATE_RetVal_OneParam(bool, FMDFilterFieldPathField, const FFieldVariant&);
 
 /**
- * 
+ *
  */
 USTRUCT()
 struct MDFASTBINDING_API FMDFastBindingFieldPath
@@ -18,7 +17,7 @@ struct MDFASTBINDING_API FMDFastBindingFieldPath
 
 public:
 	~FMDFastBindingFieldPath();
-	
+
 	bool BuildPath();
 	const TArray<FFieldVariant>& GetFieldPath();
 
@@ -30,7 +29,7 @@ public:
 
 	bool IsPropertyValidForPath(const FProperty& Prop) const;
 	bool IsFunctionValidForPath(const UFunction& Func) const;
-	
+
 	UStruct* GetPathOwnerStruct() const;
 
 	FString ToString() const;
@@ -38,7 +37,7 @@ public:
 #if WITH_EDITOR
 	void OnVariableRenamed(UClass* VariableClass, const FName& OldVariableName, const FName& NewVariableName);
 #endif
-	
+
 	FMDGetFieldPathOwner OwnerGetter;
 	FMDGetFieldPathOwnerStruct OwnerStructGetter;
 	FMDFilterFieldPathField FieldFilter;
@@ -64,7 +63,7 @@ private:
 	void CleanupFunctionMemory();
 
 	void FixupFieldPath();
-	
+
 	TArray<FFieldVariant> CachedPath;
 	TMap<TWeakObjectPtr<const UFunction>, void*> FunctionMemory;
 

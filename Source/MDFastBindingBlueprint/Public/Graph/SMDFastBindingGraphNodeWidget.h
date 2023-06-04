@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#include "CoreMinimal.h"
 #include "SGraphNode.h"
 #include "SGraphPin.h"
 #include "KismetPins/SGraphPinObject.h"

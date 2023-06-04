@@ -1,11 +1,10 @@
 ﻿#pragma once
 
-#include "CoreMinimal.h"
 #include "UObject/NameTypes.h"
 #include "Styling/SlateStyle.h"
 
 /**
- * 
+ *
  */
 class MDFASTBINDINGEDITOR_API FMDFastBindingEditorStyle
 {
@@ -17,7 +16,7 @@ public:
 	static const ISlateStyle& Get();
 
 	static FName GetStyleSetName();
-	
+
 private:
 	static TSharedRef<FSlateStyleSet> Create();
 

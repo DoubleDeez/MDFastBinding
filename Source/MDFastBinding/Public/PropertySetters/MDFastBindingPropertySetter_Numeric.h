@@ -2,11 +2,10 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "IMDFastBindingPropertySetter.h"
 
 /**
- * 
+ *
  */
 class MDFASTBINDING_API FMDFastBindingPropertySetter_Numeric : public IMDFastBindingPropertySetter
 {

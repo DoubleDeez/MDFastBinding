@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#include "CoreMinimal.h"
 #include "MDFastBindingFieldPath.h"
 #include "BindingDestinations/MDFastBindingDestinationBase.h"
 #include "MDFastBindingDestination_Property.generated.h"

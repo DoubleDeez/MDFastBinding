@@ -1,6 +1,5 @@
 #pragma once
 
-#include "CoreMinimal.h"
 #include "MDFastBindingOwnerInterface.h"
 #include "Extensions/UserWidgetExtension.h"
 #include "MDFastBindingWidgetExtension.generated.h"

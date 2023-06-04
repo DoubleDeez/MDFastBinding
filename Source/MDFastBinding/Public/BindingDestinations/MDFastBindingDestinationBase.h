@@ -1,13 +1,12 @@
 ﻿#pragma once
 
-#include "CoreMinimal.h"
 #include "MDFastBindingObject.h"
 #include "MDFastBindingDestinationBase.generated.h"
 
 class UMDFastBindingValueBase;
 
 /**
- * 
+ *
  */
 UCLASS(Abstract, DefaultToInstanced, EditInlineNew)
 class MDFASTBINDING_API UMDFastBindingDestinationBase : public UMDFastBindingObject
@@ -18,7 +17,7 @@ public:
 	void InitializeDestination(UObject* SourceObject);
 	void UpdateDestination(UObject* SourceObject);
 	void TerminateDestination(UObject* SourceObject);
-	
+
 	virtual bool CheckNeedsUpdate() const override;
 
 	virtual bool DoesObjectRequireTick() const override;

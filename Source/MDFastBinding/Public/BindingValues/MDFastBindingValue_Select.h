@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#include "CoreMinimal.h"
 #include "MDFastBindingValueBase.h"
 #include "MDFastBindingValue_Select.generated.h"
 
@@ -34,6 +33,6 @@ private:
 	const FProperty* ResolveOutputProperty();
 
 	TWeakFieldPtr<const FProperty> ResolvedOutputProperty;
-	
+
 	TMap<int64, FName> EnumValueToPinNameMap;
 };

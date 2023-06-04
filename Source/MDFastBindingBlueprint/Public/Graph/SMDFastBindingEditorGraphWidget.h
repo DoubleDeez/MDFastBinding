@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#include "CoreMinimal.h"
 #include "GraphEditor.h"
 #include "Widgets/SCompoundWidget.h"
 

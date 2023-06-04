@@ -1,7 +1,11 @@
 ﻿#pragma once
 
-#include "CoreMinimal.h"
+#include "Containers/Array.h"
+#include "Containers/UnrealString.h"
 
+
+class FProperty;
+class UFunction;
 class UWidgetBlueprintGeneratedClass;
 
 class MDFASTBINDING_API FMDFastBindingHelpers
@@ -13,6 +17,6 @@ public:
 	static FString PropertyToString(const FProperty& Prop);
 
 	static bool ArePropertyValuesEqual(const FProperty* PropA, const void* ValuePtrA, const FProperty* PropB, const void* ValuePtrB);
-	
+
 	static bool DoesClassHaveSuperClassBindings(UWidgetBlueprintGeneratedClass* Class);
 };

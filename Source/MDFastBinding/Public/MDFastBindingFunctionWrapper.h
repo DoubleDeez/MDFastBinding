@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#include "CoreMinimal.h"
 #include "MDFastBindingMemberReference.h"
 #include "MDFastBindingFunctionWrapper.generated.h"
 
@@ -11,7 +10,7 @@ DECLARE_DELEGATE_RetVal_ThreeParams(bool, FMDFunctionFilter, UFunction*, const F
 DECLARE_DELEGATE_RetVal(bool, FMDShouldCallFunction)
 
 /**
- * 
+ *
  */
 USTRUCT()
 struct MDFASTBINDING_API FMDFastBindingFunctionWrapper
@@ -22,9 +21,9 @@ public:
 	~FMDFastBindingFunctionWrapper();
 
 	bool BuildFunctionData();
-	
+
 	UClass* GetFunctionOwnerClass() const;
-	
+
 	const TArray<const FProperty*>& GetParams();
 
 	const FProperty* GetReturnProp();
@@ -39,7 +38,7 @@ public:
 	FString ToString();
 
 	static FString FunctionToString(UFunction* Func);
-	
+
 	static FString FunctionToString_Internal(UFunction* Func, const FProperty* ReturnProp, const TArray<const FProperty*>& Params);
 #endif
 
@@ -48,7 +47,7 @@ public:
 #endif
 
 	static bool IsFunctionValidForWrapper(const UFunction* Func);
-	
+
 	FMDGetFunctionOwner OwnerGetter;
 	FMDGetFunctionOwnerClass OwnerClassGetter;
 	FMDPopulateFunctionParam ParamPopulator;
@@ -70,7 +69,7 @@ private:
 	TArray<const FProperty*> Params;
 
 	const FProperty* ReturnProp = nullptr;
-	
+
 	void* FunctionMemory = nullptr;
 	UObject* GetFunctionOwner(UObject* SourceObject) const;
 	void InitFunctionMemory();
