@@ -293,6 +293,7 @@ TOptional<FName> FMDFastBindingPropertyBindingExtension::GetCurrentValue(const U
 	return {};
 }
 
+#if ENGINE_MAJOR_VERSION > 5 || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 2)
 const FSlateBrush* FMDFastBindingPropertyBindingExtension::GetCurrentIcon(const UWidgetBlueprint* WidgetBlueprint, const UWidget* Widget, const FProperty* Property) const
 {
 	if (UMDFastBindingInstance* BindingInstance = MDFastBindingPropertyBinding::FindBindingInstance(WidgetBlueprint, Widget, Property))
@@ -315,3 +316,4 @@ const FSlateBrush* FMDFastBindingPropertyBindingExtension::GetCurrentIcon(const 
 
 	return nullptr;
 }
+#endif
