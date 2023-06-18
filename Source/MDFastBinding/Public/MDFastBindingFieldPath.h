@@ -1,6 +1,8 @@
 ﻿#pragma once
 
 #include "MDFastBindingMemberReference.h"
+#include "UObject/UnrealType.h"
+#include "UObject/WeakFieldPtr.h"
 #include "MDFastBindingFieldPath.generated.h"
 
 DECLARE_DELEGATE_RetVal_OneParam(UObject*, FMDGetFieldPathOwner, UObject*);
@@ -21,8 +23,10 @@ public:
 	bool BuildPath();
 	const TArray<FFieldVariant>& GetFieldPath();
 
-	// Returns a tuple containing the leaf property in the path (or return value property if a function) and a pointer to the value
+	// Returns a tuple containing the leaf property in the path (or return value property if a function) and a pointer to the value,
+	// with an optional out param to retrieve the container that holds the leaf property
 	TTuple<const FProperty*, void*> ResolvePath(UObject* SourceObject);
+	TTuple<const FProperty*, void*> ResolvePath(UObject* SourceObject, void*& OutContainer);
 
 	const FProperty* GetLeafProperty();
 	bool IsLeafFunction();
@@ -58,15 +62,15 @@ public:
 	TArray<FMDFastBindingMemberReference> FieldPathMembers;
 
 private:
-	void* GetPathOwner(UObject* SourceObject) const;
-	void InitFunctionMemory(const UFunction* Func);
+	void* InitAndGetFunctionMemory(const UFunction* Func);
 	void CleanupFunctionMemory();
+
+	void* InitAndGetPropertyMemory(const FProperty* Property);
+	void CleanupPropertyMemory();
 
 	void FixupFieldPath();
 
 	TArray<FFieldVariant> CachedPath;
 	TMap<TWeakObjectPtr<const UFunction>, void*> FunctionMemory;
-
-	// Cached to be able to provide a UObject**
-	mutable UObject* CachedOwnerObject = nullptr;
+	TMap<TWeakFieldPtr<FProperty>, void*> PropertyMemory;
 };

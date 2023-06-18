@@ -11,7 +11,7 @@
 void FMDFastBindingHelpers::GetFunctionParamProps(const UFunction* Func, TArray<const FProperty*>& OutParams)
 {
 	OutParams.Empty();
-	
+
 	if (Func != nullptr)
 	{
 		for (TFieldIterator<const FProperty> It(Func); It; ++It)
@@ -32,11 +32,11 @@ void FMDFastBindingHelpers::SplitFunctionParamsAndReturnProp(const UFunction* Fu
 {
 	OutParams.Empty();
 	OutReturnProp = nullptr;
-	
+
 	if (Func != nullptr)
 	{
 		OutReturnProp = Func->GetReturnProperty();
-		
+
 		for (TFieldIterator<const FProperty> It(Func); It; ++It)
 		{
 			if (const FProperty* Param = *It)
@@ -85,7 +85,7 @@ bool FMDFastBindingHelpers::ArePropertyValuesEqual(const FProperty* PropA, const
 	}
 
 	bool bResult = false;
-	if (PropA->GetClass() == PropB->GetClass())
+	if (PropA->SameType(PropB))
 	{
 		return PropA->Identical(ValuePtrA, ValuePtrB);
 	}
@@ -93,7 +93,7 @@ bool FMDFastBindingHelpers::ArePropertyValuesEqual(const FProperty* PropA, const
 	{
 		void* AllocatedValue = FMemory::Malloc(PropA->GetSize(), PropA->GetMinAlignment());
 		PropA->InitializeValue(AllocatedValue);
-		FMDFastBindingModule::SetProperty(PropA, AllocatedValue, PropB, ValuePtrB);
+		FMDFastBindingModule::SetPropertyDirectly(PropA, AllocatedValue, PropB, ValuePtrB);
 		bResult = PropA->Identical(ValuePtrA, AllocatedValue);
 		FMemory::Free(AllocatedValue);
 	}
@@ -101,7 +101,7 @@ bool FMDFastBindingHelpers::ArePropertyValuesEqual(const FProperty* PropA, const
 	{
 		void* AllocatedValue = FMemory::Malloc(PropB->GetSize(), PropB->GetMinAlignment());
 		PropB->InitializeValue(AllocatedValue);
-		FMDFastBindingModule::SetProperty(PropB, AllocatedValue, PropA, ValuePtrA);
+		FMDFastBindingModule::SetPropertyDirectly(PropB, AllocatedValue, PropA, ValuePtrA);
 		bResult = PropB->Identical(AllocatedValue, ValuePtrB);
 		FMemory::Free(AllocatedValue);
 	}
@@ -115,7 +115,7 @@ bool FMDFastBindingHelpers::DoesClassHaveSuperClassBindings(UWidgetBlueprintGene
 	{
 		Class = Cast<UWidgetBlueprintGeneratedClass>(Class->GetSuperClass());
 	}
-	
+
 	while (Class != nullptr)
 	{
 		if (const UMDFastBindingWidgetClassExtension* Extension = Class->GetExtension<UMDFastBindingWidgetClassExtension>())

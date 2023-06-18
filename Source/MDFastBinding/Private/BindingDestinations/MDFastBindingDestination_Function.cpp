@@ -54,7 +54,7 @@ void UMDFastBindingDestination_Function::PopulateFunctionParam(UObject* SourceOb
 
 	bool bDidUpdate = false;
 	const TTuple<const FProperty*, void*> ParamValue = GetBindingItemValue(SourceObject, Param->GetFName(), bDidUpdate);
-	FMDFastBindingModule::SetProperty(Param, ValuePtr, ParamValue.Key, ParamValue.Value);
+	FMDFastBindingModule::SetPropertyDirectly(Param, ValuePtr, ParamValue.Key, ParamValue.Value);
 	bNeedsUpdate |= bDidUpdate;
 }
 

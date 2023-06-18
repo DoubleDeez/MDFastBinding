@@ -22,7 +22,7 @@ TTuple<const FProperty*, void*> UMDFastBindingValue_FormatText::GetValue_Interna
 			if (ArgValue.Value != nullptr)
 			{
 				FText ArgText;
-				FMDFastBindingModule::SetProperty(GetOutputProperty(), &ArgText, ArgValue.Key, ArgValue.Value);
+				FMDFastBindingModule::SetPropertyDirectly(GetOutputProperty(), &ArgText, ArgValue.Key, ArgValue.Value);
 
 				Args.FindOrAdd(Arg.ToString()) = ArgText;
 			}
@@ -37,7 +37,7 @@ TTuple<const FProperty*, void*> UMDFastBindingValue_FormatText::GetValue_Interna
 	{
 		OutputValue = FText::Format(TextFormat, Args);
 	}
-	
+
 	return TTuple<const FProperty*, void*>{ GetOutputProperty(), &OutputValue };
 }
 
@@ -45,9 +45,9 @@ const FProperty* UMDFastBindingValue_FormatText::GetOutputProperty()
 {
 	if (TextProp == nullptr)
 	{
-		TextProp = GetClass()->FindPropertyByName(GET_MEMBER_NAME_CHECKED(UMDFastBindingValue_FormatText, OutputValue));	
+		TextProp = GetClass()->FindPropertyByName(GET_MEMBER_NAME_CHECKED(UMDFastBindingValue_FormatText, OutputValue));
 	}
-	
+
 	return TextProp;
 }
 
@@ -61,10 +61,10 @@ FText UMDFastBindingValue_FormatText::GetDisplayName()
 void UMDFastBindingValue_FormatText::SetupBindingItems()
 {
 	Arguments.Empty();
-	
+
 	FString Argument;
 	Argument.Reserve(FormatText.ToString().Len());
-	
+
 	bool bIsParsingArgument = false;
 	bool bIsEscaping = false;
 	for (const TCHAR& Char : FormatText.ToString())

@@ -31,11 +31,12 @@ void UMDFastBindingDestination_Property::UpdateDestination_Internal(UObject* Sou
 {
 	bool bDidUpdate = false;
 	const TTuple<const FProperty*, void*> Value = GetBindingItemValue(SourceObject, MDFastBindingDestination_Property_Private::ValueSourceName, bDidUpdate);
-	const TTuple<const FProperty*, void*> Property = PropertyPath.ResolvePath(SourceObject);
 
 	if (UpdateType != EMDFastBindingUpdateType::IfUpdatesNeeded || bDidUpdate || !bHasEverUpdated || bNeedsUpdate)
 	{
-		FMDFastBindingModule::SetProperty(Property.Key, Property.Value, Value.Key, Value.Value);
+		void* PropertyContainer = nullptr;
+		const TTuple<const FProperty*, void*> Property = PropertyPath.ResolvePath(SourceObject, PropertyContainer);
+		FMDFastBindingModule::SetPropertyInContainer(Property.Key, PropertyContainer, Value.Key, Value.Value);
 	}
 }
 

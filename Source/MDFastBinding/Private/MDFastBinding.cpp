@@ -47,30 +47,54 @@ bool FMDFastBindingModule::CanSetProperty(const FProperty* DestinationProp, cons
 	return SourceProp != nullptr && DestinationProp != nullptr && SourceProp->SameType(DestinationProp);
 }
 
-void FMDFastBindingModule::SetProperty(const FProperty* DestinationProp, void* DestinationValuePtr, const FProperty* SourceProp, const void* SourceValuePtr)
+void FMDFastBindingModule::SetPropertyDirectly(const FProperty* DestinationProp, void* DestinationValuePtr, const FProperty* SourceProp, const void* SourceValuePtr)
 {
 	if (SourceProp == nullptr || SourceValuePtr == nullptr || DestinationProp == nullptr || DestinationValuePtr == nullptr)
 	{
 		return;
 	}
-	
+
 	FMDFastBindingModule& Module = FModuleManager::GetModuleChecked<FMDFastBindingModule>(TEXT("MDFastBinding"));
 	for (const TSharedRef<IMDFastBindingPropertySetter>& Setter : Module.PropertySetters)
 	{
 		if (Setter->CanSetProperty(*DestinationProp, *SourceProp))
 		{
-			Setter->SetProperty(*DestinationProp, DestinationValuePtr, *SourceProp, SourceValuePtr);
+			Setter->SetPropertyDirectly(*DestinationProp, DestinationValuePtr, *SourceProp, SourceValuePtr);
 			return;
 		}
 	}
 
 	// Fallback to setting same type
 	if (SourceProp->SameType(DestinationProp))
-	{		
+	{
 		DestinationProp->CopyCompleteValue(DestinationValuePtr, SourceValuePtr);
 	}
 }
 
+void FMDFastBindingModule::SetPropertyInContainer(const FProperty* DestinationProp, void* DestinationContainerPtr, const FProperty* SourceProp, const void* SourceValuePtr)
+{
+	if (SourceProp == nullptr || SourceValuePtr == nullptr || DestinationProp == nullptr || DestinationContainerPtr == nullptr)
+	{
+		return;
+	}
+
+	FMDFastBindingModule& Module = FModuleManager::GetModuleChecked<FMDFastBindingModule>(TEXT("MDFastBinding"));
+	for (const TSharedRef<IMDFastBindingPropertySetter>& Setter : Module.PropertySetters)
+	{
+		if (Setter->CanSetProperty(*DestinationProp, *SourceProp))
+		{
+			Setter->SetPropertyInContainer(*DestinationProp, DestinationContainerPtr, *SourceProp, SourceValuePtr);
+			return;
+		}
+	}
+
+	// Fallback to setting same type
+	if (SourceProp->SameType(DestinationProp))
+	{
+		DestinationProp->SetValue_InContainer(DestinationContainerPtr, SourceValuePtr);
+	}
+}
+
 #undef LOCTEXT_NAMESPACE
-	
+
 IMPLEMENT_MODULE(FMDFastBindingModule, MDFastBinding)

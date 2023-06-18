@@ -1,6 +1,7 @@
 ﻿#include "MDFastBindingFieldPath.h"
 
 #include "MDFastBindingHelpers.h"
+#include "UObject/WeakFieldPtr.h"
 
 FMDFastBindingFieldPath::~FMDFastBindingFieldPath()
 {
@@ -10,7 +11,7 @@ FMDFastBindingFieldPath::~FMDFastBindingFieldPath()
 bool FMDFastBindingFieldPath::BuildPath()
 {
 	FixupFieldPath();
-	
+
 	CachedPath.Empty(FieldPathMembers.Num());
 
 	if (UStruct* OwnerStruct = GetPathOwnerStruct())
@@ -22,7 +23,7 @@ bool FMDFastBindingFieldPath::BuildPath()
 			{
 				const UFunction* Func = FieldPathMember.ResolveMember<UFunction>();
 				CachedPath.Add(Func);
-				
+
 				TArray<const FProperty*> Params;
 				FMDFastBindingHelpers::SplitFunctionParamsAndReturnProp(Func, Params, NextProp);
 			}
@@ -52,7 +53,7 @@ bool FMDFastBindingFieldPath::BuildPath()
 			}
 		}
 	}
-	
+
 	return CachedPath.Num() > 0 && CachedPath.Num() == FieldPathMembers.Num();
 }
 
@@ -71,42 +72,54 @@ const TArray<FFieldVariant>& FMDFastBindingFieldPath::GetFieldPath()
 
 TTuple<const FProperty*, void*> FMDFastBindingFieldPath::ResolvePath(UObject* SourceObject)
 {
-	if (void* Owner = GetPathOwner(SourceObject))
+	void* Unused = nullptr;
+	return ResolvePath(SourceObject, Unused);
+}
+
+TTuple<const FProperty*, void*> FMDFastBindingFieldPath::ResolvePath(UObject* SourceObject, void*& OutContainer)
+{
+	OutContainer = nullptr;
+
+	UObject* RootOwnerObject = OwnerGetter.IsBound() ? OwnerGetter.Execute(SourceObject) : nullptr;
+	void* Owner = IsValid(RootOwnerObject) ? &RootOwnerObject : nullptr;
+	if (Owner != nullptr)
 	{
 		bool bIsOwnerAUObject = true;
+		void* LastOwner = nullptr;
 		const TArray<FFieldVariant>& Path = GetFieldPath();
 		for (int32 i = 0; i < Path.Num() && Owner != nullptr; ++i)
 		{
 			const FFieldVariant& FieldVariant = Path[i];
 			const FProperty* OwnerProp = nullptr;
+			LastOwner = Owner;
 
 			if (UFunction* Func = Cast<UFunction>(FieldVariant.ToUObject()))
 			{
-				UObject* OwnerUObject = *static_cast<UObject**>(Owner);
+				UObject* OwnerUObject = *static_cast<UObject**>(LastOwner);
 				if (!bIsOwnerAUObject || OwnerUObject == nullptr)
 				{
 					return {};
 				}
-				
+
 				if (!OwnerUObject->IsA(Func->GetOwnerClass()))
 				{
 					// Func needs fixup, likely due to a reparented BP
+					// TODO - Update the actual FieldVariant so this only needs to happen once
 					Func = OwnerUObject->GetClass()->FindFunctionByName(Func->GetFName());
 					if (Func == nullptr)
 					{
 						return {};
 					}
 				}
-				
-				InitFunctionMemory(Func);
-				void* FuncMemory = FunctionMemory.FindRef(Func);
+
+				void* FuncMemory = InitAndGetFunctionMemory(Func);
 				if (FuncMemory == nullptr)
 				{
 					return {};
 				}
-				
+
 				OwnerUObject->ProcessEvent(Func, FuncMemory);
-				
+
 				TArray<const FProperty*> Params;
 				FMDFastBindingHelpers::SplitFunctionParamsAndReturnProp(Func, Params, OwnerProp);
 				Owner = FuncMemory;
@@ -117,19 +130,34 @@ TTuple<const FProperty*, void*> FMDFastBindingFieldPath::ResolvePath(UObject* So
 
 				if (bIsOwnerAUObject)
 				{
-					if (UObject* OwnerObject = *static_cast<UObject**>(Owner))
+					if (UObject* OwnerObject = *static_cast<UObject**>(LastOwner))
 					{
 						if (!OwnerObject->IsA(Prop->GetOwnerClass()))
 						{
 							// Prop needs fixup, likely due to a reparented BP
+							// TODO - Update the actual FieldVariant so this only needs to happen once
 							Prop = OwnerObject->GetClass()->FindPropertyByName(Prop->GetFName());
 							if (Prop == nullptr)
 							{
 								return {};
 							}
 						}
-						
-						Owner = Prop->ContainerPtrToValuePtr<void>(OwnerObject);
+
+						// Only bother allocating memory if there's a getter to use
+						if (Prop->HasGetter())
+						{
+							Owner = InitAndGetPropertyMemory(Prop);
+							if (Owner == nullptr)
+							{
+								return {};
+							}
+
+							Prop->GetValue_InContainer(OwnerObject, Owner);
+						}
+						else
+						{
+							Owner = Prop->ContainerPtrToValuePtr<void>(OwnerObject);
+						}
 					}
 					else
 					{
@@ -138,17 +166,40 @@ TTuple<const FProperty*, void*> FMDFastBindingFieldPath::ResolvePath(UObject* So
 				}
 				else
 				{
-					Owner = Prop->ContainerPtrToValuePtr<void>(Owner);
+					// Only bother allocating memory if there's a getter to use
+					if (Prop->HasGetter())
+					{
+						Owner = InitAndGetPropertyMemory(Prop);
+						if (Owner == nullptr)
+						{
+							return {};
+						}
+
+						Prop->GetValue_InContainer(LastOwner, Owner);
+					}
+					else
+					{
+						Owner = Prop->ContainerPtrToValuePtr<void>(LastOwner);
+					}
 				}
 			}
 			else
 			{
 				return {};
 			}
-			
+
 			const bool bIsEndOfPath = i == (FieldPathMembers.Num() - 1);
 			if (bIsEndOfPath)
 			{
+				if (bIsOwnerAUObject)
+				{
+					OutContainer = *static_cast<UObject**>(LastOwner);
+				}
+				else
+				{
+					OutContainer = LastOwner;
+				}
+
 				return TTuple<const FProperty*, void*>{ OwnerProp, Owner };
 			}
 
@@ -238,7 +289,7 @@ FString FMDFastBindingFieldPath::ToString() const
 			FieldPathMember.ResolveMember<FProperty>();
 		}
 	}
-	
+
 	FString Result = FieldPathMembers[0].GetMemberName().ToString();
 	for (int32 i = 1; i < FieldPathMembers.Num(); ++i)
 	{
@@ -270,26 +321,19 @@ UStruct* FMDFastBindingFieldPath::GetPathOwnerStruct() const
 	return OwnerStructGetter.IsBound() ? OwnerStructGetter.Execute() : nullptr;
 }
 
-void* FMDFastBindingFieldPath::GetPathOwner(UObject* SourceObject) const
+void* FMDFastBindingFieldPath::InitAndGetFunctionMemory(const UFunction* Func)
 {
-	CachedOwnerObject = OwnerGetter.IsBound() ? OwnerGetter.Execute(SourceObject) : nullptr;
-
-	if (CachedOwnerObject != nullptr)
+	if (Func != nullptr)
 	{
-		return &CachedOwnerObject;
-	}
-	
-	return nullptr;
-}
+		if (void** MemoryPtr = FunctionMemory.Find(Func))
+		{
+			return *MemoryPtr;
+		}
 
-void FMDFastBindingFieldPath::InitFunctionMemory(const UFunction* Func)
-{
-	if (Func != nullptr && !FunctionMemory.Contains(Func))
-	{
 		void* Memory = nullptr;
 		TArray<const FProperty*> Params;
 		FMDFastBindingHelpers::GetFunctionParamProps(Func, Params);
-		
+
 		for (const FProperty* Param : Params)
 		{
 			if (Memory == nullptr)
@@ -300,7 +344,11 @@ void FMDFastBindingFieldPath::InitFunctionMemory(const UFunction* Func)
 
 			Param->InitializeValue_InContainer(Memory);
 		}
+
+		return Memory;
 	}
+
+	return nullptr;
 }
 
 void FMDFastBindingFieldPath::CleanupFunctionMemory()
@@ -309,11 +357,58 @@ void FMDFastBindingFieldPath::CleanupFunctionMemory()
 	{
 		if (FuncPair.Value != nullptr)
 		{
+			TArray<const FProperty*> Params;
+			FMDFastBindingHelpers::GetFunctionParamProps(FuncPair.Key.Get(), Params);
+
+			for (const FProperty* Param : Params)
+			{
+				Param->DestroyValue_InContainer(FuncPair.Value);
+			}
+
 			FMemory::Free(FuncPair.Value);
 		}
 	}
 
 	FunctionMemory.Empty();
+}
+
+void* FMDFastBindingFieldPath::InitAndGetPropertyMemory(const FProperty* Property)
+{
+	if (Property != nullptr)
+	{
+		// const-cast to work around https://github.com/EpicGames/UnrealEngine/pull/10541
+		TWeakFieldPtr<FProperty> WeakProp = MakeWeakFieldPtr(const_cast<FProperty*>(Property));
+		if (void** MemoryPtr = PropertyMemory.Find(WeakProp))
+		{
+			return *MemoryPtr;
+		}
+
+		void* Memory = FMemory::Malloc(Property->GetSize(), Property->GetMinAlignment());
+		Property->InitializeValue(Memory);
+		PropertyMemory.Add(MoveTemp(WeakProp), Memory);
+
+		return Memory;
+	}
+
+	return nullptr;
+}
+
+void FMDFastBindingFieldPath::CleanupPropertyMemory()
+{
+	for(const TPair<TWeakFieldPtr<FProperty>, void*>& PropertyPair : PropertyMemory)
+	{
+		if (PropertyPair.Value != nullptr)
+		{
+			if (const FProperty* Prop = PropertyPair.Key.Get())
+			{
+				Prop->DestroyValue(PropertyPair.Value);
+			}
+
+			FMemory::Free(PropertyPair.Value);
+		}
+	}
+
+	PropertyMemory.Empty();
 }
 
 void FMDFastBindingFieldPath::FixupFieldPath()
@@ -380,5 +475,5 @@ void FMDFastBindingFieldPath::FixupFieldPath()
 		FieldPath.Empty();
 	}
 
-	
+
 }
