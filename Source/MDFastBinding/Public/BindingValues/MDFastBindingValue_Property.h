@@ -41,6 +41,8 @@ protected:
 
 	virtual void PostInitProperties() override;
 
+	FFieldVariant GetLeafField();
+
 	// Path to the property you want to get
 	UPROPERTY(EditDefaultsOnly, Category = "Binding")
 	FMDFastBindingFieldPath PropertyPath;

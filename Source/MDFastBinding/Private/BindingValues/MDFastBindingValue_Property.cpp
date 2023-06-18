@@ -91,6 +91,12 @@ void UMDFastBindingValue_Property::PostInitProperties()
 	Super::PostInitProperties();
 }
 
+FFieldVariant UMDFastBindingValue_Property::GetLeafField()
+{
+	const TArray<FFieldVariant>& FieldPath = PropertyPath.GetFieldPath();
+	return FieldPath.IsEmpty() ? FFieldVariant{} : FieldPath.Last();
+}
+
 #if WITH_EDITOR
 EDataValidationResult UMDFastBindingValue_Property::IsDataValid(TArray<FText>& ValidationErrors)
 {

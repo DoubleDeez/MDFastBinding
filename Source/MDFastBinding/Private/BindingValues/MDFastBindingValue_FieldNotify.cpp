@@ -5,14 +5,14 @@
 UMDFastBindingValue_FieldNotify::UMDFastBindingValue_FieldNotify()
 {
 	UpdateType = EMDFastBindingUpdateType::EventBased;
-	PropertyPath.bAllowGetterFunctions = false;
+	PropertyPath.bAllowGetterFunctions = true;
 	PropertyPath.bAllowSubProperties = false;
 }
 
 void UMDFastBindingValue_FieldNotify::PostInitProperties()
 {
 	PropertyPath.FieldFilter.BindUObject(this, &UMDFastBindingValue_FieldNotify::IsValidFieldNotify);
-	
+
 	Super::PostInitProperties();
 }
 
@@ -43,9 +43,9 @@ TTuple<const FProperty*, void*> UMDFastBindingValue_FieldNotify::GetValue_Intern
 	// If the owner has changed, we need to rebind to the delegate
 	if (Cast<INotifyFieldValueChanged>(GetPropertyOwner(SourceObject)) != BoundInterface.Get())
 	{
-		BindFieldNotify(SourceObject);	
+		BindFieldNotify(SourceObject);
 	}
-	
+
 	return Super::GetValue_Internal(SourceObject);
 }
 
@@ -68,13 +68,13 @@ void UMDFastBindingValue_FieldNotify::OnFieldNotifyValueChanged(UObject* Object,
 
 bool UMDFastBindingValue_FieldNotify::IsValidFieldNotify(const FFieldVariant& Field) const
 {
-	if (const FProperty* Prop = CastField<FProperty>(Field.ToField()))
+	if (Field.IsValid())
 	{
-		if (const UClass* Class = Prop->GetOwnerClass())
+		if (const UClass* Class = Field.GetOwnerClass())
 		{
-			if (const INotifyFieldValueChanged* FieldNotify = Cast<INotifyFieldValueChanged>(Class->GetDefaultObject()))
+			if (const TScriptInterface<INotifyFieldValueChanged> FieldNotify = Class->GetDefaultObject())
 			{
-				return FieldNotify->GetFieldNotificationDescriptor().GetField(Class, Prop->GetFName()).IsValid();
+				return FieldNotify->GetFieldNotificationDescriptor().GetField(Class, Field.GetFName()).IsValid();
 			}
 		}
 	}
@@ -119,13 +119,13 @@ void UMDFastBindingValue_FieldNotify::UnbindFieldNotify()
 
 UE::FieldNotification::FFieldId UMDFastBindingValue_FieldNotify::GetFieldId()
 {
-	if (const FProperty* Field = GetOutputProperty())
+	if (const FFieldVariant Field = GetLeafField())
 	{
 		if (const UClass* OwnerClass = Cast<UClass>(GetPropertyOwnerStruct()))
 		{
 			if (const INotifyFieldValueChanged* FieldNotify = Cast<INotifyFieldValueChanged>(OwnerClass->GetDefaultObject()))
 			{
-				return FieldNotify->GetFieldNotificationDescriptor().GetField(OwnerClass, Field->GetFName());
+				return FieldNotify->GetFieldNotificationDescriptor().GetField(OwnerClass, Field.GetFName());
 			}
 		}
 	}
@@ -135,13 +135,13 @@ UE::FieldNotification::FFieldId UMDFastBindingValue_FieldNotify::GetFieldId()
 
 UE::FieldNotification::FFieldId UMDFastBindingValue_FieldNotify::GetFieldId(UObject* SourceObject)
 {
-	if (const FProperty* Field = GetOutputProperty())
+	if (const FFieldVariant Field = GetLeafField())
 	{
 		if (UObject* PropertyOwner = GetPropertyOwner(SourceObject))
 		{
 			if (const INotifyFieldValueChanged* FieldNotify = Cast<INotifyFieldValueChanged>(PropertyOwner))
 			{
-				return FieldNotify->GetFieldNotificationDescriptor().GetField(PropertyOwner->GetClass(), Field->GetFName());
+				return FieldNotify->GetFieldNotificationDescriptor().GetField(PropertyOwner->GetClass(), Field.GetFName());
 			}
 		}
 	}
