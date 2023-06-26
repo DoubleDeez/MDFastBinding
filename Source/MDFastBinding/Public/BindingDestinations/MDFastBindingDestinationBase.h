@@ -18,19 +18,21 @@ public:
 	void UpdateDestination(UObject* SourceObject);
 	void TerminateDestination(UObject* SourceObject);
 
-	virtual bool CheckNeedsUpdate() const override;
-
-	virtual bool DoesObjectRequireTick() const override;
-
 #if WITH_EDITOR
 	bool IsActive() const;
 #endif
 
 protected:
+	virtual bool CheckNeedsUpdate() const override;
+
 	virtual void InitializeDestination_Internal(UObject* SourceObject) {}
 	virtual void UpdateDestination_Internal(UObject* SourceObject) {}
 	virtual void TerminateDestination_Internal(UObject* SourceObject) {}
 
+	// Must be called manually by child classes after updated the destination
+	void MarkAsHasEverUpdated();
+
+private:
 	UPROPERTY(Transient)
 	bool bHasEverUpdated = false;
 };

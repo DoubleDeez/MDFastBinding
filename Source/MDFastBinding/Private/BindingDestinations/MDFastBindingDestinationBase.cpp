@@ -22,10 +22,9 @@ void UMDFastBindingDestinationBase::UpdateDestination(UObject* SourceObject)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE_STR(__FUNCTION__);
 	TRACE_CPUPROFILER_EVENT_SCOPE_TEXT(*GetName());
-	if (CheckNeedsUpdate())
+	if (CheckCachedNeedsUpdate())
 	{
 		UpdateDestination_Internal(SourceObject);
-		bHasEverUpdated = true;
 	}
 }
 
@@ -49,9 +48,9 @@ bool UMDFastBindingDestinationBase::CheckNeedsUpdate() const
 	return !bHasEverUpdated || Super::CheckNeedsUpdate();
 }
 
-bool UMDFastBindingDestinationBase::DoesObjectRequireTick() const
+void UMDFastBindingDestinationBase::MarkAsHasEverUpdated()
 {
-	return !bHasEverUpdated || Super::DoesObjectRequireTick();
+	bHasEverUpdated = true;
 }
 
 #if WITH_EDITOR

@@ -78,10 +78,15 @@ TTuple<const FProperty*, void*> FMDFastBindingFieldPath::ResolvePath(UObject* So
 
 TTuple<const FProperty*, void*> FMDFastBindingFieldPath::ResolvePath(UObject* SourceObject, void*& OutContainer)
 {
+	UObject* RootObject = OwnerGetter.IsBound() ? OwnerGetter.Execute(SourceObject) : nullptr;
+	return ResolvePathFromRootObject(RootObject, OutContainer);
+}
+
+TTuple<const FProperty*, void*> FMDFastBindingFieldPath::ResolvePathFromRootObject(UObject* RootObject, void*& OutContainer)
+{
 	OutContainer = nullptr;
 
-	UObject* RootOwnerObject = OwnerGetter.IsBound() ? OwnerGetter.Execute(SourceObject) : nullptr;
-	void* Owner = IsValid(RootOwnerObject) ? &RootOwnerObject : nullptr;
+	void* Owner = IsValid(RootObject) ? &RootObject : nullptr;
 	if (Owner != nullptr)
 	{
 		bool bIsOwnerAUObject = true;

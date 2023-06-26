@@ -48,7 +48,6 @@ protected:
 	UPROPERTY(Instanced)
 	TArray<UMDFastBindingInstance*> Bindings;
 
-	// Map binding indices to whether or not they should tick
-	UPROPERTY(Transient)
-	TMap<int32, bool> BindingTickPolicyLookUpMap;
+	// Array aligned with Bindings indicating whether or not to tick the binding of the same index
+	TBitArray<> TickingBindings;
 };

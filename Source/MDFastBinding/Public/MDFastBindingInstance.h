@@ -22,7 +22,7 @@ public:
 	UMDFastBindingContainer* GetBindingContainer() const;
 
 	void InitializeBinding(UObject* SourceObject);
-	void UpdateBinding(UObject* SourceObject);
+	bool UpdateBinding(UObject* SourceObject);
 	void TerminateBinding(UObject* SourceObject);
 
 	UMDFastBindingDestinationBase* GetBindingDestination() const { return BindingDestination; }
@@ -33,6 +33,7 @@ public:
 
 #if WITH_EDITOR
 	virtual EDataValidationResult IsDataValid(TArray<FText>& ValidationErrors) override;
+	virtual void PreSave(FObjectPreSaveContext SaveContext) override;
 
 	void OnVariableRenamed(UClass* VariableClass, const FName& OldVariableName, const FName& NewVariableName);
 
@@ -76,4 +77,9 @@ public:
 protected:
 	UPROPERTY(Instanced)
 	UMDFastBindingDestinationBase* BindingDestination = nullptr;
+
+private:
+	// Default to true so that bindings saved before this was added are properly checked in ShouldBindingTick()
+	UPROPERTY()
+	bool bIsBindingPerformant = true;
 };

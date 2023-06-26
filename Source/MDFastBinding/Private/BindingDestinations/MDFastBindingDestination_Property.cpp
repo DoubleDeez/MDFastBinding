@@ -29,14 +29,28 @@ void UMDFastBindingDestination_Property::InitializeDestination_Internal(UObject*
 
 void UMDFastBindingDestination_Property::UpdateDestination_Internal(UObject* SourceObject)
 {
+	bNeedsUpdate = false;
+
 	bool bDidUpdate = false;
 	const TTuple<const FProperty*, void*> Value = GetBindingItemValue(SourceObject, MDFastBindingDestination_Property_Private::ValueSourceName, bDidUpdate);
+	if (Value.Key == nullptr || Value.Value == nullptr)
+	{
+		return;
+	}
 
-	if (UpdateType != EMDFastBindingUpdateType::IfUpdatesNeeded || bDidUpdate || !bHasEverUpdated || bNeedsUpdate)
+	// GetPropertyOwner updates bNeedsUpdate internally
+	UObject* RootObject = GetPropertyOwner(SourceObject);
+	if (UpdateType != EMDFastBindingUpdateType::IfUpdatesNeeded || bDidUpdate || bNeedsUpdate || CheckCachedNeedsUpdate())
 	{
 		void* PropertyContainer = nullptr;
-		const TTuple<const FProperty*, void*> Property = PropertyPath.ResolvePath(SourceObject, PropertyContainer);
+		const TTuple<const FProperty*, void*> Property = PropertyPath.ResolvePathFromRootObject(RootObject, PropertyContainer);
+		if (Property.Key == nullptr || Property.Value == nullptr)
+		{
+			return;
+		}
+
 		FMDFastBindingModule::SetPropertyInContainer(Property.Key, PropertyContainer, Value.Key, Value.Value);
+		MarkAsHasEverUpdated();
 	}
 }
 
@@ -50,7 +64,11 @@ void UMDFastBindingDestination_Property::PostInitProperties()
 
 UObject* UMDFastBindingDestination_Property::GetPropertyOwner(UObject* SourceObject)
 {
-	const TTuple<const FProperty*, void*> PathRoot = GetBindingItemValue(SourceObject, MDFastBindingDestination_Property_Private::PathRootName, bNeedsUpdate);
+	bool bDidUpdate = false;
+	const TTuple<const FProperty*, void*> PathRoot = GetBindingItemValue(SourceObject, MDFastBindingDestination_Property_Private::PathRootName, bDidUpdate);
+
+	bNeedsUpdate = bDidUpdate;
+
 	if (PathRoot.Value != nullptr)
 	{
 		if (UObject* Owner = *static_cast<UObject**>(PathRoot.Value))

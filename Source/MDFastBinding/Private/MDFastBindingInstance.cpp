@@ -4,6 +4,10 @@
 #include "BindingDestinations/MDFastBindingDestinationBase.h"
 #include "BindingValues/MDFastBindingValueBase.h"
 
+#if WITH_EDITOR
+#include "UObject/ObjectSaveContext.h"
+#endif
+
 UClass* UMDFastBindingInstance::GetBindingOwnerClass() const
 {
 	if (const UMDFastBindingContainer* BindingContainer = GetBindingContainer())
@@ -41,12 +45,15 @@ void UMDFastBindingInstance::InitializeBinding(UObject* SourceObject)
 	}
 }
 
-void UMDFastBindingInstance::UpdateBinding(UObject* SourceObject)
+bool UMDFastBindingInstance::UpdateBinding(UObject* SourceObject)
 {
 	if (BindingDestination != nullptr)
 	{
 		BindingDestination->UpdateDestination(SourceObject);
+		return ShouldBindingTick();
 	}
+
+	return false;
 }
 
 void UMDFastBindingInstance::TerminateBinding(UObject* SourceObject)
@@ -59,11 +66,16 @@ void UMDFastBindingInstance::TerminateBinding(UObject* SourceObject)
 
 bool UMDFastBindingInstance::ShouldBindingTick() const
 {
+	if (!bIsBindingPerformant)
+	{
+		return true;
+	}
+
 	if (BindingDestination != nullptr)
 	{
-		return BindingDestination->DoesObjectRequireTick();
+		return BindingDestination->CheckCachedNeedsUpdate();
 	}
-	
+
 	return false;
 }
 
@@ -88,13 +100,21 @@ EDataValidationResult UMDFastBindingInstance::IsDataValid(TArray<FText>& Validat
 	return EDataValidationResult::Invalid;
 }
 
+void UMDFastBindingInstance::PreSave(FObjectPreSaveContext SaveContext)
+{
+	Super::PreSave(SaveContext);
+
+	// Save this off to speed up ShouldBindingTick()
+	bIsBindingPerformant = IsBindingPerformant();
+}
+
 void UMDFastBindingInstance::OnVariableRenamed(UClass* VariableClass, const FName& OldVariableName, const FName& NewVariableName)
 {
 	if (BindingDestination != nullptr)
 	{
 		BindingDestination->OnVariableRenamed(VariableClass, OldVariableName, NewVariableName);
 	}
-	
+
 	for (UMDFastBindingValueBase* Orphan : OrphanedValues)
 	{
 		if (Orphan != nullptr)
@@ -102,7 +122,7 @@ void UMDFastBindingInstance::OnVariableRenamed(UClass* VariableClass, const FNam
 			Orphan->OnVariableRenamed(VariableClass, OldVariableName, NewVariableName);
 		}
 	}
-	
+
 	for (UMDFastBindingDestinationBase* Destination : InactiveDestinations)
 	{
 		if (Destination != nullptr)
@@ -124,7 +144,7 @@ bool UMDFastBindingInstance::IsBindingPerformant() const
 			{
 				return true;
 			}
-			
+
 			const EMDFastBindingUpdateType UpdateType = BindingObject->GetUpdateType();
 			if (UpdateType == EMDFastBindingUpdateType::Once)
 			{
@@ -148,7 +168,7 @@ bool UMDFastBindingInstance::IsBindingPerformant() const
 
 			return true;
 		};
-		
+
 		return IsBindingObjectPerformant(BindingDestination);
 	}
 
@@ -163,7 +183,7 @@ int32 UMDFastBindingInstance::GetBindingIndex() const
 		return BindingContainer->GetBindings().IndexOfByKey(this);
 	}
 #endif
-	
+
 	return INDEX_NONE;
 }
 
@@ -216,7 +236,7 @@ UMDFastBindingDestinationBase* UMDFastBindingInstance::SetDestination(UMDFastBin
 	{
 		Destination = DuplicateObject<UMDFastBindingDestinationBase>(Destination, this);
 	}
-	
+
 	if (BindingDestination != nullptr)
 	{
 		InactiveDestinations.Add(BindingDestination);
@@ -277,7 +297,7 @@ UMDFastBindingObject* UMDFastBindingInstance::FindBindingObjectWithGUID(const FG
 
 		return false;
 	};
-	
+
 	// Traverse the tree of nodes connected to BindingDestination
 	if (BindingDestination != nullptr)
 	{
@@ -305,14 +325,14 @@ UMDFastBindingObject* UMDFastBindingInstance::FindBindingObjectWithGUID(const FG
 
 			return nullptr;
 		};
-		
+
 		if (UMDFastBindingObject* FoundObject = CheckBindingNodeTree(BindingDestination))
 		{
 			return FoundObject;
 		}
 	}
-	
-	// Check if the object is an orphan / inactive destination 
+
+	// Check if the object is an orphan / inactive destination
 	{
 		for (UMDFastBindingValueBase* Orphan : OrphanedValues)
 		{
@@ -337,15 +357,15 @@ UMDFastBindingObject* UMDFastBindingInstance::FindBindingObjectWithGUID(const FG
 TArray<UMDFastBindingObject*> UMDFastBindingInstance::GatherAllBindingObjects() const
 {
 	TArray<UMDFastBindingObject*> Result;
-	
+
 	TArray<UMDFastBindingObject*> NextNodes;
 	if (UMDFastBindingDestinationBase* BindingDest = GetBindingDestination())
 	{
-		NextNodes.Add(BindingDest);		
+		NextNodes.Add(BindingDest);
 	}
 	NextNodes.Append(OrphanedValues);
 	NextNodes.Append(InactiveDestinations);
-	
+
 	while (NextNodes.Num() > 0)
 	{
 		TArray<UMDFastBindingObject*> CurrentNodes = MoveTemp(NextNodes);
@@ -356,7 +376,7 @@ TArray<UMDFastBindingObject*> UMDFastBindingInstance::GatherAllBindingObjects() 
 			UMDFastBindingObject* Node = CurrentNodes[0];
 			CurrentNodes.RemoveAt(0);
 			Result.Add(Node);
-			
+
 			for (const FMDFastBindingItem& Item : Node->GetBindingItems())
 			{
 				if (Item.Value != nullptr)

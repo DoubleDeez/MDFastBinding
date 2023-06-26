@@ -12,14 +12,14 @@ void UMDFastBindingContainer::InitializeBindings(UObject* SourceObject)
 		UE_CLOG(!OuterWidget->IsDesignTime(), LogMDFastBinding, Warning, TEXT("[%s] uses a deprecated property-based MDFastBindingContainer, resave it to automatically upgrade it to a widget extension"), *GetNameSafe(OuterWidget->GetClass()));
 	}
 
+	TickingBindings.Insert(false, 0, Bindings.Num());
+
 	for (int32 i = 0; i < Bindings.Num(); ++i)
 	{
 		if (UMDFastBindingInstance* Binding = Bindings[i])
 		{
 			Binding->InitializeBinding(SourceObject);
-			Binding->UpdateBinding(SourceObject);
-
-			BindingTickPolicyLookUpMap.Add(i, Binding->ShouldBindingTick());
+			TickingBindings[i] = Binding->UpdateBinding(SourceObject);
 		}
 	}
 }
@@ -28,16 +28,10 @@ void UMDFastBindingContainer::UpdateBindings(UObject* SourceObject)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE_STR(__FUNCTION__);
 	TRACE_CPUPROFILER_EVENT_SCOPE_TEXT(*GetNameSafe(SourceObject));
-	for (int32 i = 0; i < Bindings.Num(); ++i)
+
+	for (TConstSetBitIterator<> It(TickingBindings); It; ++It)
 	{
-		if (bool& bShouldBindingUpdate = BindingTickPolicyLookUpMap.FindOrAdd(i))
-		{
-			if (UMDFastBindingInstance* Binding = Bindings[i])
-			{
-				Binding->UpdateBinding(SourceObject);
-				bShouldBindingUpdate = Binding->ShouldBindingTick();
-			}
-		}
+		TickingBindings[It.GetIndex()] = Bindings[It.GetIndex()]->UpdateBinding(SourceObject);
 	}
 }
 
@@ -48,16 +42,15 @@ void UMDFastBindingContainer::TerminateBindings(UObject* SourceObject)
 		Binding->TerminateBinding(SourceObject);
 	}
 
-	BindingTickPolicyLookUpMap.Empty();
+	TickingBindings.Reset();
 }
 
 void UMDFastBindingContainer::SetBindingTickPolicy(UMDFastBindingInstance* Binding, bool bShouldTick)
 {
 	const int32 BindingIndex = Bindings.IndexOfByKey(Binding);
-
 	if (BindingIndex != INDEX_NONE)
 	{
-		BindingTickPolicyLookUpMap.FindOrAdd(BindingIndex, bShouldTick);
+		TickingBindings[BindingIndex] = bShouldTick;
 	}
 }
 

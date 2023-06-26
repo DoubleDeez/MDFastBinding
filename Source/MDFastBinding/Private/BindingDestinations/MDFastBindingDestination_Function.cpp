@@ -111,7 +111,14 @@ void UMDFastBindingDestination_Function::PostInitProperties()
 
 bool UMDFastBindingDestination_Function::ShouldCallFunction()
 {
-	return UpdateType != EMDFastBindingUpdateType::IfUpdatesNeeded || bNeedsUpdate;
+	const bool bResult = UpdateType != EMDFastBindingUpdateType::IfUpdatesNeeded || bNeedsUpdate;
+
+	if (bResult)
+	{
+		MarkAsHasEverUpdated();
+	}
+
+	return bResult;
 }
 
 bool UMDFastBindingDestination_Function::DoesBindingItemDefaultToSelf(const FName& InItemName) const

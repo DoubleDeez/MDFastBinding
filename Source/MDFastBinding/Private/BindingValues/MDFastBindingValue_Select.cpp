@@ -35,7 +35,7 @@ TTuple<const FProperty*, void*> UMDFastBindingValue_Select::GetValue_Internal(UO
 	{
 		return {};
 	}
-	
+
 	if (const FBoolProperty* BoolProp = CastField<const FBoolProperty>(InputValue.Key))
 	{
 		static const bool TrueValue = true;
@@ -65,10 +65,10 @@ TTuple<const FProperty*, void*> UMDFastBindingValue_Select::GetValue_Internal(UO
 		{
 			if (BindingItem.ExtendablePinListIndex != INDEX_NONE && BindingItem.ExtendablePinListNameBase == MDFastBindingValue_Select_Private::FromValueItemName)
 			{
-				TTuple<const FProperty*, void*> ItemValue = BindingItem.GetValue(SourceObject, bDidUpdate, true);
+				const TTuple<const FProperty*, void*> ItemValue = BindingItem.GetValue(SourceObject, bDidUpdate);
 				if (FMDFastBindingHelpers::ArePropertyValuesEqual(ItemValue.Key, ItemValue.Value, InputValue.Key, InputValue.Value))
 				{
-					const FName ResultValueName = CreateExtendableItemName(MDFastBindingValue_Select_Private::ToValueItemName, BindingItem.ExtendablePinListIndex);
+					const FName& ResultValueName = FindOrCreateExtendableItemName(MDFastBindingValue_Select_Private::ToValueItemName, BindingItem.ExtendablePinListIndex);
 					return GetBindingItemValue(SourceObject, ResultValueName, bDidUpdate);
 				}
 			}
@@ -76,7 +76,7 @@ TTuple<const FProperty*, void*> UMDFastBindingValue_Select::GetValue_Internal(UO
 
 		return GetBindingItemValue(SourceObject, MDFastBindingValue_Select_Private::FallbackResultInputName, bDidUpdate);
 	}
-	
+
 	return {};
 }
 
@@ -122,7 +122,7 @@ void UMDFastBindingValue_Select::SetupBindingItems()
 					EnumDisplayNamesForFixUp.Add(EnumFriendlyName, EnumNameString);
 				}
 #endif
-				
+
 				ExpectedNames.Add(EnumNameString);
 				EnsureBindingItemExists(EnumNameString, OutputProp, FText::GetEmpty(), true);
 			}
@@ -150,7 +150,7 @@ void UMDFastBindingValue_Select::SetupBindingItems()
 				{
 					NewItem->Value = It->Value;
 					It->Value = nullptr;
-					
+
 					NewItem->DefaultObject = It->DefaultObject;
 					NewItem->DefaultString = It->DefaultString;
 					NewItem->DefaultText = It->DefaultText;
@@ -187,7 +187,7 @@ FText UMDFastBindingValue_Select::GetDisplayName()
 			, FText::FromString(FMDFastBindingHelpers::PropertyToString(*InputValueProp))
 			, FText::FromString(FMDFastBindingHelpers::PropertyToString(*OutputValueProp)));
 	}
-	
+
 	return Super::GetDisplayName();
 }
 #endif
@@ -222,8 +222,8 @@ const FProperty* UMDFastBindingValue_Select::ResolveOutputProperty()
 		ResolvedOutputProperty = FallbackValueProp;
 		return FallbackValueProp;
 	}
-	
-	const FName FirstToValueInputName = CreateExtendableItemName(MDFastBindingValue_Select_Private::ToValueItemName, 0);
+
+	const FName& FirstToValueInputName = FindOrCreateExtendableItemName(MDFastBindingValue_Select_Private::ToValueItemName, 0);
 	if (const FProperty* FirstToValueProp = GetBindingItemValueProperty(FirstToValueInputName))
 	{
 		ResolvedOutputProperty = FirstToValueProp;

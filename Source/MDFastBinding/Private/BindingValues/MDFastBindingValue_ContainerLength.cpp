@@ -11,9 +11,9 @@ const FProperty* UMDFastBindingValue_ContainerLength::GetOutputProperty()
 {
 	if (Int32Prop == nullptr)
 	{
-		Int32Prop = GetClass()->FindPropertyByName(GET_MEMBER_NAME_CHECKED(UMDFastBindingValue_ContainerLength, OutputValue));	
+		Int32Prop = GetClass()->FindPropertyByName(GET_MEMBER_NAME_CHECKED(UMDFastBindingValue_ContainerLength, OutputValue));
 	}
-	
+
 	return Int32Prop;
 }
 
@@ -41,7 +41,7 @@ EDataValidationResult UMDFastBindingValue_ContainerLength::IsDataValid(TArray<FT
 			return EDataValidationResult::Invalid;
 		}
 	}
-	
+
 	return Super::IsDataValid(ValidationErrors);
 }
 #endif
@@ -49,9 +49,11 @@ EDataValidationResult UMDFastBindingValue_ContainerLength::IsDataValid(TArray<FT
 TTuple<const FProperty*, void*> UMDFastBindingValue_ContainerLength::GetValue_Internal(UObject* SourceObject)
 {
 	bool bDidUpdate = false;
-	TTuple<const FProperty*, void*> Container = GetBindingItemValue(SourceObject, MDFastBindingValue_ContainerLength_Private::ContainerName, bDidUpdate);
-	if (Container.Key != nullptr && Container.Value != nullptr)
+	const TTuple<const FProperty*, void*> Container = GetBindingItemValue(SourceObject, MDFastBindingValue_ContainerLength_Private::ContainerName, bDidUpdate);
+	if (Container.Key != nullptr && Container.Value != nullptr && bDidUpdate)
 	{
+		OutputValue = 0;
+		
 		if (const FArrayProperty* ArrayProp = CastField<const FArrayProperty>(Container.Key))
 		{
 			const FScriptArrayHelper Helper = FScriptArrayHelper(ArrayProp, Container.Value);
@@ -68,7 +70,7 @@ TTuple<const FProperty*, void*> UMDFastBindingValue_ContainerLength::GetValue_In
 			OutputValue = Helper.Num();
 		}
 	}
-	
+
 	return TTuple<const FProperty*, void*>{ GetOutputProperty(), &OutputValue };
 }
 

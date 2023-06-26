@@ -27,6 +27,7 @@ public:
 	// with an optional out param to retrieve the container that holds the leaf property
 	TTuple<const FProperty*, void*> ResolvePath(UObject* SourceObject);
 	TTuple<const FProperty*, void*> ResolvePath(UObject* SourceObject, void*& OutContainer);
+	TTuple<const FProperty*, void*> ResolvePathFromRootObject(UObject* RootObject, void*& OutContainer);
 
 	const FProperty* GetLeafProperty();
 	bool IsLeafFunction();

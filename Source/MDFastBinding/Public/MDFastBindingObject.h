@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include "Misc/FrameValue.h"
 #include "UObject/Object.h"
 #include "UObject/WeakFieldPtr.h"
 #include "Templates/SubclassOf.h"
@@ -53,6 +54,9 @@ public:
 	UPROPERTY()
 	FName ExtendablePinListNameBase = NAME_None;
 
+	UPROPERTY()
+	bool bIsSelfPin = false;
+
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(Transient)
 	double LastUpdateTime = 0.0;
@@ -81,9 +85,11 @@ public:
 		return Value != nullptr || DefaultObject != nullptr || !DefaultString.IsEmpty() || !DefaultText.IsEmpty();
 	}
 
-	TTuple<const FProperty*, void*> GetValue(UObject* SourceObject, bool& OutDidUpdate, bool bAllowDefaults);
+	TTuple<const FProperty*, void*> GetValue(UObject* SourceObject, bool& OutDidUpdate);
 
 	bool HasRetrievedDefaultValue() const { return bHasRetrievedDefaultValue; }
+
+	bool IsSelfPin() const { return bIsSelfPin; }
 
 	// Resolves wildcard binding items (where ItemProperty is null, the output property of Value is used instead)
 	const FProperty* ResolveOutputProperty() const;
@@ -116,8 +122,6 @@ public:
 
 	UMDFastBindingInstance* GetOuterBinding() const;
 
-	virtual bool CheckNeedsUpdate() const;
-
 	virtual bool HasUserExtendablePinList() const { return false; }
 
 	void IncrementExtendablePinCount() { ++ExtendablePinListCount; }
@@ -125,17 +129,16 @@ public:
 	void RemoveExtendablePinBindingItem(int32 ItemIndex);
 
 	void MarkObjectDirty();
+	void MarkObjectClean();
 
-	virtual bool DoesObjectRequireTick() const;
+	// Wrapper around CheckNeedsUpdate with a TFrameValue cache so that multiple calls in a frame are "free"
+	bool CheckCachedNeedsUpdate() const;
 
 	const FMDFastBindingItem* FindBindingItemWithValue(const UMDFastBindingValueBase* Value) const;
 	const FMDFastBindingItem* FindBindingItem(const FName& ItemName) const;
 	FMDFastBindingItem* FindBindingItem(const FName& ItemName);
 
-	static FName CreateExtendableItemName(const FName& Base, int32 Index)
-	{
-		return *FString::Printf(TEXT("%s %d"), *Base.ToString(), Index);
-	}
+	static const FName& FindOrCreateExtendableItemName(const FName& Base, int32 Index);
 
 // Editor only operations
 #if WITH_EDITORONLY_DATA
@@ -196,6 +199,8 @@ protected:
 	virtual void PostLoad() override;
 	virtual void PostInitProperties() override;
 
+	virtual bool CheckNeedsUpdate() const;
+
 	virtual void SetupBindingItems() {}
 
 	virtual void SetupExtendablePinBindingItem(int32 ItemIndex) {}
@@ -220,7 +225,9 @@ protected:
 
 private:
 	UPROPERTY(Transient)
-	bool bIsObjectDirty = true;
+	bool bIsObjectDirty = false;
+
+	mutable TFrameValue<bool> CachedNeedsUpdate;
 
 	mutable TWeakObjectPtr<UClass> BindingOwnerClass;
 	mutable TWeakObjectPtr<UMDFastBindingInstance> OuterBinding;

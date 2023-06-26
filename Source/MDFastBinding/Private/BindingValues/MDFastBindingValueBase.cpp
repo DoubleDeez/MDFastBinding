@@ -3,7 +3,7 @@
 void UMDFastBindingValueBase::BeginDestroy()
 {
 	Super::BeginDestroy();
-	
+
 	if (CachedValue.Value != nullptr)
 	{
 		FMemory::Free(CachedValue.Value);
@@ -35,10 +35,10 @@ TTuple<const FProperty*, void*> UMDFastBindingValueBase::GetValue(UObject* Sourc
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE_STR(__FUNCTION__);
 	TRACE_CPUPROFILER_EVENT_SCOPE_TEXT(*GetName());
-	
+
 	OutDidUpdate = false;
-	
-	if (CheckNeedsUpdate())
+
+	if (CheckCachedNeedsUpdate())
 	{
 		const TTuple<const FProperty*, void*> Value = GetValue_Internal(SourceObject);
 		if (Value.Key == nullptr || Value.Value == nullptr)
@@ -59,19 +59,16 @@ TTuple<const FProperty*, void*> UMDFastBindingValueBase::GetValue(UObject* Sourc
 			CachedValue.Key->CopyCompleteValue(CachedValue.Value, Value.Value);
 			OutDidUpdate = true;
 		}
+
+		MarkObjectClean();
 	}
-	
+
 	return CachedValue;
 }
 
 bool UMDFastBindingValueBase::CheckNeedsUpdate() const
 {
 	return CachedValue.Value == nullptr || Super::CheckNeedsUpdate();
-}
-
-bool UMDFastBindingValueBase::DoesObjectRequireTick() const
-{
-	return CachedValue.Value == nullptr || Super::DoesObjectRequireTick();
 }
 
 const FMDFastBindingItem* UMDFastBindingValueBase::GetOwningBindingItem() const

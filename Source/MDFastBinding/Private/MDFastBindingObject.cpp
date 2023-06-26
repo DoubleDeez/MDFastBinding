@@ -25,7 +25,7 @@ FMDFastBindingItem::~FMDFastBindingItem()
 	}
 }
 
-TTuple<const FProperty*, void*> FMDFastBindingItem::GetValue(UObject* SourceObject, bool& OutDidUpdate, bool bAllowDefaults)
+TTuple<const FProperty*, void*> FMDFastBindingItem::GetValue(UObject* SourceObject, bool& OutDidUpdate)
 {
 	OutDidUpdate = false;
 
@@ -41,8 +41,9 @@ TTuple<const FProperty*, void*> FMDFastBindingItem::GetValue(UObject* SourceObje
 		return Result;
 	}
 
-	if (!bAllowDefaults)
+	if (IsSelfPin())
 	{
+		// Self pins can't have defaults
 		return {};
 	}
 
@@ -57,7 +58,7 @@ TTuple<const FProperty*, void*> FMDFastBindingItem::GetValue(UObject* SourceObje
 		return TTuple<const FProperty*, void*>{ ItemProp, AllocatedDefaultValue };
 	}
 
-	OutDidUpdate = !bHasRetrievedDefaultValue;
+	OutDidUpdate = !HasRetrievedDefaultValue();
 #if WITH_EDITORONLY_DATA
 	if (OutDidUpdate)
 	{
@@ -128,6 +129,20 @@ TTuple<const FProperty*, void*> FMDFastBindingItem::GetCachedValue() const
 	return {};
 }
 #endif
+
+const FName& UMDFastBindingObject::FindOrCreateExtendableItemName(const FName& Base, int32 Index)
+{
+	static TMap<TTuple<FName, int32>, FName> ItemNameMap;
+
+	FName& Result = ItemNameMap.FindOrAdd(TTuple<FName, int32>(Base, Index));
+
+	if (!Result.IsValid())
+	{
+		Result = *FString::Printf(TEXT("%s %d"), *Base.ToString(), Index);
+	}
+
+	return Result;
+}
 
 UClass* UMDFastBindingObject::GetBindingOwnerClass() const
 {
@@ -222,38 +237,37 @@ UMDFastBindingInstance* UMDFastBindingObject::GetOuterBinding() const
 
 bool UMDFastBindingObject::CheckNeedsUpdate() const
 {
-	if (UpdateType != EMDFastBindingUpdateType::Always)
+	if (UpdateType == EMDFastBindingUpdateType::Always)
 	{
-		if (UpdateType == EMDFastBindingUpdateType::Once)
+		return true;
+	}
+
+	if (UpdateType == EMDFastBindingUpdateType::EventBased && bIsObjectDirty)
+	{
+		// If dirty and event based, then we must update
+		return true;
+	}
+
+	if (UpdateType == EMDFastBindingUpdateType::Once)
+	{
+		// Assume the child classes check for this
+		return false;
+	}
+
+	// TODO - Optimize - Cache whether downstream items could ever possibly need an update when this object doesn't
+	for (const FMDFastBindingItem& Item : BindingItems)
+	{
+		if (Item.Value != nullptr && Item.Value->CheckCachedNeedsUpdate())
 		{
-			// Assume the child classes check for this
-			return false;
-		}
-		else if (UpdateType == EMDFastBindingUpdateType::EventBased && bIsObjectDirty)
-		{
-			// If dirty and event based, then we must update
 			return true;
 		}
-		else if (UpdateType == EMDFastBindingUpdateType::IfUpdatesNeeded || UpdateType == EMDFastBindingUpdateType::EventBased)
+		else if (Item.Value == nullptr && !Item.HasRetrievedDefaultValue() && !Item.IsSelfPin())
 		{
-			// Event based when not dirty acts as `IfUpdatesNeeded` to keep their binding items up to date
-			for (const FMDFastBindingItem& Item : BindingItems)
-			{
-				if (Item.Value != nullptr && Item.Value->CheckNeedsUpdate())
-				{
-					return true;
-				}
-				else if (Item.Value == nullptr && !Item.HasRetrievedDefaultValue())
-				{
-					return true;
-				}
-			}
-
-			return false;
+			return true;
 		}
 	}
 
-	return true;
+	return false;
 }
 
 void UMDFastBindingObject::RemoveExtendablePinBindingItem(int32 ItemIndex)
@@ -289,7 +303,7 @@ void UMDFastBindingObject::RemoveExtendablePinBindingItem(int32 ItemIndex)
 					while (FMDFastBindingItem* Item = BindingItems.FindByPredicate(Pred))
 					{
 						Item->ExtendablePinListIndex -= AccumulatedGap;
-						Item->ItemName = CreateExtendableItemName(Item->ExtendablePinListNameBase, Item->ExtendablePinListIndex);
+						Item->ItemName = FindOrCreateExtendableItemName(Item->ExtendablePinListNameBase, Item->ExtendablePinListIndex);
 					}
 				}
 			}
@@ -313,27 +327,19 @@ void UMDFastBindingObject::MarkObjectDirty()
 	}
 }
 
-bool UMDFastBindingObject::DoesObjectRequireTick() const
+void UMDFastBindingObject::MarkObjectClean()
 {
-	if (UpdateType == EMDFastBindingUpdateType::Always)
+	bIsObjectDirty = false;
+}
+
+bool UMDFastBindingObject::CheckCachedNeedsUpdate() const
+{
+	if (!CachedNeedsUpdate.IsSet())
 	{
-		return true;
+		CachedNeedsUpdate = CheckNeedsUpdate();
 	}
 
-	if (UpdateType == EMDFastBindingUpdateType::EventBased && bIsObjectDirty)
-	{
-		return true;
-	}
-
-	for (const FMDFastBindingItem& Item : BindingItems)
-	{
-		if (Item.Value != nullptr && Item.Value->DoesObjectRequireTick())
-		{
-			return true;
-		}
-	}
-
-	return false;
+	return CachedNeedsUpdate.GetValue();
 }
 
 const FMDFastBindingItem* UMDFastBindingObject::FindBindingItemWithValue(const UMDFastBindingValueBase* Value) const
@@ -371,7 +377,6 @@ void UMDFastBindingObject::PostLoad()
 #endif
 
 	SetupBindingItems_Internal();
-
 }
 
 void UMDFastBindingObject::PostInitProperties()
@@ -392,6 +397,7 @@ void UMDFastBindingObject::EnsureBindingItemExists(const FName& ItemName, const 
 		BindingItem = BindingItems.FindByKey(ItemName);
 	}
 
+	BindingItem->bIsSelfPin = DoesBindingItemDefaultToSelf(ItemName);
 	BindingItem->bAllowNullValue = bIsOptional;
 	BindingItem->ItemProperty = ItemProperty;
 	BindingItem->ToolTip = ItemDescription;
@@ -399,7 +405,7 @@ void UMDFastBindingObject::EnsureBindingItemExists(const FName& ItemName, const 
 
 void UMDFastBindingObject::EnsureExtendableBindingItemExists(const FName& NameBase, const FProperty* ItemProperty, const FText& ItemDescription, int32 ItemIndex, bool bIsOptional)
 {
-	const FName ItemName = CreateExtendableItemName(NameBase, ItemIndex);
+	const FName& ItemName = FindOrCreateExtendableItemName(NameBase, ItemIndex);
 	EnsureBindingItemExists(ItemName, ItemProperty, ItemDescription, bIsOptional);
 
 	FMDFastBindingItem* BindingItem = FindBindingItem(ItemName);
@@ -433,19 +439,15 @@ const FProperty* UMDFastBindingObject::GetBindingItemValueProperty(const FName& 
 
 TTuple<const FProperty*, void*> UMDFastBindingObject::GetBindingItemValue(UObject* SourceObject, const FName& Name, bool& OutDidUpdate)
 {
-	if (FMDFastBindingItem* Item = BindingItems.FindByKey(Name))
-	{
-		return Item->GetValue(SourceObject, OutDidUpdate, !DoesBindingItemDefaultToSelf(Name));
-	}
-
-	return {};
+	const int32 BindingIndex = BindingItems.IndexOfByKey(Name);
+	return GetBindingItemValue(SourceObject, BindingIndex, OutDidUpdate);
 }
 
 TTuple<const FProperty*, void*> UMDFastBindingObject::GetBindingItemValue(UObject* SourceObject, int32 Index, bool& OutDidUpdate)
 {
 	if (BindingItems.IsValidIndex(Index))
 	{
-		return BindingItems[Index].GetValue(SourceObject, OutDidUpdate, !DoesBindingItemDefaultToSelf(BindingItems[Index].ItemName));
+		return BindingItems[Index].GetValue(SourceObject, OutDidUpdate);
 	}
 
 	return {};
