@@ -24,6 +24,8 @@ public:
 
 	bool HasBindings() const { return !Bindings.IsEmpty(); }
 
+	bool DoesNeedTick() const { return TickingBindings.Contains(true); }
+
 	UClass* GetBindingOwnerClass() const;
 
 	UE_DEPRECATED(all, "GetBindingOwnerClassDelegate is deprecated, the binding's outer object should implement IMDFastBindingOwnerInterface instead")
@@ -50,4 +52,7 @@ protected:
 
 	// Array aligned with Bindings indicating whether or not to tick the binding of the same index
 	TBitArray<> TickingBindings;
+
+private:
+	void UpdateNeedsTick();
 };

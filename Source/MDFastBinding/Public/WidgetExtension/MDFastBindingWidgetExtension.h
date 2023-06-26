@@ -23,12 +23,14 @@ public:
 
 	virtual void Tick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
-	virtual bool RequiresTick() const override { return true; }
+	virtual bool RequiresTick() const override;
 
 	// Call this to manually update bindings if you know source data might have changed after ticking but before painting
 	void UpdateBindings();
 
 	virtual UClass* GetBindingOwnerClass() const override;
+
+	void UpdateNeedsTick();
 
 #if WITH_EDITOR
 	UMDFastBindingContainer* GetBindingContainer() const { return BindingContainer; }
@@ -45,4 +47,7 @@ private:
 
 	UPROPERTY(Instanced)
 	TArray<TObjectPtr<UMDFastBindingContainer>> SuperBindingContainers;
+
+	// Index 0 is BindingContainer, SuperBindingContainers starts from Index 1
+	TBitArray<> TickingContainers;
 };

@@ -4,6 +4,7 @@
 #include "MDFastBindingOwnerInterface.h"
 #include "BindingDestinations/MDFastBindingDestinationBase.h"
 #include "Blueprint/UserWidget.h"
+#include "WidgetExtension/MDFastBindingWidgetExtension.h"
 
 void UMDFastBindingContainer::InitializeBindings(UObject* SourceObject)
 {
@@ -50,7 +51,14 @@ void UMDFastBindingContainer::SetBindingTickPolicy(UMDFastBindingInstance* Bindi
 	const int32 BindingIndex = Bindings.IndexOfByKey(Binding);
 	if (BindingIndex != INDEX_NONE)
 	{
+		const bool bDidNeedTick = DoesNeedTick();
+
 		TickingBindings[BindingIndex] = bShouldTick;
+
+		if (!bDidNeedTick && bShouldTick)
+		{
+			UpdateNeedsTick();
+		}
 	}
 }
 
@@ -144,3 +152,11 @@ EDataValidationResult UMDFastBindingContainer::IsDataValid(TArray<FText>& Valida
 	return Result;
 }
 #endif
+
+void UMDFastBindingContainer::UpdateNeedsTick()
+{
+	if (UMDFastBindingWidgetExtension* Extension = Cast<UMDFastBindingWidgetExtension>(GetOuter()))
+	{
+		Extension->UpdateNeedsTick();
+	}
+}
