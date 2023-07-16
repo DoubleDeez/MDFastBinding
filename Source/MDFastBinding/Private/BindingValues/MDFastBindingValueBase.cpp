@@ -29,6 +29,14 @@ void UMDFastBindingValueBase::InitializeValue(UObject* SourceObject)
 void UMDFastBindingValueBase::TerminateValue(UObject* SourceObject)
 {
 	TerminateValue_Internal(SourceObject);
+
+	for (const FMDFastBindingItem& BindingItem : BindingItems)
+	{
+		if (BindingItem.Value != nullptr)
+		{
+			BindingItem.Value->TerminateValue(SourceObject);
+		}
+	}
 }
 
 TTuple<const FProperty*, void*> UMDFastBindingValueBase::GetValue(UObject* SourceObject, bool& OutDidUpdate)
