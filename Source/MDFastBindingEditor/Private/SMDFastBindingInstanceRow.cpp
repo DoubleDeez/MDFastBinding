@@ -31,7 +31,7 @@ public:
 			.WidthOverride(16.0f)
 			[
 				SNew(SImage)
-				.Image(FAppStyle::Get().GetBrush("VerticalBoxDragIndicatorShort"))
+				.Image(FAppStyle::Get().GetBrush("Icons.DragHandle"))
 			]
 		];
 	}
