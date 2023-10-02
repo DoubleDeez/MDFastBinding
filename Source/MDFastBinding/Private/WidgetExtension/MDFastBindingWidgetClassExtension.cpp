@@ -1,7 +1,7 @@
 #include "WidgetExtension/MDFastBindingWidgetClassExtension.h"
 
 #include "Blueprint/UserWidget.h"
-#include "Launch/Resources/Version.h"
+#include "Runtime/Launch/Resources/Version.h"
 #include "MDFastBindingContainer.h"
 #include "MDFastBindingHelpers.h"
 #include "Blueprint/WidgetBlueprintGeneratedClass.h"
@@ -62,7 +62,7 @@ void UMDFastBindingWidgetClassExtension::Construct(UUserWidget* UserWidget)
 {
 	Super::Construct(UserWidget);
 
-#if ENGINE_MAJOR_VERSION > 5 || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 2)
+#if ENGINE_MAJOR_VERSION > 5 || ENGINE_MINOR_VERSION >= 2
 	// Initialize isn't called in editor Debug mode so we force it here
 	if (IsValid(UserWidget) && UserWidget->IsPreviewTime())
 	{

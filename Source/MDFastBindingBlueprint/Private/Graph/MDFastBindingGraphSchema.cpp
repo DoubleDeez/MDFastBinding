@@ -9,7 +9,12 @@
 #include "BindingValues/MDFastBindingValue_FieldNotify.h"
 #include "BindingValues/MDFastBindingValue_Property.h"
 #include "EdGraphSchema_K2.h"
+#include "Runtime/Launch/Resources/Version.h"
+#if ENGINE_MAJOR_VERSION > 5 || ENGINE_MINOR_VERSION >= 3
+#include "INotifyFieldValueChanged.h"
+#else
 #include "FieldNotification/IFieldValueChanged.h"
+#endif
 #include "Graph/MDFastBindingConnectionDrawingPolicy.h"
 #include "Graph/MDFastBindingGraph.h"
 #include "Graph/MDFastBindingGraphNode.h"

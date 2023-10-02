@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Runtime/Launch/Resources/Version.h"
 #include "SPinValueInspector.h"
 #include "UObject/WeakFieldPtr.h"
 
@@ -46,7 +47,11 @@ protected:
 		return WatchedObjectPtr == Other->WatchedObjectPtr;
 	}
 
+#if ENGINE_MAJOR_VERSION > 5 || ENGINE_MINOR_VERSION >= 3
+	virtual uint32 GetHash() const override
+#else
 	virtual uint32 GetHash() override
+#endif
 	{
 		return GetTypeHash(WatchedObjectPtr.Get());
 	}
@@ -88,7 +93,11 @@ protected:
 		return GetPropertyInstance() == Other->GetPropertyInstance();
 	}
 
+#if ENGINE_MAJOR_VERSION > 5 || ENGINE_MINOR_VERSION >= 3
+	virtual uint32 GetHash() const override
+#else
 	virtual uint32 GetHash() override
+#endif
 	{
 		const TTuple<const FProperty*, void*> Instance = GetPropertyInstance();
 		return HashCombine(GetTypeHash(Instance.Key), GetTypeHash(Instance.Value));

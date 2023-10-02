@@ -272,11 +272,33 @@ bool FMDFastBindingPropertyBindingExtension::CanExtend(const UWidgetBlueprint* W
 }
 
 TSharedPtr<FExtender> FMDFastBindingPropertyBindingExtension::CreateMenuExtender(const UWidgetBlueprint* WidgetBlueprint, const UWidget* Widget, const FProperty* Property)
+#if ENGINE_MAJOR_VERSION > 5 || ENGINE_MINOR_VERSION >= 3
+{
+	return nullptr;
+}
+
+TSharedPtr<FExtender> FMDFastBindingPropertyBindingExtension::CreateMenuExtender(const UWidgetBlueprint* WidgetBlueprint, UWidget* Widget, TSharedPtr<IPropertyHandle> WidgetPropertyHandle)
+#endif
 {
 	TSharedPtr<FExtender> Extender = MakeShared<FExtender>();
-	Extender->AddMenuExtension("BindingActions", EExtensionHook::Before, nullptr, FMenuExtensionDelegate::CreateStatic(&MDFastBindingPropertyBinding::AddFastBindingMenuItems, WidgetBlueprint, Widget, Property));
+	Extender->AddMenuExtension("BindingActions", EExtensionHook::Before, nullptr, FMenuExtensionDelegate::CreateStatic(&MDFastBindingPropertyBinding::AddFastBindingMenuItems, WidgetBlueprint,
+#if ENGINE_MAJOR_VERSION > 5 || ENGINE_MINOR_VERSION >= 3
+		(const UWidget*)Widget,
+		(const FProperty*)(WidgetPropertyHandle.IsValid() ? WidgetPropertyHandle->GetProperty() : nullptr)
+#else
+		Widget,
+		Property
+#endif
+	));
 	return Extender;
 }
+
+#if ENGINE_MAJOR_VERSION > 5 || ENGINE_MINOR_VERSION >= 3
+IPropertyBindingExtension::EDropResult FMDFastBindingPropertyBindingExtension::OnDrop(const FGeometry& Geometry, const FDragDropEvent& DragDropEvent, UWidgetBlueprint* WidgetBlueprint, UWidget* Widget, TSharedPtr<IPropertyHandle> WidgetPropertyHandle)
+{
+	return IPropertyBindingExtension::EDropResult::Unhandled;
+}
+#endif
 
 void FMDFastBindingPropertyBindingExtension::ClearCurrentValue(const UWidgetBlueprint* WidgetBlueprint, const UWidget* Widget, const FProperty* Property)
 {
@@ -293,13 +315,17 @@ TOptional<FName> FMDFastBindingPropertyBindingExtension::GetCurrentValue(const U
 	return {};
 }
 
-#if ENGINE_MAJOR_VERSION > 5 || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 2)
+#if ENGINE_MAJOR_VERSION > 5 || ENGINE_MINOR_VERSION >= 2
 const FSlateBrush* FMDFastBindingPropertyBindingExtension::GetCurrentIcon(const UWidgetBlueprint* WidgetBlueprint, const UWidget* Widget, const FProperty* Property) const
 {
 	if (UMDFastBindingInstance* BindingInstance = MDFastBindingPropertyBinding::FindBindingInstance(WidgetBlueprint, Widget, Property))
 	{
 		FDataValidationContext ValidationContext;
+#if ENGINE_MAJOR_VERSION > 5 || ENGINE_MINOR_VERSION >= 3
+		if (((const UObject*)BindingInstance)->IsDataValid(ValidationContext) == EDataValidationResult::Invalid)
+#else
 		if (((UObject*)BindingInstance)->IsDataValid(ValidationContext) == EDataValidationResult::Invalid)
+#endif
 		{
 			return FAppStyle::Get().GetBrush("Icons.ErrorWithColor");
 		}
