@@ -15,11 +15,6 @@ UMDFastBindingDestination_Property::UMDFastBindingDestination_Property()
 	PropertyPath.bOnlyAllowBlueprintReadWriteProperties = true;
 }
 
-bool UMDFastBindingDestination_Property::DoesBindingItemDefaultToSelf(const FName& InItemName) const
-{
-	return InItemName == MDFastBindingDestination_Property_Private::PathRootName;
-}
-
 void UMDFastBindingDestination_Property::InitializeDestination_Internal(UObject* SourceObject)
 {
 	Super::InitializeDestination_Internal(SourceObject);
@@ -169,6 +164,11 @@ const TArray<FFieldVariant>& UMDFastBindingDestination_Property::GetFieldPath()
 #endif
 
 #if WITH_EDITORONLY_DATA
+bool UMDFastBindingDestination_Property::DoesBindingItemDefaultToSelf(const FName& InItemName) const
+{
+	return InItemName == MDFastBindingDestination_Property_Private::PathRootName;
+}
+
 FText UMDFastBindingDestination_Property::GetDisplayName()
 {
 	if (PropertyPath.BuildPath())

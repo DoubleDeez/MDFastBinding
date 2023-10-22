@@ -23,12 +23,12 @@ const FProperty* UMDFastBindingValue_Property::GetOutputProperty()
 	return PropertyPath.GetLeafProperty();
 }
 
+#if WITH_EDITORONLY_DATA
 bool UMDFastBindingValue_Property::DoesBindingItemDefaultToSelf(const FName& InItemName) const
 {
 	return InItemName == MDFastBindingValue_Property_Private::PathRootName;
 }
 
-#if WITH_EDITORONLY_DATA
 FText UMDFastBindingValue_Property::GetDisplayName()
 {
 	if (PropertyPath.BuildPath())

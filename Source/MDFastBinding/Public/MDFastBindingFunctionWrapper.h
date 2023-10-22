@@ -47,8 +47,6 @@ public:
 	void OnVariableRenamed(UClass* VariableClass, const FName& OldVariableName, const FName& NewVariableName);
 #endif
 
-	static bool IsFunctionValidForWrapper(const UFunction* Func);
-
 	FMDGetFunctionOwner OwnerGetter;
 	FMDGetFunctionOwnerClass OwnerClassGetter;
 	FMDPopulateFunctionParam ParamPopulator;

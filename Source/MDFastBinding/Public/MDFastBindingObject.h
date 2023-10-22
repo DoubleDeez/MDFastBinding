@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include "Misc/Optional.h"
 #include "Misc/FrameValue.h"
 #include "UObject/Object.h"
 #include "UObject/WeakFieldPtr.h"

@@ -174,11 +174,6 @@ void FMDFastBindingFunctionWrapper::OnVariableRenamed(UClass* VariableClass, con
 }
 #endif
 
-bool FMDFastBindingFunctionWrapper::IsFunctionValidForWrapper(const UFunction* Func)
-{
-	return Func != nullptr && Func->HasAnyFunctionFlags(FUNC_BlueprintCallable) && !Func->HasMetaData(TEXT("DeprecatedFunction")) && !Func->HasMetaData(TEXT("Hidden"));
-}
-
 UObject* FMDFastBindingFunctionWrapper::GetFunctionOwner(UObject* SourceObject) const
 {
 	return OwnerGetter.IsBound() ? OwnerGetter.Execute(SourceObject) : nullptr;

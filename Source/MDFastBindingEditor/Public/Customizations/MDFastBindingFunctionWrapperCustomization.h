@@ -13,6 +13,8 @@ class FMDFastBindingFunctionWrapperCustomization : public IPropertyTypeCustomiza
 public:
 	static TSharedRef<IPropertyTypeCustomization> MakeInstance() { return MakeShared<FMDFastBindingFunctionWrapperCustomization>(); }
 
+	static bool IsFunctionValidForWrapper(const UFunction* Func);
+
 	virtual void CustomizeHeader(TSharedRef<IPropertyHandle> PropertyHandle, FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& CustomizationUtils) override;
 	virtual void CustomizeChildren(TSharedRef<IPropertyHandle> PropertyHandle, IDetailChildrenBuilder& ChildBuilder, IPropertyTypeCustomizationUtils& CustomizationUtils) override {}
 

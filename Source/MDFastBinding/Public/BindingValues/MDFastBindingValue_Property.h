@@ -16,9 +16,9 @@ public:
 	UMDFastBindingValue_Property();
 
 	virtual const FProperty* GetOutputProperty() override;
-	virtual bool DoesBindingItemDefaultToSelf(const FName& InItemName) const override;
 
 #if WITH_EDITORONLY_DATA
+	virtual bool DoesBindingItemDefaultToSelf(const FName& InItemName) const override;
 	virtual FText GetDisplayName() override;
 #endif
 #if WITH_EDITOR

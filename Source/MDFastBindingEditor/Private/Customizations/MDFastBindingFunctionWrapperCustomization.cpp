@@ -11,12 +11,17 @@
 
 #define LOCTEXT_NAMESPACE "MDFastBindingFunctionWrapperCustomization"
 
+bool FMDFastBindingFunctionWrapperCustomization::IsFunctionValidForWrapper(const UFunction* Func)
+{
+	return Func != nullptr && Func->HasAnyFunctionFlags(FUNC_BlueprintCallable) && !Func->HasMetaData(TEXT("DeprecatedFunction")) && !Func->HasMetaData(TEXT("Hidden"));
+}
+
 void FMDFastBindingFunctionWrapperCustomization::CustomizeHeader(TSharedRef<IPropertyHandle> PropertyHandle,
-                                                           FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& CustomizationUtils)
+                                                                 FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& CustomizationUtils)
 {
 	FunctionWrapperHandle = PropertyHandle;
 	FunctionWrapperMemberHandle = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FMDFastBindingFunctionWrapper, FunctionMember));
-	
+
 	HeaderRow.NameContent()
 	[
 		PropertyHandle->CreatePropertyNameWidget()
@@ -103,11 +108,11 @@ TSharedRef<SWidget> FMDFastBindingFunctionWrapperCustomization::BuildFunctionWid
 			.Text(LOCTEXT("NullFunctionName", "None"))
 			.ToolTipText(LOCTEXT("NullFunctionTooltip", "Clear the selection"));
 	}
-	
+
 	const FProperty* ReturnProp = nullptr;
 	TArray<const FProperty*> Params;
 	FMDFastBindingHelpers::SplitFunctionParamsAndReturnProp(Function, Params, ReturnProp);
-	
+
 	const UEdGraphSchema_K2* Schema = GetDefault<UEdGraphSchema_K2>();
 	FEdGraphPinType PinType;
 	Schema->ConvertPropertyToPinType(ReturnProp, PinType);
@@ -142,14 +147,14 @@ TSharedRef<SWidget> FMDFastBindingFunctionWrapperCustomization::BuildFunctionWid
 void FMDFastBindingFunctionWrapperCustomization::GatherPossibleFunctions()
 {
 	Functions.Empty();
-	
+
 	if (const FMDFastBindingFunctionWrapper* FunctionWrapper = ResolveFunctionWrapper())
 	{
 		if (const UClass* Class = FunctionWrapper->GetFunctionOwnerClass())
 		{
 			for (TFieldIterator<UFunction> It(Class); It; ++It)
 			{
-				if (FMDFastBindingFunctionWrapper::IsFunctionValidForWrapper(*It))
+				if (IsFunctionValidForWrapper(*It))
 				{
 					if (FunctionWrapper->FunctionFilter.IsBound())
 					{
@@ -161,13 +166,13 @@ void FMDFastBindingFunctionWrapperCustomization::GatherPossibleFunctions()
 							continue;
 						}
 					}
-					
+
 					Functions.Add(*It);
 				}
 			}
 		}
 	}
-	
+
 	Functions.Sort([](const UFunction& A, const UFunction& B)
 	{
 		return A.GetDisplayNameText().CompareTo(B.GetDisplayNameText()) < 0;
@@ -192,7 +197,7 @@ void FMDFastBindingFunctionWrapperCustomization::OnFunctionSelected(UFunction* F
 		{
 			FunctionWrapperHandle->NotifyPreChange();
 		}
-		
+
 		void* ValueData = nullptr;
 		if (FunctionWrapperMemberHandle->GetValueData(ValueData) == FPropertyAccess::Success)
 		{
@@ -206,7 +211,7 @@ void FMDFastBindingFunctionWrapperCustomization::OnFunctionSelected(UFunction* F
 				{
 					*MemberRef = {};
 				}
-				
+
 				MemberRef->bIsFunction = true;
 			}
 		}
