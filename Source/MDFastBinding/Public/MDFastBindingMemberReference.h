@@ -12,7 +12,9 @@ struct MDFASTBINDING_API FMDFastBindingMemberReference : public FMemberReference
 	GENERATED_BODY()
 
 public:
-	UPROPERTY()
+	void FixUpReference(UClass& OwnerClass) const;
+
+	UPROPERTY(SaveGame)
 	bool bIsFunction = false;
 
 };

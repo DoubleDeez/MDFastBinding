@@ -387,7 +387,7 @@ void UMDFastBindingObject::PostInitProperties()
 {
 	Super::PostInitProperties();
 
-	SetupBindingItems_Internal();
+	//SetupBindingItems_Internal();
 }
 
 FMDFastBindingItem& UMDFastBindingObject::EnsureBindingItemExists(const FName& ItemName, const FProperty* ItemProperty, const FText& ItemDescription, bool bIsOptional)

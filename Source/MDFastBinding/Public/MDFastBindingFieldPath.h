@@ -3,6 +3,7 @@
 #include "MDFastBindingMemberReference.h"
 #include "UObject/UnrealType.h"
 #include "UObject/WeakFieldPtr.h"
+
 #include "MDFastBindingFieldPath.generated.h"
 
 DECLARE_DELEGATE_RetVal_OneParam(UObject*, FMDGetFieldPathOwner, UObject*);
@@ -70,6 +71,10 @@ private:
 	void CleanupPropertyMemory();
 
 	void FixupFieldPath();
+
+#if WITH_EDITORONLY_DATA
+	uint64 LastFrameUpdatedPath = 0;
+#endif
 
 	TArray<FFieldVariant> CachedPath;
 	TMap<TWeakObjectPtr<const UFunction>, void*> FunctionMemory;

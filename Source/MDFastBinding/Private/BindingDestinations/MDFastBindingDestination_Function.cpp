@@ -92,11 +92,14 @@ void UMDFastBindingDestination_Function::SetupBindingItems()
 
 	for (const FProperty* Param : Params)
 	{
+		if (Param != nullptr)
+		{
 #if WITH_EDITORONLY_DATA
-		EnsureBindingItemExists(Param->GetFName(), Param, Param->GetToolTipText());
+			EnsureBindingItemExists(Param->GetFName(), Param, Param->GetToolTipText());
 #else
-		EnsureBindingItemExists(Param->GetFName(), Param, FText::GetEmpty());
+			EnsureBindingItemExists(Param->GetFName(), Param, FText::GetEmpty());
 #endif
+		}
 	}
 }
 
@@ -141,7 +144,6 @@ bool UMDFastBindingDestination_Function::IsBindingItemWorldContextObject(const F
 #endif
 
 #if WITH_EDITOR
-
 EDataValidationResult UMDFastBindingDestination_Function::IsDataValid(TArray<FText>& ValidationErrors)
 {
 	EDataValidationResult Result = Super::IsDataValid(ValidationErrors);

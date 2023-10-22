@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "MDFastBindingMemberReference.h"
+
 #include "MDFastBindingFunctionWrapper.generated.h"
 
 DECLARE_DELEGATE_RetVal_OneParam(UObject*, FMDGetFunctionOwner, UObject*);
@@ -64,7 +65,11 @@ public:
 
 private:
 	UPROPERTY(Transient)
-	UFunction* FunctionPtr = nullptr;
+	TObjectPtr<UFunction> FunctionPtr = nullptr;
+
+#if WITH_EDITORONLY_DATA
+	uint64 LastFrameFunctionUpdated = 0;
+#endif
 
 	TArray<const FProperty*> Params;
 

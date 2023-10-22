@@ -14,7 +14,7 @@ bool FMDFastBindingFieldPath::BuildPath()
 
 	CachedPath.Empty(FieldPathMembers.Num());
 
-	if (UStruct* OwnerStruct = GetPathOwnerStruct())
+	if (const UStruct* OwnerStruct = GetPathOwnerStruct())
 	{
 		for (const FMDFastBindingMemberReference& FieldPathMember : FieldPathMembers)
 		{
@@ -54,13 +54,25 @@ bool FMDFastBindingFieldPath::BuildPath()
 		}
 	}
 
-	return CachedPath.Num() > 0 && CachedPath.Num() == FieldPathMembers.Num();
+	const bool bIsPathValid = CachedPath.Num() > 0 && CachedPath.Num() == FieldPathMembers.Num();
+#if WITH_EDITORONLY_DATA
+	LastFrameUpdatedPath = bIsPathValid ? GFrameCounter : 0;
+#endif
+
+	if (!bIsPathValid)
+	{
+		CachedPath.Reset();
+	}
+
+	return bIsPathValid;
 }
 
 const TArray<FFieldVariant>& FMDFastBindingFieldPath::GetFieldPath()
 {
-#if !WITH_EDITOR
-	// No caching in editor, since the user could change the path
+#if WITH_EDITORONLY_DATA
+	// Only cached once per frame, since the user could change the path
+	if (LastFrameUpdatedPath != GFrameCounter)
+#else
 	if (CachedPath.Num() == 0)
 #endif
 	{
@@ -480,5 +492,47 @@ void FMDFastBindingFieldPath::FixupFieldPath()
 		FieldPath.Empty();
 	}
 
+	UStruct* OwnerStruct = GetPathOwnerStruct();
 
+	// Check if PathMember needs to be updated with a new owner, likely due to a reparented, duplicated BP, or changed/renamed property type
+	for (FMDFastBindingMemberReference& PathMember : FieldPathMembers)
+	{
+		if (OwnerStruct != nullptr)
+		{
+			if (UClass* OwnerClass = Cast<UClass>(OwnerStruct))
+			{
+				PathMember.FixUpReference(*OwnerClass);
+			}
+
+			const FProperty* NextProp = nullptr;
+			if (PathMember.bIsFunction)
+			{
+				const UFunction* Func = PathMember.ResolveMember<UFunction>();
+
+				TArray<const FProperty*> Params;
+				FMDFastBindingHelpers::SplitFunctionParamsAndReturnProp(Func, Params, NextProp);
+			}
+			else if (const FProperty* Prop = PathMember.ResolveMember<FProperty>())
+			{
+				NextProp = Prop;
+			}
+			else if (OwnerStruct != nullptr)
+			{
+				NextProp = OwnerStruct->FindPropertyByName(PathMember.GetMemberName());
+			}
+
+			if (const FObjectPropertyBase* ObjectProp = CastField<const FObjectPropertyBase>(NextProp))
+			{
+				OwnerStruct = ObjectProp->PropertyClass;
+			}
+			else if (const FStructProperty* StructProp = CastField<const FStructProperty>(NextProp))
+			{
+				OwnerStruct = StructProp->Struct;
+			}
+			else
+			{
+				OwnerStruct = nullptr;
+			}
+		}
+	}
 }

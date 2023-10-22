@@ -22,7 +22,12 @@ bool FMDFastBindingFunctionWrapper::BuildFunctionData()
 		FMDFastBindingHelpers::SplitFunctionParamsAndReturnProp(FunctionPtr, Params, ReturnProp);
 	}
 
-	return FunctionPtr != nullptr;
+	const bool bIsFuncValid = IsValid(FunctionPtr);
+#if WITH_EDITORONLY_DATA
+	LastFrameFunctionUpdated = bIsFuncValid ? GFrameCounter : 0;
+#endif
+
+	return bIsFuncValid;
 }
 
 UClass* FMDFastBindingFunctionWrapper::GetFunctionOwnerClass() const
@@ -32,7 +37,9 @@ UClass* FMDFastBindingFunctionWrapper::GetFunctionOwnerClass() const
 
 const TArray<const FProperty*>& FMDFastBindingFunctionWrapper::GetParams()
 {
-#if !WITH_EDITOR
+#if WITH_EDITORONLY_DATA
+	if (LastFrameFunctionUpdated != GFrameCounter)
+#else
 	if (FunctionPtr == nullptr)
 #endif
 	{
@@ -44,7 +51,9 @@ const TArray<const FProperty*>& FMDFastBindingFunctionWrapper::GetParams()
 
 const FProperty* FMDFastBindingFunctionWrapper::GetReturnProp()
 {
-#if !WITH_EDITOR
+#if WITH_EDITORONLY_DATA
+	if (LastFrameFunctionUpdated != GFrameCounter)
+#else
 	if (FunctionPtr == nullptr)
 #endif
 	{
@@ -56,7 +65,9 @@ const FProperty* FMDFastBindingFunctionWrapper::GetReturnProp()
 
 UFunction* FMDFastBindingFunctionWrapper::GetFunctionPtr()
 {
-#if !WITH_EDITOR
+#if WITH_EDITORONLY_DATA
+	if (LastFrameFunctionUpdated != GFrameCounter)
+#else
 	if (FunctionPtr == nullptr)
 #endif
 	{
@@ -68,7 +79,9 @@ UFunction* FMDFastBindingFunctionWrapper::GetFunctionPtr()
 
 TTuple<const FProperty*, void*> FMDFastBindingFunctionWrapper::CallFunction(UObject* SourceObject)
 {
-#if !WITH_EDITOR
+#if WITH_EDITORONLY_DATA
+	if (LastFrameFunctionUpdated != GFrameCounter)
+#else
 	if (FunctionPtr == nullptr)
 #endif
 	{
@@ -81,16 +94,6 @@ TTuple<const FProperty*, void*> FMDFastBindingFunctionWrapper::CallFunction(UObj
 	if (SourceObject == nullptr || FunctionPtr == nullptr || FunctionOwner == nullptr || FunctionMemory == nullptr)
 	{
 		return {};
-	}
-
-	if (!FunctionOwner->IsA(FunctionPtr->GetOwnerClass()))
-	{
-		// Function needs fixup, likely due to a reparented BP
-		FunctionPtr = FunctionOwner->GetClass()->FindFunctionByName(FunctionPtr->GetFName());
-		if (FunctionPtr == nullptr)
-		{
-			return {};
-		}
 	}
 
 	PopulateParams(SourceObject);
@@ -213,9 +216,9 @@ void FMDFastBindingFunctionWrapper::PopulateParams(UObject* SourceObject)
 
 void FMDFastBindingFunctionWrapper::FixupFunctionMember()
 {
-	if (FunctionMember.GetMemberName() == NAME_None && FunctionName != NAME_None)
+	if (UClass* OwnerClass = GetFunctionOwnerClass())
 	{
-		if (const UClass* OwnerClass = GetFunctionOwnerClass())
+		if (FunctionMember.GetMemberName() == NAME_None && FunctionName != NAME_None)
 		{
 			if (UFunction* Func = OwnerClass->FindFunctionByName(FunctionName))
 			{
@@ -224,5 +227,8 @@ void FMDFastBindingFunctionWrapper::FixupFunctionMember()
 				FunctionMember.bIsFunction = true;
 			}
 		}
+
+		// Check if FunctionMember needs to be updated with a new owner, likely due to a reparented or duplicated BP
+		FunctionMember.FixUpReference(*OwnerClass);
 	}
 }
