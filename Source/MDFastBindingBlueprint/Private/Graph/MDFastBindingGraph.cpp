@@ -24,12 +24,7 @@ void UMDFastBindingGraph::SetBinding(UMDFastBindingInstance* InBinding)
 	Nodes.Empty();
 	Binding = InBinding;
 
-	if (InBinding == nullptr)
-	{
-		return;
-	}
-
-	const TArray<UMDFastBindingObject*> Objects = Binding->GatherAllBindingObjects();
+	const TArray<UMDFastBindingObject*> Objects = IsValid(InBinding) ? InBinding->GatherAllBindingObjects() : TArray<UMDFastBindingObject*>{};
 	if (Objects.IsEmpty())
 	{
 		NotifyGraphChanged(FEdGraphEditAction(EEdGraphActionType::GRAPHACTION_Default, this, nullptr, false));

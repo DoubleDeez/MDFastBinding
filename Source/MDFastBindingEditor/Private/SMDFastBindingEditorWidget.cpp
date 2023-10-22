@@ -281,7 +281,7 @@ void SMDFastBindingEditorWidget::AssignBindingData(UBlueprint* BindingOwnerBP)
 
 void SMDFastBindingEditorWidget::SelectBinding(UMDFastBindingInstance* InBinding)
 {
-	if (!Bindings.Contains(InBinding))
+	if (IsValid(InBinding) && !Bindings.Contains(InBinding))
 	{
 		return;
 	}
