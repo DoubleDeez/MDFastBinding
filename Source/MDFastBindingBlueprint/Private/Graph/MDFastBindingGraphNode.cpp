@@ -9,6 +9,7 @@
 #include "Graph/SMDFastBindingGraphNodeWidget.h"
 #include "BindingDestinations/MDFastBindingDestination_Function.h"
 #include "BindingValues/MDFastBindingValue_Function.h"
+#include "Kismet2/BlueprintEditorUtils.h"
 #include "Styling/SlateStyleRegistry.h"
 
 #define LOCTEXT_NAMESPACE "MDFastBindingGraphNode"
@@ -141,6 +142,8 @@ void UMDFastBindingGraphNode::PinDefaultValueChanged(UEdGraphPin* Pin)
 			Item->DefaultObject = Pin->DefaultObject;
 			Item->DefaultString = Pin->DefaultValue;
 			Item->DefaultText = Pin->DefaultTextValue;
+
+			FBlueprintEditorUtils::MarkBlueprintAsModified(GetTypedOuter<UBlueprint>());
 			RefreshGraph();
 		}
 	}

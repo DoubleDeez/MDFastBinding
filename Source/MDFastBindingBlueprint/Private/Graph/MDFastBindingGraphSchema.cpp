@@ -1,7 +1,6 @@
 ﻿#include "Graph/MDFastBindingGraphSchema.h"
 
 #include "BlueprintConnectionDrawingPolicy.h"
-#include "Blueprint/UserWidget.h"
 #include "Blueprint/WidgetBlueprintGeneratedClass.h"
 #include "Blueprint/WidgetTree.h"
 #include "BindingDestinations/MDFastBindingDestinationBase.h"
@@ -18,6 +17,7 @@
 #include "Graph/MDFastBindingConnectionDrawingPolicy.h"
 #include "Graph/MDFastBindingGraph.h"
 #include "Graph/MDFastBindingGraphNode.h"
+#include "Kismet2/BlueprintEditorUtils.h"
 #include "MDFastBindingInstance.h"
 #include "ScopedTransaction.h"
 #include "Styling/SlateStyleRegistry.h"
@@ -139,6 +139,7 @@ UEdGraphNode* FMDFastBindingSchemaAction_CreateValue::PerformAction(UEdGraph* Pa
 					}
 				}
 
+				FBlueprintEditorUtils::MarkBlueprintAsModified(Graph->GetBlueprint());
 				return NewNode;
 			}
 		}
@@ -193,6 +194,7 @@ UEdGraphNode* FMDFastBindingSchemaAction_SetDestination::PerformAction(UEdGraph*
 					}
 				}
 
+				FBlueprintEditorUtils::MarkBlueprintAsModified(Graph->GetBlueprint());
 				return NewNode;
 			}
 		}

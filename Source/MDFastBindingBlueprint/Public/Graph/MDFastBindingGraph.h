@@ -32,6 +32,8 @@ public:
 
 	void ClearSelection();
 
+	UBlueprint* GetBlueprint() const;
+
 private:
 	TWeakObjectPtr<UMDFastBindingInstance> Binding;
 	TWeakObjectPtr<UMDFastBindingInstance> BindingBeingDebugged;

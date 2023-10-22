@@ -2,6 +2,7 @@
 
 #include "BindingValues/MDFastBindingValueBase.h"
 #include "EdGraph/EdGraphPin.h"
+#include "Engine/Blueprint.h"
 #include "GraphEditAction.h"
 #include "Graph/MDFastBindingGraphNode.h"
 #include "Graph/SMDFastBindingEditorGraphWidget.h"
@@ -119,4 +120,9 @@ void UMDFastBindingGraph::ClearSelection()
 	{
 		GraphWidgetPtr->ClearSelection();
 	}
+}
+
+UBlueprint* UMDFastBindingGraph::GetBlueprint() const
+{
+	return GetTypedOuter<UBlueprint>();
 }

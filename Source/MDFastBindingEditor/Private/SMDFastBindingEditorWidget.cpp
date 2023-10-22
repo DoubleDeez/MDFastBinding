@@ -20,6 +20,7 @@
 #include "SMDFastBindingInstanceRow.h"
 #include "WidgetBlueprint.h"
 #include "Blueprint/WidgetBlueprintGeneratedClass.h"
+#include "Kismet2/BlueprintEditorUtils.h"
 #include "Util/MDFastBindingEditorHelpers.h"
 #include "Widgets/Layout/SWidgetSwitcher.h"
 #include "Widgets/Input/SButton.h"
@@ -503,6 +504,7 @@ FReply SMDFastBindingEditorWidget::OnAddBinding()
 
 		if (UMDFastBindingInstance* Binding = Container->AddBinding())
 		{
+			FBlueprintEditorUtils::MarkBlueprintAsModified(GetBlueprint());
 			PopulateBindingsList();
 			SelectBinding(Binding);
 			BindingListView->SetSelection(SelectedBinding);
@@ -522,6 +524,7 @@ FReply SMDFastBindingEditorWidget::OnDuplicateBinding(TWeakObjectPtr<UMDFastBind
 
 		if (UMDFastBindingInstance* NewBindingPtr = Container->DuplicateBinding(Binding.Get()))
 		{
+			FBlueprintEditorUtils::MarkBlueprintAsModified(GetBlueprint());
 			PopulateBindingsList();
 			SelectBinding(NewBindingPtr);
 			BindingListView->SetSelection(SelectedBinding);
@@ -543,6 +546,7 @@ FReply SMDFastBindingEditorWidget::OnDeleteBinding(TWeakObjectPtr<UMDFastBinding
 
 			if (Container->DeleteBinding(Binding.Get()))
 			{
+				FBlueprintEditorUtils::MarkBlueprintAsModified(GetBlueprint());
 				PopulateBindingsList();
 				BindingListView->SetSelection(SelectedBinding);
 			}
@@ -555,6 +559,8 @@ FReply SMDFastBindingEditorWidget::OnDeleteBinding(TWeakObjectPtr<UMDFastBinding
 void SMDFastBindingEditorWidget::OnDetailsPanelPropertyChanged(const FPropertyChangedEvent& Event)
 {
 	RefreshGraph();
+
+	FBlueprintEditorUtils::MarkBlueprintAsModified(GetBlueprint());
 }
 
 void SMDFastBindingEditorWidget::OnBlueprintCompiled(UBlueprint* Blueprint)
