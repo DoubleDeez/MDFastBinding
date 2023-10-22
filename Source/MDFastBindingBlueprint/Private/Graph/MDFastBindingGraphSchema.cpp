@@ -503,4 +503,19 @@ void UMDFastBindingGraphSchema::GetGraphDisplayInformation(const UEdGraph& Graph
 	}
 }
 
+void UMDFastBindingGraphSchema::TrySetDefaultValue(UEdGraphPin& Pin, const FString& NewDefaultValue, bool bMarkAsModified) const
+{
+	GetDefault<UEdGraphSchema_K2>()->TrySetDefaultValue(Pin, NewDefaultValue, bMarkAsModified);
+}
+
+void UMDFastBindingGraphSchema::TrySetDefaultObject(UEdGraphPin& Pin, UObject* NewDefaultObject, bool bMarkAsModified) const
+{
+	GetDefault<UEdGraphSchema_K2>()->TrySetDefaultObject(Pin, NewDefaultObject, bMarkAsModified);
+}
+
+void UMDFastBindingGraphSchema::TrySetDefaultText(UEdGraphPin& InPin, const FText& InNewDefaultText, bool bMarkAsModified) const
+{
+	GetDefault<UEdGraphSchema_K2>()->TrySetDefaultText(InPin, InNewDefaultText, bMarkAsModified);
+}
+
 #undef LOCTEXT_NAMESPACE
