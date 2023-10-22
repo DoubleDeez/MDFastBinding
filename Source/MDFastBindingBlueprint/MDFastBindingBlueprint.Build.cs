@@ -20,6 +20,10 @@ public class MDFastBindingBlueprint : ModuleRules
         PublicDependencyModuleNames.Add("FieldNotification");
 #endif
 
+#if UE_5_4_OR_LATER
+		PublicDefinitions.Add("WITH_FASTBINDING_DIFFS=1");
+#endif
+
         PrivateDependencyModuleNames.AddRange(
             new string[]
             {
