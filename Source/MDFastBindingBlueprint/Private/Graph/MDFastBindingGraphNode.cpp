@@ -159,6 +159,22 @@ void UMDFastBindingGraphNode::PrepareForCopying()
 	}
 }
 
+FString UMDFastBindingGraphNode::GetPinMetaData(FName InPinName, FName InKey)
+{
+	if (const UMDFastBindingObject* Object = BindingObject.Get())
+	{
+		if (const FMDFastBindingItem* Item = Object->FindBindingItem(InPinName))
+		{
+			if (const FProperty* Prop = Item->ItemProperty.Get())
+			{
+				return Prop->GetMetaData(InKey);
+			}
+		}
+	}
+
+	return Super::GetPinMetaData(InPinName, InKey);
+}
+
 void UMDFastBindingGraphNode::CleanUpCopying()
 {
 	CopiedObject = nullptr;

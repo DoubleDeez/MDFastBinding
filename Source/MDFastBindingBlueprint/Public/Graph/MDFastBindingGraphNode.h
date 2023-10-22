@@ -39,6 +39,8 @@ public:
 
 	virtual void PrepareForCopying() override;
 
+	virtual FString GetPinMetaData(FName InPinName, FName InKey) override;
+
 	void CleanUpCopying();
 	void CleanUpPasting();
 
