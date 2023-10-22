@@ -202,7 +202,6 @@ public:
 
 protected:
 	virtual void PostLoad() override;
-	virtual void PostInitProperties() override;
 
 	virtual bool CheckNeedsUpdate() const;
 

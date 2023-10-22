@@ -56,7 +56,7 @@ bool FMDFastBindingFieldPath::BuildPath()
 
 	const bool bIsPathValid = CachedPath.Num() > 0 && CachedPath.Num() == FieldPathMembers.Num();
 #if WITH_EDITORONLY_DATA
-	LastFrameUpdatedPath = bIsPathValid ? GFrameCounter : 0;
+	LastFrameUpdatedPath = bIsPathValid ? GFrameCounter : TOptional<uint64>();
 #endif
 
 	if (!bIsPathValid)
@@ -71,7 +71,7 @@ const TArray<FFieldVariant>& FMDFastBindingFieldPath::GetFieldPath()
 {
 #if WITH_EDITORONLY_DATA
 	// Only cached once per frame, since the user could change the path
-	if (LastFrameUpdatedPath != GFrameCounter || LastFrameUpdatedPath == 0)
+	if (!LastFrameUpdatedPath.IsSet() || LastFrameUpdatedPath.GetValue() != GFrameCounter)
 #else
 	if (CachedPath.Num() == 0)
 #endif

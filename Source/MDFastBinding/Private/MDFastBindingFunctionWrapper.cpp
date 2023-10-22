@@ -24,7 +24,7 @@ bool FMDFastBindingFunctionWrapper::BuildFunctionData()
 
 	const bool bIsFuncValid = IsValid(FunctionPtr);
 #if WITH_EDITORONLY_DATA
-	LastFrameFunctionUpdated = bIsFuncValid ? GFrameCounter : 0;
+	LastFrameFunctionUpdated = bIsFuncValid ? GFrameCounter : TOptional<uint64>();
 #endif
 
 	return bIsFuncValid;
@@ -38,7 +38,7 @@ UClass* FMDFastBindingFunctionWrapper::GetFunctionOwnerClass() const
 const TArray<const FProperty*>& FMDFastBindingFunctionWrapper::GetParams()
 {
 #if WITH_EDITORONLY_DATA
-	if (LastFrameFunctionUpdated != GFrameCounter)
+	if (!LastFrameFunctionUpdated.IsSet() || LastFrameFunctionUpdated.GetValue() != GFrameCounter)
 #else
 	if (FunctionPtr == nullptr)
 #endif
@@ -52,7 +52,7 @@ const TArray<const FProperty*>& FMDFastBindingFunctionWrapper::GetParams()
 const FProperty* FMDFastBindingFunctionWrapper::GetReturnProp()
 {
 #if WITH_EDITORONLY_DATA
-	if (LastFrameFunctionUpdated != GFrameCounter || LastFrameFunctionUpdated == 0)
+	if (!LastFrameFunctionUpdated.IsSet() || LastFrameFunctionUpdated.GetValue() != GFrameCounter)
 #else
 	if (FunctionPtr == nullptr)
 #endif
@@ -66,7 +66,7 @@ const FProperty* FMDFastBindingFunctionWrapper::GetReturnProp()
 UFunction* FMDFastBindingFunctionWrapper::GetFunctionPtr()
 {
 #if WITH_EDITORONLY_DATA
-	if (LastFrameFunctionUpdated != GFrameCounter)
+	if (!LastFrameFunctionUpdated.IsSet() || LastFrameFunctionUpdated.GetValue() != GFrameCounter)
 #else
 	if (FunctionPtr == nullptr)
 #endif
@@ -80,7 +80,7 @@ UFunction* FMDFastBindingFunctionWrapper::GetFunctionPtr()
 TTuple<const FProperty*, void*> FMDFastBindingFunctionWrapper::CallFunction(UObject* SourceObject)
 {
 #if WITH_EDITORONLY_DATA
-	if (LastFrameFunctionUpdated != GFrameCounter)
+	if (!LastFrameFunctionUpdated.IsSet() || LastFrameFunctionUpdated.GetValue() != GFrameCounter)
 #else
 	if (FunctionPtr == nullptr)
 #endif

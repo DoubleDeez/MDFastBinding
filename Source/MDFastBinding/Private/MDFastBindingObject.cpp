@@ -383,13 +383,6 @@ void UMDFastBindingObject::PostLoad()
 	SetupBindingItems_Internal();
 }
 
-void UMDFastBindingObject::PostInitProperties()
-{
-	Super::PostInitProperties();
-
-	//SetupBindingItems_Internal();
-}
-
 FMDFastBindingItem& UMDFastBindingObject::EnsureBindingItemExists(const FName& ItemName, const FProperty* ItemProperty, const FText& ItemDescription, bool bIsOptional)
 {
 	FMDFastBindingItem* BindingItem = BindingItems.FindByKey(ItemName);

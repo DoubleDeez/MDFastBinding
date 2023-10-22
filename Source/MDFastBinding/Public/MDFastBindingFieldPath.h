@@ -73,7 +73,7 @@ private:
 	void FixupFieldPath();
 
 #if WITH_EDITORONLY_DATA
-	uint64 LastFrameUpdatedPath = 0;
+	TOptional<uint64> LastFrameUpdatedPath;
 #endif
 
 	TArray<FFieldVariant> CachedPath;

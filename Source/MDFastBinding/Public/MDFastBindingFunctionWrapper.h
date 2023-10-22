@@ -66,7 +66,7 @@ private:
 	TObjectPtr<UFunction> FunctionPtr = nullptr;
 
 #if WITH_EDITORONLY_DATA
-	uint64 LastFrameFunctionUpdated = 0;
+	TOptional<uint64> LastFrameFunctionUpdated;
 #endif
 
 	TArray<const FProperty*> Params;
