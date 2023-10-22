@@ -71,7 +71,7 @@ const TArray<FFieldVariant>& FMDFastBindingFieldPath::GetFieldPath()
 {
 #if WITH_EDITORONLY_DATA
 	// Only cached once per frame, since the user could change the path
-	if (LastFrameUpdatedPath != GFrameCounter)
+	if (LastFrameUpdatedPath != GFrameCounter || LastFrameUpdatedPath == 0)
 #else
 	if (CachedPath.Num() == 0)
 #endif

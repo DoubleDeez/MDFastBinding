@@ -52,7 +52,7 @@ const TArray<const FProperty*>& FMDFastBindingFunctionWrapper::GetParams()
 const FProperty* FMDFastBindingFunctionWrapper::GetReturnProp()
 {
 #if WITH_EDITORONLY_DATA
-	if (LastFrameFunctionUpdated != GFrameCounter)
+	if (LastFrameFunctionUpdated != GFrameCounter || LastFrameFunctionUpdated == 0)
 #else
 	if (FunctionPtr == nullptr)
 #endif
