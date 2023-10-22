@@ -74,6 +74,14 @@ FString FMDFastBindingHelpers::PropertyToString(const FProperty& Prop)
 		return FString::Printf(TEXT("%s<%s, %s>"), *Prop.GetCPPType(), *PropertyToString(*MapProp->KeyProp), *PropertyToString(*MapProp->ValueProp));
 	}
 
+	if (const FObjectPropertyBase* ObjectProp = CastField<const FObjectPropertyBase>(&Prop))
+	{
+		if (ObjectProp->PropertyClass == nullptr)
+		{
+			return TEXT("INVALID");
+		}
+	}
+
 	return Prop.GetCPPType();
 }
 

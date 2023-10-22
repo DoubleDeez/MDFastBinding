@@ -14,11 +14,12 @@ namespace MDFastBindingPropertySetter_Objects_Private
 
 		UObject* ObjectValue = (SrcObjProp != nullptr) ? SrcObjProp->GetObjectPropertyValue(SourceValuePtr) : SrcInterfaceProp->GetPropertyValue(SourceValuePtr).GetObject();
 		const UClass* SourcePropClass = (SrcObjProp != nullptr) ? SrcObjProp->PropertyClass : SrcInterfaceProp->InterfaceClass;
-		const UClass* DestinationClass = (DestObjProp != nullptr) ? DestObjProp->PropertyClass : DestInterfaceProp->InterfaceClass;
+		UClass* DestinationClass = (DestObjProp != nullptr) ? DestObjProp->PropertyClass : DestInterfaceProp->InterfaceClass;
 
 		// Check if the declared types are compatible, if not, check if the actual type is compatible
 		const bool bCanAssign = (SourcePropClass->IsChildOf(DestinationClass))
-			|| (ObjectValue != nullptr && ObjectValue->IsA(DestinationClass));
+			|| (ObjectValue != nullptr && ObjectValue->IsA(DestinationClass))
+			|| (ObjectValue != nullptr && ObjectValue->GetClass()->ImplementsInterface(DestinationClass));
 
 		if (bCanAssign)
 		{
@@ -50,14 +51,13 @@ namespace MDFastBindingPropertySetter_Objects_Private
 			}
 			else if (DestInterfaceProp != nullptr)
 			{
-				const FScriptInterface& Interface = SrcInterfaceProp->GetPropertyValue(SourceValuePtr);
 				if constexpr (bIsDestinationAContainer)
 				{
-					DestInterfaceProp->SetPropertyValue_InContainer(DestinationPtr, FScriptInterface(ObjectValue, Interface.GetInterface()));
+					DestInterfaceProp->SetPropertyValue_InContainer(DestinationPtr, FScriptInterface(ObjectValue, ObjectValue->GetInterfaceAddress(DestinationClass)));
 				}
 				else
 				{
-					DestInterfaceProp->SetPropertyValue(DestinationPtr, FScriptInterface(ObjectValue, Interface.GetInterface()));
+					DestInterfaceProp->SetPropertyValue(DestinationPtr, FScriptInterface(ObjectValue, ObjectValue->GetInterfaceAddress(DestinationClass)));
 				}
 			}
 		}
@@ -99,6 +99,21 @@ bool FMDFastBindingPropertySetter_Objects::CanSetProperty(const FProperty& Desti
 	const FInterfaceProperty* DestInterfaceProp = CastField<const FInterfaceProperty>(&DestinationProp);
 	const FInterfaceProperty* SrcInterfaceProp = CastField<const FInterfaceProperty>(&SourceProp);
 
+	if ((DestObjProp == nullptr && DestInterfaceProp == nullptr) || (SrcObjProp == nullptr && SrcInterfaceProp == nullptr))
+	{
+		return false;
+	}
+
+	if ((SrcObjProp != nullptr && SrcObjProp->PropertyClass == nullptr) || (DestObjProp != nullptr && DestObjProp->PropertyClass == nullptr))
+	{
+		return false;
+	}
+
+	if ((SrcInterfaceProp != nullptr && SrcInterfaceProp->InterfaceClass == nullptr) || (DestInterfaceProp != nullptr && DestInterfaceProp->InterfaceClass == nullptr))
+	{
+		return false;
+	}
+
 	if (SrcObjProp != nullptr && DestObjProp != nullptr)
 	{
 		if (!SrcObjProp->PropertyClass->IsChildOf(DestObjProp->PropertyClass) && !DestObjProp->PropertyClass->IsChildOf(SrcObjProp->PropertyClass))
@@ -107,5 +122,5 @@ bool FMDFastBindingPropertySetter_Objects::CanSetProperty(const FProperty& Desti
 		}
 	}
 
-	return (DestObjProp != nullptr || DestInterfaceProp != nullptr) && (SrcObjProp != nullptr || SrcInterfaceProp != nullptr);
+	return true;
 }

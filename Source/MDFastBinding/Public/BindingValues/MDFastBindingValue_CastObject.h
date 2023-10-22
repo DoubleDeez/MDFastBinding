@@ -1,6 +1,8 @@
 ﻿#pragma once
 
 #include "MDFastBindingValueBase.h"
+#include "UObject/Interface.h"
+
 #include "MDFastBindingValue_CastObject.generated.h"
 
 /**
@@ -23,11 +25,17 @@ protected:
 	virtual void SetupBindingItems() override;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Binding", meta = (AllowAbstract))
-	TSubclassOf<UObject> ObjectClass;
+	TSubclassOf<UObject> ObjectClass = UObject::StaticClass();
 
 private:
 	UPROPERTY(Transient)
-	UObject* ResultObject = nullptr;
+	TObjectPtr<UObject> ObjectField = nullptr;
 
-	const FProperty* ObjectProp = nullptr;
+	UPROPERTY(Transient)
+	TObjectPtr<UObject> ResultObject = nullptr;
+	UPROPERTY(Transient)
+	TScriptInterface<UInterface> ResultInterfaceField;
+	FScriptInterface ResultInterface;
+
+	const FProperty* ResultProp = nullptr;
 };
