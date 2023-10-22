@@ -98,5 +98,14 @@ bool FMDFastBindingPropertySetter_Objects::CanSetProperty(const FProperty& Desti
 	const FObjectPropertyBase* SrcObjProp = CastField<const FObjectPropertyBase>(&SourceProp);
 	const FInterfaceProperty* DestInterfaceProp = CastField<const FInterfaceProperty>(&DestinationProp);
 	const FInterfaceProperty* SrcInterfaceProp = CastField<const FInterfaceProperty>(&SourceProp);
+
+	if (SrcObjProp != nullptr && DestObjProp != nullptr)
+	{
+		if (!SrcObjProp->PropertyClass->IsChildOf(DestObjProp->PropertyClass) && !DestObjProp->PropertyClass->IsChildOf(SrcObjProp->PropertyClass))
+		{
+			return false;
+		}
+	}
+
 	return (DestObjProp != nullptr || DestInterfaceProp != nullptr) && (SrcObjProp != nullptr || SrcInterfaceProp != nullptr);
 }

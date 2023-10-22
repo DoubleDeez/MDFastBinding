@@ -116,6 +116,7 @@ UEdGraphNode* FMDFastBindingSchemaAction_CreateValue::PerformAction(UEdGraph* Pa
 		FromBindingObject->Modify();
 		if (UMDFastBindingValueBase* NewValue = FromBindingObject->SetBindingItem(FromPin->GetFName(), ValueClass))
 		{
+			FBlueprintEditorUtils::MarkBlueprintAsModified(Graph->GetBlueprint());
 			return InitValueAndNode(NewValue);
 		}
 	}
@@ -311,6 +312,7 @@ void UMDFastBindingGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSend
 	{
 		if (UMDFastBindingGraph* Graph = Cast<UMDFastBindingGraph>(TargetPin.GetOwningNode()->GetGraph()))
 		{
+			FBlueprintEditorUtils::MarkBlueprintAsModified(Graph->GetBlueprint());
 			Graph->RefreshGraph();
 		}
 	}
@@ -398,6 +400,8 @@ bool UMDFastBindingGraphSchema::TryCreateConnection(UEdGraphPin* A, UEdGraphPin*
 				}
 			}
 		}
+
+		FBlueprintEditorUtils::MarkBlueprintAsModified(InputNode->GetTypedOuter<UBlueprint>());
 
 		if (UMDFastBindingGraph* Graph = Cast<UMDFastBindingGraph>(InputNode->GetGraph()))
 		{
