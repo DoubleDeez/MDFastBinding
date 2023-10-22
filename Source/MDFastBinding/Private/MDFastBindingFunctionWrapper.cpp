@@ -15,7 +15,7 @@ FMDFastBindingFunctionWrapper::~FMDFastBindingFunctionWrapper()
 bool FMDFastBindingFunctionWrapper::BuildFunctionData()
 {
 	FixupFunctionMember();
-	
+
 	FunctionPtr = FunctionMember.ResolveMember<UFunction>();
 	if (FunctionPtr != nullptr)
 	{
@@ -38,7 +38,7 @@ const TArray<const FProperty*>& FMDFastBindingFunctionWrapper::GetParams()
 	{
 		BuildFunctionData();
 	}
-	
+
 	return Params;
 }
 
@@ -50,7 +50,7 @@ const FProperty* FMDFastBindingFunctionWrapper::GetReturnProp()
 	{
 		BuildFunctionData();
 	}
-	
+
 	return ReturnProp;
 }
 
@@ -62,7 +62,7 @@ UFunction* FMDFastBindingFunctionWrapper::GetFunctionPtr()
 	{
 		BuildFunctionData();
 	}
-	
+
 	return FunctionPtr;
 }
 
@@ -76,13 +76,13 @@ TTuple<const FProperty*, void*> FMDFastBindingFunctionWrapper::CallFunction(UObj
 	}
 
 	InitFunctionMemory();
-		
+
 	UObject* FunctionOwner = GetFunctionOwner(SourceObject);
 	if (SourceObject == nullptr || FunctionPtr == nullptr || FunctionOwner == nullptr || FunctionMemory == nullptr)
 	{
 		return {};
 	}
-	
+
 	if (!FunctionOwner->IsA(FunctionPtr->GetOwnerClass()))
 	{
 		// Function needs fixup, likely due to a reparented BP
@@ -99,7 +99,7 @@ TTuple<const FProperty*, void*> FMDFastBindingFunctionWrapper::CallFunction(UObj
 	{
 		return {};
 	}
-	
+
 	FunctionOwner->ProcessEvent(FunctionPtr, FunctionMemory);
 
 	if (ReturnProp != nullptr)
@@ -149,7 +149,7 @@ FString FMDFastBindingFunctionWrapper::FunctionToString_Internal(UFunction* Func
 		}
 	}
 
-	const FString ReturnString = ReturnProp != nullptr ? FMDFastBindingHelpers::PropertyToString(*ReturnProp) : TEXT("void"); 
+	const FString ReturnString = ReturnProp != nullptr ? FMDFastBindingHelpers::PropertyToString(*ReturnProp) : TEXT("void");
 
 	return FString::Printf(TEXT("%s %s(%s)"), *ReturnString, *Func->GetFName().ToString(), *ParamString);
 }
@@ -173,7 +173,7 @@ void FMDFastBindingFunctionWrapper::OnVariableRenamed(UClass* VariableClass, con
 
 bool FMDFastBindingFunctionWrapper::IsFunctionValidForWrapper(const UFunction* Func)
 {
-	return Func != nullptr && Func->HasAnyFunctionFlags(FUNC_BlueprintCallable);
+	return Func != nullptr && Func->HasAnyFunctionFlags(FUNC_BlueprintCallable) && !Func->HasMetaData(TEXT("DeprecatedFunction")) && !Func->HasMetaData(TEXT("Hidden"));
 }
 
 UObject* FMDFastBindingFunctionWrapper::GetFunctionOwner(UObject* SourceObject) const
@@ -187,7 +187,7 @@ void FMDFastBindingFunctionWrapper::InitFunctionMemory()
 	{
 		TArray<const FProperty*> AllParams;
 		FMDFastBindingHelpers::GetFunctionParamProps(FunctionPtr, AllParams);
-		
+
 		for (const FProperty* Param : AllParams)
 		{
 			if (FunctionMemory == nullptr)

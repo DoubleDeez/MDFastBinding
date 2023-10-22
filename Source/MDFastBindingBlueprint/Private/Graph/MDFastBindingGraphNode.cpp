@@ -9,7 +9,9 @@
 #include "Graph/SMDFastBindingGraphNodeWidget.h"
 #include "BindingDestinations/MDFastBindingDestination_Function.h"
 #include "BindingValues/MDFastBindingValue_Function.h"
+#include "K2Node_CallFunction.h"
 #include "Kismet2/BlueprintEditorUtils.h"
+#include "MDFastBindingHelpers.h"
 #include "Styling/SlateStyleRegistry.h"
 
 #define LOCTEXT_NAMESPACE "MDFastBindingGraphNode"
@@ -175,6 +177,11 @@ FString UMDFastBindingGraphNode::GetPinMetaData(FName InPinName, FName InKey)
 	return Super::GetPinMetaData(InPinName, InKey);
 }
 
+FText UMDFastBindingGraphNode::GetPinDisplayName(const UEdGraphPin* Pin) const
+{
+	return GetDefault<UEdGraphSchema_K2>()->GetPinDisplayName(Pin);
+}
+
 void UMDFastBindingGraphNode::CleanUpCopying()
 {
 	CopiedObject = nullptr;
@@ -293,11 +300,23 @@ void UMDFastBindingGraphNode::RefreshGraph()
 	}
 }
 
+UBlueprint* UMDFastBindingGraphNode::GetBlueprint() const
+{
+	if (const UMDFastBindingGraph* MDGraph = Cast<UMDFastBindingGraph>(GetGraph()))
+	{
+		return MDGraph->GetBlueprint();
+	}
+
+	return nullptr;
+}
+
 void UMDFastBindingGraphNode::AllocateDefaultPins()
 {
 	if (UMDFastBindingObject* Object = BindingObject.Get())
 	{
 		Object->SetupBindingItems_Internal();
+
+		UBlueprint* Blueprint = GetBlueprint();
 
 		UFunction* Function = nullptr;
 		if (UMDFastBindingDestination_Function* DestFunc = Cast<UMDFastBindingDestination_Function>(BindingObject))
@@ -308,6 +327,33 @@ void UMDFastBindingGraphNode::AllocateDefaultPins()
 		{
 			Function = ValueFunc->GetFunction();
 		}
+
+		auto SetupPinTextData = [this, Function](UEdGraphPin* Pin, const FProperty* ItemProp)
+		{
+			if (Pin == nullptr || ItemProp == nullptr)
+			{
+				return;
+			}
+
+			Pin->PinFriendlyName = ItemProp->HasMetaData(FBlueprintMetadata::MD_DisplayName)
+				? FText::FromString(ItemProp->GetMetaData(FBlueprintMetadata::MD_DisplayName))
+				: FText::GetEmpty();
+
+			if (IsValid(Function))
+			{
+				// HACK - Temporarily swap our schema since GeneratePinTooltipFromFunction _needlessly_ ensures if it's not the K2 Schema
+				if (UMDFastBindingGraph* MDGraph = Cast<UMDFastBindingGraph>(GetGraph()))
+				{
+					TGuardValue<TSubclassOf<UEdGraphSchema>> SchemaGuard(MDGraph->Schema, UEdGraphSchema_K2::StaticClass());
+					UK2Node_CallFunction::GeneratePinTooltipFromFunction(*Pin, Function);
+				}
+			}
+			else
+			{
+				static const FText PinToolTipFormat = LOCTEXT("PinToolTipFormat", "{0} ({1}) \n{2}");
+				Pin->PinToolTip = FText::Format(PinToolTipFormat, ItemProp->GetDisplayNameText(), FText::FromString(FMDFastBindingHelpers::PropertyToString(*ItemProp)), ItemProp->GetToolTipText()).ToString();
+			}
+		};
 
 		for (FMDFastBindingItem& Item : Object->GetBindingItems())
 		{
@@ -327,7 +373,11 @@ void UMDFastBindingGraphNode::AllocateDefaultPins()
 
 			if (Pin != nullptr)
 			{
-				Pin->PinToolTip = Item.ToolTip.ToString();
+				if (Item.bIsWorldContextPin)
+				{
+					Pin->bHidden = !(Blueprint && Blueprint->ParentClass && Blueprint->ParentClass->HasMetaDataHierarchical(FBlueprintMetadata::MD_ShowWorldContextPin));
+					Pin->bNotConnectable = Pin->bHidden;
+				}
 
 				if (Item.HasValue())
 				{
@@ -371,6 +421,8 @@ void UMDFastBindingGraphNode::AllocateDefaultPins()
 					}
 				}
 			}
+
+			SetupPinTextData(Pin, ItemProp);
 		}
 
 		if (UMDFastBindingValueBase* ValueObject = Cast<UMDFastBindingValueBase>(Object))
@@ -379,7 +431,8 @@ void UMDFastBindingGraphNode::AllocateDefaultPins()
 			{
 				FEdGraphPinType OutputPinType;
 				GetDefault<UEdGraphSchema_K2>()->ConvertPropertyToPinType(OutputProp, OutputPinType);
-				CreatePin(EGPD_Output, OutputPinType, OutputPinName);
+				UEdGraphPin* Pin = CreatePin(EGPD_Output, OutputPinType, OutputPinName);
+				SetupPinTextData(Pin, OutputProp);
 			}
 			else
 			{

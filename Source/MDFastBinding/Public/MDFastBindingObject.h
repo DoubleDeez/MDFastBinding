@@ -37,7 +37,7 @@ public:
 	FName ItemName = NAME_None;
 
 	UPROPERTY(EditDefaultsOnly, Instanced, Category = "Bindings")
-	UMDFastBindingValueBase* Value = nullptr;
+	TObjectPtr<UMDFastBindingValueBase> Value = nullptr;
 
 	UPROPERTY()
 	FString DefaultString;
@@ -46,7 +46,7 @@ public:
 	FText DefaultText;
 
 	UPROPERTY()
-	UObject* DefaultObject = nullptr;
+	TObjectPtr<UObject> DefaultObject = nullptr;
 
 	UPROPERTY()
 	int32 ExtendablePinListIndex = INDEX_NONE;
@@ -56,6 +56,9 @@ public:
 
 	UPROPERTY()
 	bool bIsSelfPin = false;
+
+	UPROPERTY()
+	bool bIsWorldContextPin = false;
 
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(Transient)
@@ -90,6 +93,7 @@ public:
 	bool HasRetrievedDefaultValue() const { return bHasRetrievedDefaultValue; }
 
 	bool IsSelfPin() const { return bIsSelfPin; }
+	bool IsWorldContextPin() const { return bIsWorldContextPin; }
 
 	// Resolves wildcard binding items (where ItemProperty is null, the output property of Value is used instead)
 	const FProperty* ResolveOutputProperty() const;
@@ -118,8 +122,6 @@ public:
 
 	void SetupBindingItems_Internal();
 
-	virtual bool DoesBindingItemDefaultToSelf(const FName& InItemName) const { return false; }
-
 	UMDFastBindingInstance* GetOuterBinding() const;
 
 	virtual bool HasUserExtendablePinList() const { return false; }
@@ -142,6 +144,9 @@ public:
 
 // Editor only operations
 #if WITH_EDITORONLY_DATA
+	virtual bool DoesBindingItemDefaultToSelf(const FName& InItemName) const { return false; }
+	virtual bool IsBindingItemWorldContextObject(const FName& InItemName) const { return false; }
+
 	UPROPERTY()
 	FIntPoint NodePos = FIntPoint::ZeroValue;
 
@@ -177,11 +182,10 @@ public:
 
 private:
 	UMDFastBindingValueBase* SetBindingItem_Internal(const FName& ItemName, UMDFastBindingValueBase* InValue);
-
-public:
 #endif
 
 #if WITH_EDITOR
+public:
 	virtual EDataValidationResult IsDataValid(TArray<FText>& ValidationErrors) override;
 
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
@@ -205,8 +209,8 @@ protected:
 
 	virtual void SetupExtendablePinBindingItem(int32 ItemIndex) {}
 
-	void EnsureBindingItemExists(const FName& ItemName, const FProperty* ItemProperty, const FText& ItemDescription, bool bIsOptional = false);
-	void EnsureExtendableBindingItemExists(const FName& ItemName, const FProperty* ItemProperty, const FText& ItemDescription, int32 ItemIndex, bool bIsOptional = false);
+	FMDFastBindingItem& EnsureBindingItemExists(const FName& ItemName, const FProperty* ItemProperty, const FText& ItemDescription, bool bIsOptional = false);
+	FMDFastBindingItem& EnsureExtendableBindingItemExists(const FName& ItemName, const FProperty* ItemProperty, const FText& ItemDescription, int32 ItemIndex, bool bIsOptional = false);
 
 	const FProperty* ResolveBindingItemProperty(const FName& Name) const;
 	const FProperty* GetBindingItemValueProperty(const FName& Name) const;

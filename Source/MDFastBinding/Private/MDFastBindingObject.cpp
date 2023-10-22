@@ -41,12 +41,6 @@ TTuple<const FProperty*, void*> FMDFastBindingItem::GetValue(UObject* SourceObje
 		return Result;
 	}
 
-	if (IsSelfPin())
-	{
-		// Self pins can't have defaults
-		return {};
-	}
-
 	const FProperty* ItemProp = ItemProperty.Get();
 	if (ItemProp == nullptr)
 	{
@@ -55,6 +49,16 @@ TTuple<const FProperty*, void*> FMDFastBindingItem::GetValue(UObject* SourceObje
 
 	if (AllocatedDefaultValue != nullptr)
 	{
+		return TTuple<const FProperty*, void*>{ ItemProp, AllocatedDefaultValue };
+	}
+
+	if (IsSelfPin() || IsWorldContextPin())
+	{
+		bHasRetrievedDefaultValue = true;
+		UObject** SourceObjectPtr = &SourceObject;
+		AllocatedDefaultValue = FMemory::Malloc(ItemProp->GetSize(), ItemProp->GetMinAlignment());
+		ItemProp->InitializeValue(AllocatedDefaultValue);
+		ItemProp->CopyCompleteValue(AllocatedDefaultValue, SourceObjectPtr);
 		return TTuple<const FProperty*, void*>{ ItemProp, AllocatedDefaultValue };
 	}
 
@@ -261,7 +265,7 @@ bool UMDFastBindingObject::CheckNeedsUpdate() const
 		{
 			return true;
 		}
-		else if (Item.Value == nullptr && !Item.HasRetrievedDefaultValue() && !Item.IsSelfPin())
+		else if (Item.Value == nullptr && !Item.HasRetrievedDefaultValue())
 		{
 			return true;
 		}
@@ -386,7 +390,7 @@ void UMDFastBindingObject::PostInitProperties()
 	SetupBindingItems_Internal();
 }
 
-void UMDFastBindingObject::EnsureBindingItemExists(const FName& ItemName, const FProperty* ItemProperty, const FText& ItemDescription, bool bIsOptional)
+FMDFastBindingItem& UMDFastBindingObject::EnsureBindingItemExists(const FName& ItemName, const FProperty* ItemProperty, const FText& ItemDescription, bool bIsOptional)
 {
 	FMDFastBindingItem* BindingItem = BindingItems.FindByKey(ItemName);
 	if (BindingItem == nullptr)
@@ -397,21 +401,26 @@ void UMDFastBindingObject::EnsureBindingItemExists(const FName& ItemName, const 
 		BindingItem = BindingItems.FindByKey(ItemName);
 	}
 
+#if WITH_EDITORONLY_DATA
 	BindingItem->bIsSelfPin = DoesBindingItemDefaultToSelf(ItemName);
+	BindingItem->bIsWorldContextPin = IsBindingItemWorldContextObject(ItemName);
+#endif
 	BindingItem->bAllowNullValue = bIsOptional;
 	BindingItem->ItemProperty = ItemProperty;
 	BindingItem->ToolTip = ItemDescription;
+
+	return *BindingItem;
 }
 
-void UMDFastBindingObject::EnsureExtendableBindingItemExists(const FName& NameBase, const FProperty* ItemProperty, const FText& ItemDescription, int32 ItemIndex, bool bIsOptional)
+FMDFastBindingItem& UMDFastBindingObject::EnsureExtendableBindingItemExists(const FName& NameBase, const FProperty* ItemProperty, const FText& ItemDescription, int32 ItemIndex, bool bIsOptional)
 {
 	const FName& ItemName = FindOrCreateExtendableItemName(NameBase, ItemIndex);
-	EnsureBindingItemExists(ItemName, ItemProperty, ItemDescription, bIsOptional);
+	FMDFastBindingItem& BindingItem = EnsureBindingItemExists(ItemName, ItemProperty, ItemDescription, bIsOptional);
 
-	FMDFastBindingItem* BindingItem = FindBindingItem(ItemName);
-	check(BindingItem);
-	BindingItem->ExtendablePinListIndex = ItemIndex;
-	BindingItem->ExtendablePinListNameBase = NameBase;
+	BindingItem.ExtendablePinListIndex = ItemIndex;
+	BindingItem.ExtendablePinListNameBase = NameBase;
+
+	return BindingItem;
 }
 
 const FProperty* UMDFastBindingObject::ResolveBindingItemProperty(const FName& Name) const

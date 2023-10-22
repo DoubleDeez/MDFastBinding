@@ -27,12 +27,23 @@ const FProperty* UMDFastBindingValue_Function::GetOutputProperty()
 	return Function.GetReturnProp();
 }
 
+#if WITH_EDITORONLY_DATA
 bool UMDFastBindingValue_Function::DoesBindingItemDefaultToSelf(const FName& InItemName) const
 {
-	return InItemName == MDFastBindingValue_Function_Private::FunctionOwnerName;
+	const UFunction* Func = const_cast<UMDFastBindingValue_Function*>(this)->GetFunction();
+	const FName DefaultToSelfMetaValue = IsValid(Func) ? *Func->GetMetaData(TEXT("DefaultToSelf")) : TEXT("");
+
+	return InItemName == DefaultToSelfMetaValue || InItemName == MDFastBindingValue_Function_Private::FunctionOwnerName;
 }
 
-#if WITH_EDITORONLY_DATA
+bool UMDFastBindingValue_Function::IsBindingItemWorldContextObject(const FName& InItemName) const
+{
+	const UFunction* Func = const_cast<UMDFastBindingValue_Function*>(this)->GetFunction();
+	const FName WorldContextMetaValue = IsValid(Func) ? *Func->GetMetaData(TEXT("WorldContext")) : TEXT("");
+
+	return InItemName == WorldContextMetaValue;
+}
+
 FText UMDFastBindingValue_Function::GetDisplayName()
 {
 	if (const UFunction* Func = Function.GetFunctionPtr())

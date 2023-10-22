@@ -41,10 +41,14 @@ public:
 
 	virtual FString GetPinMetaData(FName InPinName, FName InKey) override;
 
+	virtual FText GetPinDisplayName(const UEdGraphPin* Pin) const override;
+
 	void CleanUpCopying();
 	void CleanUpPasting();
 
 	void RefreshGraph();
+
+	UBlueprint* GetBlueprint() const;
 
 	static const FName OutputPinName;
 

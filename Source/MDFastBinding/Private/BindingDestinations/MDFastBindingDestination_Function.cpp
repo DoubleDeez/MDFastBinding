@@ -89,6 +89,7 @@ void UMDFastBindingDestination_Function::SetupBindingItems()
 		, LOCTEXT("PathRootToolTip", "The root object that has the function to call. (Defaults to 'Self').")
 		, true);
 
+
 	for (const FProperty* Param : Params)
 	{
 #if WITH_EDITORONLY_DATA
@@ -121,10 +122,23 @@ bool UMDFastBindingDestination_Function::ShouldCallFunction()
 	return bResult;
 }
 
+#if WITH_EDITORONLY_DATA
 bool UMDFastBindingDestination_Function::DoesBindingItemDefaultToSelf(const FName& InItemName) const
 {
-	return InItemName == MDFastBindingDestination_Function_Private::FunctionOwnerName;
+	const UFunction* Func = const_cast<UMDFastBindingDestination_Function*>(this)->GetFunction();
+	const FName DefaultToSelfMetaValue = IsValid(Func) ? *Func->GetMetaData(TEXT("DefaultToSelf")) : TEXT("");
+
+	return InItemName == DefaultToSelfMetaValue || InItemName == MDFastBindingDestination_Function_Private::FunctionOwnerName;
 }
+
+bool UMDFastBindingDestination_Function::IsBindingItemWorldContextObject(const FName& InItemName) const
+{
+	const UFunction* Func = const_cast<UMDFastBindingDestination_Function*>(this)->GetFunction();
+	const FName WorldContextMetaValue = IsValid(Func) ? *Func->GetMetaData(TEXT("WorldContext")) : TEXT("");
+
+	return InItemName == WorldContextMetaValue;
+}
+#endif
 
 #if WITH_EDITOR
 

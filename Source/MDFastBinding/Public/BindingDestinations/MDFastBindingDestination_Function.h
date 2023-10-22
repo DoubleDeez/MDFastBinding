@@ -13,7 +13,10 @@ class MDFASTBINDING_API UMDFastBindingDestination_Function : public UMDFastBindi
 	GENERATED_BODY()
 
 public:
+#if WITH_EDITORONLY_DATA
 	virtual bool DoesBindingItemDefaultToSelf(const FName& InItemName) const override;
+	virtual bool IsBindingItemWorldContextObject(const FName& InItemName) const override;
+#endif
 
 #if WITH_EDITOR
 	virtual EDataValidationResult IsDataValid(TArray<FText>& ValidationErrors) override;
