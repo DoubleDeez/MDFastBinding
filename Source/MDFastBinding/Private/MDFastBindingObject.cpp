@@ -140,7 +140,7 @@ const FName& UMDFastBindingObject::FindOrCreateExtendableItemName(const FName& B
 
 	FName& Result = ItemNameMap.FindOrAdd(TTuple<FName, int32>(Base, Index));
 
-	if (!Result.IsValid())
+	if (Result.IsNone())
 	{
 		Result = *FString::Printf(TEXT("%s %d"), *Base.ToString(), Index);
 	}
