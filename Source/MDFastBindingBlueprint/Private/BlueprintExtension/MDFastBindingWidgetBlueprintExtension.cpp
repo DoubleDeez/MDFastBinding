@@ -61,21 +61,23 @@ void UMDFastBindingWidgetBlueprintExtension::HandleBeginCompilation(FWidgetBluep
 	CompilerContext = &InCreationContext;
 }
 
-void UMDFastBindingWidgetBlueprintExtension::HandleFinishCompilingClass(UWidgetBlueprintGeneratedClass* Class)
+void UMDFastBindingWidgetBlueprintExtension::HandleCopyTermDefaultsToDefaultObject(UObject* DefaultObject)
 {
-	Super::HandleFinishCompilingClass(Class);
-
-	if (CompilerContext != nullptr && DoesBlueprintOrSuperClassesHaveBindings())
+	Super::HandleCopyTermDefaultsToDefaultObject(DefaultObject);
+	
+	if (UWidgetBlueprintGeneratedClass* WidgetBPClass = Cast<UWidgetBlueprintGeneratedClass>(DefaultObject->GetClass()))
 	{
-		UMDFastBindingWidgetClassExtension* BindingClass = NewObject<UMDFastBindingWidgetClassExtension>(Class);
-		if (BindingContainer != nullptr && BindingContainer->GetBindings().Num() > 0)
+		if (CompilerContext != nullptr && DoesBlueprintOrSuperClassesHaveBindings())
 		{
-			BindingClass->SetBindingContainer(BindingContainer);
+			UMDFastBindingWidgetClassExtension* BindingClass = NewObject<UMDFastBindingWidgetClassExtension>(WidgetBPClass);
+			if (BindingContainer != nullptr && BindingContainer->GetBindings().Num() > 0)
+			{
+				BindingClass->SetBindingContainer(BindingContainer);
+			}
+		
+			// There's a chance we could perform some compile-time steps here that would improve runtime performance
+			CompilerContext->AddExtension(WidgetBPClass, BindingClass);
 		}
-
-		// There's a chance we could perform some compile-time steps here that would improve runtime performance
-
-		CompilerContext->AddExtension(Class, BindingClass);
 	}
 }
 
