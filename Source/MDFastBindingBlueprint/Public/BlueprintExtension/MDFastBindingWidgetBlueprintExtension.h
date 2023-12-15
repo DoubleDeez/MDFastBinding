@@ -35,7 +35,7 @@ public:
 
 protected:
 	virtual void HandleBeginCompilation(FWidgetBlueprintCompilerContext& InCreationContext) override;
-	virtual void HandleFinishCompilingClass(UWidgetBlueprintGeneratedClass* Class) override;
+	virtual void HandleCopyTermDefaultsToDefaultObject(UObject* DefaultObject) override;
 	virtual bool HandleValidateGeneratedClass(UWidgetBlueprintGeneratedClass* Class) override;
 	virtual void HandleEndCompilation() override;
 
