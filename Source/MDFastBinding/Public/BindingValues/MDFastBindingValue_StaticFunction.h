@@ -21,7 +21,7 @@ public:
 protected:
 	virtual UObject* GetFunctionOwner(UObject* SourceObject) override;
 	virtual UClass* GetFunctionOwnerClass() override { return FunctionOwnerClass; }
-	virtual bool IsFunctionValid(UFunction* Func, const FProperty* ReturnValue, const TArray<const FProperty*>& Params) const override;
+	virtual bool IsFunctionValid(UFunction* Func, const TWeakFieldPtr<const FProperty>& ReturnValue, const TArray<TWeakFieldPtr<const FProperty>>& Params) const override;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Binding")
 	TSubclassOf<UObject> FunctionOwnerClass;

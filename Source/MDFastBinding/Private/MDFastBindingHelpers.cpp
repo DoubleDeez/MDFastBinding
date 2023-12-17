@@ -27,11 +27,11 @@ void FMDFastBindingHelpers::GetFunctionParamProps(const UFunction* Func, TArray<
 	}
 }
 
-void FMDFastBindingHelpers::SplitFunctionParamsAndReturnProp(const UFunction* Func, TArray<const FProperty*>& OutParams,
-                                                             const FProperty*& OutReturnProp)
+void FMDFastBindingHelpers::SplitFunctionParamsAndReturnProp(const UFunction* Func, TArray<TWeakFieldPtr<const FProperty>>& OutParams,
+                                                             TWeakFieldPtr<const FProperty>& OutReturnProp)
 {
 	OutParams.Empty();
-	OutReturnProp = nullptr;
+	OutReturnProp.Reset();
 
 	if (Func != nullptr)
 	{
@@ -45,7 +45,7 @@ void FMDFastBindingHelpers::SplitFunctionParamsAndReturnProp(const UFunction* Fu
 				{
 					const bool bIsReturnParam = Param->HasAnyPropertyFlags(CPF_ReturnParm)
 						|| (Param->HasAnyPropertyFlags(CPF_OutParm) && !Param->HasAnyPropertyFlags(CPF_ReferenceParm));
-					if (Param != OutReturnProp && !bIsReturnParam)
+					if (Param != OutReturnProp.Get() && !bIsReturnParam)
 					{
 						OutParams.Add(Param);
 					}

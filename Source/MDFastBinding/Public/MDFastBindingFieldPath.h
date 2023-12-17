@@ -10,6 +10,45 @@ DECLARE_DELEGATE_RetVal_OneParam(UObject*, FMDGetFieldPathOwner, UObject*);
 DECLARE_DELEGATE_RetVal(UStruct*, FMDGetFieldPathOwnerStruct);
 DECLARE_DELEGATE_RetVal_OneParam(bool, FMDFilterFieldPathField, const FFieldVariant&);
 
+class FMDFastBindingFieldPathVariant
+{
+public:
+	FMDFastBindingFieldPathVariant(const FField* InField)
+		: FieldVariant(InField)
+	{
+		Field = InField;
+	}
+	
+	FMDFastBindingFieldPathVariant(UObject* InObject)
+	: FieldVariant(InObject)
+	{
+		Object = InObject;
+	}
+
+	bool IsUObject() const
+	{
+		return Object.IsValid();
+	}
+	
+	FField* ToField() const
+	{
+		return Field.Get();
+	}
+
+	UObject* ToUObject() const
+	{
+		return Object.Get();
+	}
+
+	const FFieldVariant& GetFieldVariant() const { return FieldVariant; }
+
+private:
+	TWeakFieldPtr<FField> Field;
+	TWeakObjectPtr<UObject> Object;
+
+	FFieldVariant FieldVariant;
+};
+
 /**
  *
  */
@@ -22,7 +61,7 @@ public:
 	~FMDFastBindingFieldPath();
 
 	bool BuildPath();
-	const TArray<FFieldVariant>& GetFieldPath();
+	const TArray<FMDFastBindingFieldPathVariant>& GetFieldPath();
 
 	// Returns a tuple containing the leaf property in the path (or return value property if a function) and a pointer to the value,
 	// with an optional out param to retrieve the container that holds the leaf property
@@ -76,7 +115,7 @@ private:
 	TOptional<uint64> LastFrameUpdatedPath;
 #endif
 
-	TArray<FFieldVariant> CachedPath;
+	TArray<FMDFastBindingFieldPathVariant> CachedPath;
 	TMap<TWeakObjectPtr<const UFunction>, void*> FunctionMemory;
 	TMap<TWeakFieldPtr<FProperty>, void*> PropertyMemory;
 };

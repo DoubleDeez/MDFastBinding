@@ -1,5 +1,7 @@
 ﻿#include "BindingValues/MDFastBindingValue_Property.h"
 
+#include "MDFastBindingFieldPath.h"
+
 #define LOCTEXT_NAMESPACE "MDFastBindingValue_Property"
 
 namespace MDFastBindingValue_Property_Private
@@ -93,8 +95,8 @@ void UMDFastBindingValue_Property::PostInitProperties()
 
 FFieldVariant UMDFastBindingValue_Property::GetLeafField()
 {
-	const TArray<FFieldVariant>& FieldPath = PropertyPath.GetFieldPath();
-	return FieldPath.IsEmpty() ? FFieldVariant{} : FieldPath.Last();
+	const TArray<FMDFastBindingFieldPathVariant>& FieldPath = PropertyPath.GetFieldPath();
+	return FieldPath.IsEmpty() ? FFieldVariant{} : FieldPath.Last().GetFieldVariant();
 }
 
 #if WITH_EDITOR
@@ -146,9 +148,19 @@ void UMDFastBindingValue_Property::SetFieldPath(const TArray<FFieldVariant>& Pat
 	PropertyPath.BuildPath();
 }
 
-const TArray<FFieldVariant>& UMDFastBindingValue_Property::GetFieldPath()
+TArray<FFieldVariant> UMDFastBindingValue_Property::GetFieldPath()
 {
-	return PropertyPath.GetFieldPath();
+	const TArray<FMDFastBindingFieldPathVariant>& FieldPath = PropertyPath.GetFieldPath();
+	
+	TArray<FFieldVariant> ReturnPath;
+	ReturnPath.Reserve(FieldPath.Num());
+
+	for (const FMDFastBindingFieldPathVariant& FieldPathVariant : FieldPath)
+	{
+		ReturnPath.Add(FieldPathVariant.GetFieldVariant());
+	}
+	
+	return ReturnPath;
 }
 #endif
 

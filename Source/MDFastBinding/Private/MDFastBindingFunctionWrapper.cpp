@@ -22,6 +22,8 @@ bool FMDFastBindingFunctionWrapper::BuildFunctionData()
 		FMDFastBindingHelpers::SplitFunctionParamsAndReturnProp(FunctionPtr, Params, ReturnProp);
 	}
 
+	RefreshCachedProperties();
+
 	const bool bIsFuncValid = IsValid(FunctionPtr);
 #if WITH_EDITORONLY_DATA
 	LastFrameFunctionUpdated = bIsFuncValid ? GFrameCounter : TOptional<uint64>();
@@ -35,7 +37,7 @@ UClass* FMDFastBindingFunctionWrapper::GetFunctionOwnerClass() const
 	return OwnerClassGetter.IsBound() ? OwnerClassGetter.Execute() : nullptr;
 }
 
-const TArray<const FProperty*>& FMDFastBindingFunctionWrapper::GetParams()
+TArray<const FProperty*> FMDFastBindingFunctionWrapper::GetParams()
 {
 #if WITH_EDITORONLY_DATA
 	if (!LastFrameFunctionUpdated.IsSet() || LastFrameFunctionUpdated.GetValue() != GFrameCounter)
@@ -46,7 +48,7 @@ const TArray<const FProperty*>& FMDFastBindingFunctionWrapper::GetParams()
 		BuildFunctionData();
 	}
 
-	return Params;
+	return CachedParams;
 }
 
 const FProperty* FMDFastBindingFunctionWrapper::GetReturnProp()
@@ -60,7 +62,7 @@ const FProperty* FMDFastBindingFunctionWrapper::GetReturnProp()
 		BuildFunctionData();
 	}
 
-	return ReturnProp;
+	return CachedReturnProp;
 }
 
 UFunction* FMDFastBindingFunctionWrapper::GetFunctionPtr()
@@ -105,10 +107,10 @@ TTuple<const FProperty*, void*> FMDFastBindingFunctionWrapper::CallFunction(UObj
 
 	FunctionOwner->ProcessEvent(FunctionPtr, FunctionMemory);
 
-	if (ReturnProp != nullptr)
+	if (CachedReturnProp != nullptr)
 	{
-		void* ReturnValuePtr = static_cast<uint8*>(FunctionMemory) + ReturnProp->GetOffset_ForUFunction();
-		return TTuple<const FProperty*, void*>{ ReturnProp, ReturnValuePtr };
+		void* ReturnValuePtr = static_cast<uint8*>(FunctionMemory) + CachedReturnProp->GetOffset_ForUFunction();
+		return TTuple<const FProperty*, void*>{ CachedReturnProp, ReturnValuePtr };
 	}
 
 	return {};
@@ -124,14 +126,14 @@ FString FMDFastBindingFunctionWrapper::ToString()
 
 FString FMDFastBindingFunctionWrapper::FunctionToString(UFunction* Func)
 {
-	const FProperty* ReturnProp = nullptr;
-	TArray<const FProperty*> Params;
+	TWeakFieldPtr<const FProperty> ReturnProp = nullptr;
+	TArray<TWeakFieldPtr<const FProperty>> Params;
 	FMDFastBindingHelpers::SplitFunctionParamsAndReturnProp(Func, Params, ReturnProp);
 
 	return FunctionToString_Internal(Func, ReturnProp, Params);
 }
 
-FString FMDFastBindingFunctionWrapper::FunctionToString_Internal(UFunction* Func, const FProperty* ReturnProp, const TArray<const FProperty*>& Params)
+FString FMDFastBindingFunctionWrapper::FunctionToString_Internal(UFunction* Func, const TWeakFieldPtr<const FProperty>& ReturnProp, const TArray<TWeakFieldPtr<const FProperty>>& Params)
 {
 	if (Func == nullptr)
 	{
@@ -141,7 +143,7 @@ FString FMDFastBindingFunctionWrapper::FunctionToString_Internal(UFunction* Func
 	FString ParamString;
 	for (int32 i = 0; i < Params.Num(); ++i)
 	{
-		if (const FProperty* Param = Params[i])
+		if (const FProperty* Param = Params[i].Get())
 		{
 			if (i != 0)
 			{
@@ -152,7 +154,8 @@ FString FMDFastBindingFunctionWrapper::FunctionToString_Internal(UFunction* Func
 		}
 	}
 
-	const FString ReturnString = ReturnProp != nullptr ? FMDFastBindingHelpers::PropertyToString(*ReturnProp) : TEXT("void");
+	const FProperty* ReturnPropPtr = ReturnProp.Get(); 
+	const FString ReturnString = ReturnPropPtr != nullptr ? FMDFastBindingHelpers::PropertyToString(*ReturnPropPtr) : TEXT("void");
 
 	return FString::Printf(TEXT("%s %s(%s)"), *ReturnString, *Func->GetFName().ToString(), *ParamString);
 }
@@ -226,4 +229,19 @@ void FMDFastBindingFunctionWrapper::FixupFunctionMember()
 		// Check if FunctionMember needs to be updated with a new owner, likely due to a reparented or duplicated BP
 		FunctionMember.FixUpReference(*OwnerClass);
 	}
+}
+
+void FMDFastBindingFunctionWrapper::RefreshCachedProperties()
+{
+	CachedParams.Reset(Params.Num());
+	
+	for (const TWeakFieldPtr<const FProperty>& WeakParam : Params)
+	{
+		if (const FProperty* Param = WeakParam.Get())
+		{
+			CachedParams.Add(Param);
+		}
+	}
+
+	CachedReturnProp = ReturnProp.Get();
 }

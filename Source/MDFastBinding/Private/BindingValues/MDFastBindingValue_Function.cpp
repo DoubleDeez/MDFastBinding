@@ -92,9 +92,9 @@ void UMDFastBindingValue_Function::PopulateFunctionParam(UObject* SourceObject, 
 	bNeedsUpdate |= bDidUpdate;
 }
 
-bool UMDFastBindingValue_Function::IsFunctionValid(UFunction* Func, const FProperty* ReturnValue, const TArray<const FProperty*>& Params) const
+bool UMDFastBindingValue_Function::IsFunctionValid(UFunction* Func, const TWeakFieldPtr<const FProperty>& ReturnValue, const TArray<TWeakFieldPtr<const FProperty>>& Params) const
 {
-	return ReturnValue != nullptr;
+	return ReturnValue.IsValid();
 }
 
 void UMDFastBindingValue_Function::SetupBindingItems()

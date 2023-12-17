@@ -12,7 +12,7 @@ UObject* UMDFastBindingValue_StaticFunction::GetFunctionOwner(UObject* SourceObj
 	return FunctionOwnerClass != nullptr ? FunctionOwnerClass.GetDefaultObject() : nullptr;
 }
 
-bool UMDFastBindingValue_StaticFunction::IsFunctionValid(UFunction* Func, const FProperty* ReturnValue, const TArray<const FProperty*>& Params) const
+bool UMDFastBindingValue_StaticFunction::IsFunctionValid(UFunction* Func, const TWeakFieldPtr<const FProperty>& ReturnValue, const TArray<TWeakFieldPtr<const FProperty>>& Params) const
 {
 	return Super::IsFunctionValid(Func, ReturnValue, Params) && Func != nullptr && Func->HasAnyFunctionFlags(FUNC_Static);
 }

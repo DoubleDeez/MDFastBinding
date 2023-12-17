@@ -2,6 +2,7 @@
 
 #include "Containers/Array.h"
 #include "Containers/UnrealString.h"
+#include "UObject/WeakFieldPtr.h"
 
 
 class FProperty;
@@ -12,7 +13,7 @@ class MDFASTBINDING_API FMDFastBindingHelpers
 {
 public:
 	static void GetFunctionParamProps(const UFunction* Func, TArray<const FProperty*>& OutParams);
-	static void SplitFunctionParamsAndReturnProp(const UFunction* Func, TArray<const FProperty*>& OutParams, const FProperty*& OutReturnProp);
+	static void SplitFunctionParamsAndReturnProp(const UFunction* Func, TArray<TWeakFieldPtr<const FProperty>>& OutParams, TWeakFieldPtr<const FProperty>& OutReturnProp);
 
 	static FString PropertyToString(const FProperty& Prop);
 
