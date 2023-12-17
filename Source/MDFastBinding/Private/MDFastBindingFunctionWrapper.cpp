@@ -82,7 +82,7 @@ UFunction* FMDFastBindingFunctionWrapper::GetFunctionPtr()
 TTuple<const FProperty*, void*> FMDFastBindingFunctionWrapper::CallFunction(UObject* SourceObject)
 {
 #if WITH_EDITORONLY_DATA
-	if (!LastFrameFunctionUpdated.IsSet() || LastFrameFunctionUpdated.GetValue() != GFrameCounter || FunctionMember.ResolveMember<UFunction>() != FunctionPtr)
+	if (!LastFrameFunctionUpdated.IsSet() || LastFrameFunctionUpdated.GetValue() != GFrameCounter)
 #else
 	if (FunctionPtr == nullptr)
 #endif
