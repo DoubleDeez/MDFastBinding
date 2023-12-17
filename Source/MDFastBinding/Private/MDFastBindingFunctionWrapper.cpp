@@ -40,7 +40,7 @@ UClass* FMDFastBindingFunctionWrapper::GetFunctionOwnerClass() const
 TArray<const FProperty*> FMDFastBindingFunctionWrapper::GetParams()
 {
 #if WITH_EDITORONLY_DATA
-	if (!LastFrameFunctionUpdated.IsSet() || LastFrameFunctionUpdated.GetValue() != GFrameCounter)
+	if (!LastFrameFunctionUpdated.IsSet() || LastFrameFunctionUpdated.GetValue() != GFrameCounter || FunctionMember.ResolveMember<UFunction>() != FunctionPtr)
 #else
 	if (FunctionPtr == nullptr)
 #endif
