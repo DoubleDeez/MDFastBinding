@@ -10,7 +10,6 @@
 #include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "MDFastBindingContainer.h"
-#include "MDFastBindingEditorModule.h"
 #include "MDFastBindingEditorStyle.h"
 #include "MDFastBindingInstance.h"
 #include "Misc/DataValidation.h"
@@ -130,22 +129,19 @@ namespace MDFastBindingPropertyBinding
 
 	static void OpenBinding(UWidgetBlueprint* WidgetBlueprint, UMDFastBindingInstance* Binding)
 	{
-		FMDFastBindingEditorModule::OpenBindingEditor(WidgetBlueprint);
-		
 		if (IAssetEditorInstance* AssetEditorInstance = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->FindEditorForAsset(WidgetBlueprint, false))
 		{
-			const TSharedPtr<FTabManager> TabManager = AssetEditorInstance->GetAssociatedTabManager();
-			if (TabManager.IsValid() && TabManager->HasTabSpawner(FMDFastBindingEditorSummoner::TabId))
+			FWidgetBlueprintEditor* WidgetBPEditor = static_cast<FWidgetBlueprintEditor*>(AssetEditorInstance);
+			const TSharedPtr<SMDFastBindingEditorWidget> BindingEditor = StaticCastSharedPtr<SMDFastBindingEditorWidget>(WidgetBPEditor->GetExternalEditorWidget(FMDFastBindingEditorSummoner::DrawerId));
+			if (BindingEditor.IsValid())
 			{
-				if (const TSharedPtr<SDockTab> Tab = TabManager->FindExistingLiveTab(FMDFastBindingEditorSummoner::TabId))
-				{
-					const TSharedPtr<SMDFastBindingEditorWidget> BindingEditorWidget = StaticCastSharedRef<SMDFastBindingEditorWidget>(Tab->GetContent());
-					BindingEditorWidget->SelectBinding(Binding);
-				}
+				BindingEditor->SelectBinding(Binding);
 			}
 		}
-	}
 
+		GEditor->GetEditorSubsystem<UStatusBarSubsystem>()->TryToggleDrawer(FMDFastBindingEditorSummoner::DrawerId);
+	}
+	
 	static void CreateBinding(const UWidgetBlueprint* WidgetBlueprint, const UWidget* Widget, const FProperty* Property)
 	{
 		UMDFastBindingContainer* Container = RequestBindingContainer(const_cast<UWidgetBlueprint*>(WidgetBlueprint));
