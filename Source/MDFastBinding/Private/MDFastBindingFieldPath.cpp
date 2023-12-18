@@ -67,7 +67,22 @@ bool FMDFastBindingFieldPath::BuildPath()
 	return bIsPathValid;
 }
 
-const TArray<FMDFastBindingFieldPathVariant>& FMDFastBindingFieldPath::GetFieldPath()
+TArray<FFieldVariant> FMDFastBindingFieldPath::GetFieldPath()
+{
+	const TArray<FMDFastBindingWeakFieldVariant>& WeakFieldPath = GetWeakFieldPath();
+
+	TArray<FFieldVariant> ReturnPath;
+	ReturnPath.Reserve(WeakFieldPath.Num());
+
+	for (const FMDFastBindingWeakFieldVariant& FieldPathVariant : WeakFieldPath)
+	{
+		ReturnPath.Add(FieldPathVariant.GetFieldVariant());
+	}
+
+	return ReturnPath;
+}
+
+const TArray<FMDFastBindingWeakFieldVariant>& FMDFastBindingFieldPath::GetWeakFieldPath()
 {
 #if WITH_EDITORONLY_DATA
 	// Only cached once per frame, since the user could change the path
@@ -103,10 +118,10 @@ TTuple<const FProperty*, void*> FMDFastBindingFieldPath::ResolvePathFromRootObje
 	{
 		bool bIsOwnerAUObject = true;
 		void* LastOwner = nullptr;
-		const TArray<FMDFastBindingFieldPathVariant>& Path = GetFieldPath();
+		const TArray<FMDFastBindingWeakFieldVariant>& Path = GetWeakFieldPath();
 		for (int32 i = 0; i < Path.Num() && Owner != nullptr; ++i)
 		{
-			const FMDFastBindingFieldPathVariant& FieldVariant = Path[i];
+			const FMDFastBindingWeakFieldVariant& FieldVariant = Path[i];
 			TWeakFieldPtr<const FProperty> OwnerProp = nullptr;
 			LastOwner = Owner;
 
@@ -227,13 +242,19 @@ TTuple<const FProperty*, void*> FMDFastBindingFieldPath::ResolvePathFromRootObje
 	return { GetLeafProperty(), nullptr };
 }
 
+FFieldVariant FMDFastBindingFieldPath::GetLeafField()
+{
+	const TArray<FMDFastBindingWeakFieldVariant>& WeakFieldPath = GetWeakFieldPath();
+	return WeakFieldPath.IsEmpty() ? FFieldVariant{} : WeakFieldPath.Last().GetFieldVariant();
+}
+
 const FProperty* FMDFastBindingFieldPath::GetLeafProperty()
 {
-	const TArray<FMDFastBindingFieldPathVariant>& Path = GetFieldPath();
+	const TArray<FMDFastBindingWeakFieldVariant>& Path = GetWeakFieldPath();
 
 	if (Path.Num() > 0)
 	{
-		const FMDFastBindingFieldPathVariant& FieldVariant = Path.Last();
+		const FMDFastBindingWeakFieldVariant& FieldVariant = Path.Last();
 
 		if (const UFunction* Func = Cast<UFunction>(FieldVariant.ToUObject()))
 		{
@@ -253,7 +274,7 @@ const FProperty* FMDFastBindingFieldPath::GetLeafProperty()
 
 bool FMDFastBindingFieldPath::IsLeafFunction()
 {
-	const TArray<FMDFastBindingFieldPathVariant>& Path = GetFieldPath();
+	const TArray<FMDFastBindingWeakFieldVariant>& Path = GetWeakFieldPath();
 
 	if (Path.Num() > 0)
 	{

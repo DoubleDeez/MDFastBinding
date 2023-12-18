@@ -160,17 +160,7 @@ void UMDFastBindingDestination_Property::SetFieldPath(const TArray<FFieldVariant
 
 TArray<FFieldVariant> UMDFastBindingDestination_Property::GetFieldPath()
 {
-	const TArray<FMDFastBindingFieldPathVariant>& FieldPath = PropertyPath.GetFieldPath();
-	
-	TArray<FFieldVariant> ReturnPath;
-	ReturnPath.Reserve(FieldPath.Num());
-
-	for (const FMDFastBindingFieldPathVariant& FieldPathVariant : FieldPath)
-	{
-		ReturnPath.Add(FieldPathVariant.GetFieldVariant());
-	}
-	
-	return ReturnPath;
+	return PropertyPath.GetFieldPath();
 }
 #endif
 

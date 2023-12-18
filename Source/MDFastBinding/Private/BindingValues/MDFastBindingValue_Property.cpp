@@ -95,8 +95,7 @@ void UMDFastBindingValue_Property::PostInitProperties()
 
 FFieldVariant UMDFastBindingValue_Property::GetLeafField()
 {
-	const TArray<FMDFastBindingFieldPathVariant>& FieldPath = PropertyPath.GetFieldPath();
-	return FieldPath.IsEmpty() ? FFieldVariant{} : FieldPath.Last().GetFieldVariant();
+	return PropertyPath.GetLeafField();
 }
 
 #if WITH_EDITOR
@@ -150,17 +149,7 @@ void UMDFastBindingValue_Property::SetFieldPath(const TArray<FFieldVariant>& Pat
 
 TArray<FFieldVariant> UMDFastBindingValue_Property::GetFieldPath()
 {
-	const TArray<FMDFastBindingFieldPathVariant>& FieldPath = PropertyPath.GetFieldPath();
-	
-	TArray<FFieldVariant> ReturnPath;
-	ReturnPath.Reserve(FieldPath.Num());
-
-	for (const FMDFastBindingFieldPathVariant& FieldPathVariant : FieldPath)
-	{
-		ReturnPath.Add(FieldPathVariant.GetFieldVariant());
-	}
-	
-	return ReturnPath;
+	return PropertyPath.GetFieldPath();
 }
 #endif
 

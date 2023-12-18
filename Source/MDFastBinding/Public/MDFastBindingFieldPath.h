@@ -11,43 +11,47 @@ DECLARE_DELEGATE_RetVal(UStruct*, FMDGetFieldPathOwnerStruct);
 DECLARE_DELEGATE_RetVal_OneParam(bool, FMDFilterFieldPathField, const FFieldVariant&);
 
 // Wraps FFieldVariant to weakly hold the field
-class FMDFastBindingFieldPathVariant
+struct FMDFastBindingWeakFieldVariant
 {
 public:
-	FMDFastBindingFieldPathVariant(const FField* InField)
+	FMDFastBindingWeakFieldVariant(const FField* InField)
 		: FieldVariant(InField)
+		, FieldCanary(InField ? InField->GetOwnerUObject() : nullptr)
 	{
-		Field = InField;
-	}
-	
-	FMDFastBindingFieldPathVariant(UObject* InObject)
-		: FieldVariant(InObject)
-	{
-		Object = InObject;
 	}
 
-	bool IsUObject() const
+	FMDFastBindingWeakFieldVariant(UField* InField)
+		: FieldVariant(InField)
+		, FieldCanary(InField)
 	{
-		return Object.IsValid();
 	}
-	
+
+	bool IsFieldValid() const
+	{
+		return FieldCanary.IsValid();
+	}
+
 	FField* ToField() const
 	{
-		return Field.Get();
+		return IsFieldValid() ? FieldVariant.ToField() : nullptr;
 	}
 
 	UObject* ToUObject() const
 	{
-		return Object.Get();
+		return IsFieldValid() ? FieldVariant.ToUObject() : nullptr;
 	}
 
-	const FFieldVariant& GetFieldVariant() const { return FieldVariant; }
+	const FFieldVariant& GetFieldVariant() const
+	{
+		static FFieldVariant InvalidField = {};
+		return IsFieldValid() ? FieldVariant : InvalidField;
+	}
 
 private:
-	TWeakFieldPtr<FField> Field;
-	TWeakObjectPtr<UObject> Object;
-
 	FFieldVariant FieldVariant;
+
+	// Either the field itself or the FField owner, if it's invalid then our field is invalid
+	TWeakObjectPtr<UObject> FieldCanary;
 };
 
 /**
@@ -62,7 +66,8 @@ public:
 	~FMDFastBindingFieldPath();
 
 	bool BuildPath();
-	const TArray<FMDFastBindingFieldPathVariant>& GetFieldPath();
+	TArray<FFieldVariant> GetFieldPath();
+	const TArray<FMDFastBindingWeakFieldVariant>& GetWeakFieldPath();
 
 	// Returns a tuple containing the leaf property in the path (or return value property if a function) and a pointer to the value,
 	// with an optional out param to retrieve the container that holds the leaf property
@@ -70,6 +75,7 @@ public:
 	TTuple<const FProperty*, void*> ResolvePath(UObject* SourceObject, void*& OutContainer);
 	TTuple<const FProperty*, void*> ResolvePathFromRootObject(UObject* RootObject, void*& OutContainer);
 
+	FFieldVariant GetLeafField();
 	const FProperty* GetLeafProperty();
 	bool IsLeafFunction();
 
@@ -116,7 +122,7 @@ private:
 	TOptional<uint64> LastFrameUpdatedPath;
 #endif
 
-	TArray<FMDFastBindingFieldPathVariant> CachedPath;
+	TArray<FMDFastBindingWeakFieldVariant> CachedPath;
 	TMap<TWeakObjectPtr<const UFunction>, void*> FunctionMemory;
 	TMap<TWeakFieldPtr<FProperty>, void*> PropertyMemory;
 };
