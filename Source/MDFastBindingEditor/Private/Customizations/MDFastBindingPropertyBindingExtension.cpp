@@ -175,6 +175,7 @@ namespace MDFastBindingPropertyBinding
 
 		DestinationNode->BindingObjectIdentifier = FGuid::NewGuid();
 		DestinationNode->NodePos = FIntPoint(400, 0);
+		DestinationNode->SetupBindingItems_Internal();
 
 		UMDFastBindingValue_Property* WidgetNode = Cast<UMDFastBindingValue_Property>(DestinationNode->SetBindingItem(WidgetPinName, UMDFastBindingValue_Property::StaticClass()));
 		WidgetNode->SetUpdateType(EMDFastBindingUpdateType::Once);

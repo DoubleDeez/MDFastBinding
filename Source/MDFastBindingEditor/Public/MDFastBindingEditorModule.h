@@ -36,7 +36,7 @@ public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 
-	void OpenBindingEditor(TWeakObjectPtr<UObject> EditorObject) const;
+	static void OpenBindingEditor(TWeakObjectPtr<UObject> EditorObject);
 
 private:
 	TSharedRef<FExtender> CheckAddBindingEditorToolbarButtons(const TSharedRef<FUICommandList> Commands, const TArray<UObject*> Objects) const;
