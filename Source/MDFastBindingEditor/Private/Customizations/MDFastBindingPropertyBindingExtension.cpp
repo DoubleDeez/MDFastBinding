@@ -14,6 +14,7 @@
 #include "MDFastBindingInstance.h"
 #include "Misc/DataValidation.h"
 #include "Misc/MessageDialog.h"
+#include "PropertyHandle.h"
 #include "ScopedTransaction.h"
 #include "SMDFastBindingEditorWidget.h"
 #include "StatusBarSubsystem.h"
