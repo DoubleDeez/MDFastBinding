@@ -10,6 +10,7 @@ DECLARE_DELEGATE_RetVal_OneParam(UObject*, FMDGetFieldPathOwner, UObject*);
 DECLARE_DELEGATE_RetVal(UStruct*, FMDGetFieldPathOwnerStruct);
 DECLARE_DELEGATE_RetVal_OneParam(bool, FMDFilterFieldPathField, const FFieldVariant&);
 
+// Wraps FFieldVariant to weakly hold the field
 class FMDFastBindingFieldPathVariant
 {
 public:
@@ -20,7 +21,7 @@ public:
 	}
 	
 	FMDFastBindingFieldPathVariant(UObject* InObject)
-	: FieldVariant(InObject)
+		: FieldVariant(InObject)
 	{
 		Object = InObject;
 	}
