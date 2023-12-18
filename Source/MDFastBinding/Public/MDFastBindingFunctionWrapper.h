@@ -66,6 +66,8 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<UFunction> FunctionPtr = nullptr;
 
+	bool ShouldRebuildFunctionData() const;
+	
 #if WITH_EDITORONLY_DATA
 	TOptional<uint64> LastFrameFunctionUpdated;
 #endif

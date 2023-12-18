@@ -39,11 +39,7 @@ UClass* FMDFastBindingFunctionWrapper::GetFunctionOwnerClass() const
 
 TArray<const FProperty*> FMDFastBindingFunctionWrapper::GetParams()
 {
-#if WITH_EDITORONLY_DATA
-	if (!LastFrameFunctionUpdated.IsSet() || LastFrameFunctionUpdated.GetValue() != GFrameCounter || FunctionMember.ResolveMember<UFunction>() != FunctionPtr)
-#else
-	if (FunctionPtr == nullptr)
-#endif
+	if (ShouldRebuildFunctionData())
 	{
 		BuildFunctionData();
 	}
@@ -53,11 +49,7 @@ TArray<const FProperty*> FMDFastBindingFunctionWrapper::GetParams()
 
 const FProperty* FMDFastBindingFunctionWrapper::GetReturnProp()
 {
-#if WITH_EDITORONLY_DATA
-	if (!LastFrameFunctionUpdated.IsSet() || LastFrameFunctionUpdated.GetValue() != GFrameCounter)
-#else
-	if (FunctionPtr == nullptr)
-#endif
+	if (ShouldRebuildFunctionData())
 	{
 		BuildFunctionData();
 	}
@@ -67,11 +59,7 @@ const FProperty* FMDFastBindingFunctionWrapper::GetReturnProp()
 
 UFunction* FMDFastBindingFunctionWrapper::GetFunctionPtr()
 {
-#if WITH_EDITORONLY_DATA
-	if (!LastFrameFunctionUpdated.IsSet() || LastFrameFunctionUpdated.GetValue() != GFrameCounter)
-#else
-	if (FunctionPtr == nullptr)
-#endif
+	if (ShouldRebuildFunctionData())
 	{
 		BuildFunctionData();
 	}
@@ -81,11 +69,7 @@ UFunction* FMDFastBindingFunctionWrapper::GetFunctionPtr()
 
 TTuple<const FProperty*, void*> FMDFastBindingFunctionWrapper::CallFunction(UObject* SourceObject)
 {
-#if WITH_EDITORONLY_DATA
-	if (!LastFrameFunctionUpdated.IsSet() || LastFrameFunctionUpdated.GetValue() != GFrameCounter)
-#else
-	if (FunctionPtr == nullptr)
-#endif
+	if (ShouldRebuildFunctionData())
 	{
 		BuildFunctionData();
 	}
@@ -176,6 +160,17 @@ void FMDFastBindingFunctionWrapper::OnVariableRenamed(UClass* VariableClass, con
 	}
 }
 #endif
+
+bool FMDFastBindingFunctionWrapper::ShouldRebuildFunctionData() const
+{
+#if WITH_EDITORONLY_DATA
+	return !LastFrameFunctionUpdated.IsSet()
+	|| LastFrameFunctionUpdated.GetValue() != GFrameCounter
+	|| FunctionMember.ResolveMember<UFunction>() != FunctionPtr;
+#else
+	return FunctionPtr == nullptr;
+#endif
+}
 
 UObject* FMDFastBindingFunctionWrapper::GetFunctionOwner(UObject* SourceObject) const
 {
