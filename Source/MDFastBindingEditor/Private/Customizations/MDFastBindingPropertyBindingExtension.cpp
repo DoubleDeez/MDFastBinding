@@ -10,6 +10,7 @@
 #include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "MDFastBindingContainer.h"
+#include "MDFastBindingEditorModule.h"
 #include "MDFastBindingEditorStyle.h"
 #include "MDFastBindingInstance.h"
 #include "Misc/DataValidation.h"
@@ -129,17 +130,20 @@ namespace MDFastBindingPropertyBinding
 
 	static void OpenBinding(UWidgetBlueprint* WidgetBlueprint, UMDFastBindingInstance* Binding)
 	{
+		FMDFastBindingEditorModule::OpenBindingEditor(WidgetBlueprint);
+		
 		if (IAssetEditorInstance* AssetEditorInstance = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->FindEditorForAsset(WidgetBlueprint, false))
 		{
-			FWidgetBlueprintEditor* WidgetBPEditor = static_cast<FWidgetBlueprintEditor*>(AssetEditorInstance);
-			const TSharedPtr<SMDFastBindingEditorWidget> BindingEditor = StaticCastSharedPtr<SMDFastBindingEditorWidget>(WidgetBPEditor->GetExternalEditorWidget(FMDFastBindingEditorSummoner::DrawerId));
-			if (BindingEditor.IsValid())
+			const TSharedPtr<FTabManager> TabManager = AssetEditorInstance->GetAssociatedTabManager();
+			if (TabManager.IsValid() && TabManager->HasTabSpawner(FMDFastBindingEditorSummoner::TabId))
 			{
-				BindingEditor->SelectBinding(Binding);
+				if (const TSharedPtr<SDockTab> Tab = TabManager->FindExistingLiveTab(FMDFastBindingEditorSummoner::TabId))
+				{
+					const TSharedPtr<SMDFastBindingEditorWidget> BindingEditorWidget = StaticCastSharedRef<SMDFastBindingEditorWidget>(Tab->GetContent());
+					BindingEditorWidget->SelectBinding(Binding);
+				}
 			}
 		}
-
-		GEditor->GetEditorSubsystem<UStatusBarSubsystem>()->TryToggleDrawer(FMDFastBindingEditorSummoner::DrawerId);
 	}
 
 	static void CreateBinding(const UWidgetBlueprint* WidgetBlueprint, const UWidget* Widget, const FProperty* Property)
@@ -175,6 +179,7 @@ namespace MDFastBindingPropertyBinding
 
 		DestinationNode->BindingObjectIdentifier = FGuid::NewGuid();
 		DestinationNode->NodePos = FIntPoint(400, 0);
+		DestinationNode->SetupBindingItems_Internal();
 
 		UMDFastBindingValue_Property* WidgetNode = Cast<UMDFastBindingValue_Property>(DestinationNode->SetBindingItem(WidgetPinName, UMDFastBindingValue_Property::StaticClass()));
 		WidgetNode->SetUpdateType(EMDFastBindingUpdateType::Once);

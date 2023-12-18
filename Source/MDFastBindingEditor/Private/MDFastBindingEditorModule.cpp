@@ -129,7 +129,7 @@ TSharedRef<FExtender> FMDFastBindingEditorModule::CheckAddBindingEditorToolbarBu
 void FMDFastBindingEditorModule::AddBindingEditorToolbarButtons(FToolBarBuilder& ToolBarBuilder, TWeakObjectPtr<UObject> EditorObject) const
 {
 	ToolBarBuilder.AddToolBarButton(
-		FUIAction(FExecuteAction::CreateRaw(this, &FMDFastBindingEditorModule::OpenBindingEditor, EditorObject))
+		FUIAction(FExecuteAction::CreateStatic(&FMDFastBindingEditorModule::OpenBindingEditor, EditorObject))
 		, NAME_None
 		, LOCTEXT("BindingEditorButtonLabel", "Binding Editor")
 		, LOCTEXT("BindingEditorButtonLabelTooltip", "Opens the binding editor for this asset")
@@ -156,9 +156,9 @@ void FMDFastBindingEditorModule::AddBindingEditorToolbarButtons(FToolBarBuilder&
 	}
 }
 
-void FMDFastBindingEditorModule::OpenBindingEditor(TWeakObjectPtr<UObject> EditorObject) const
+void FMDFastBindingEditorModule::OpenBindingEditor(TWeakObjectPtr<UObject> EditorObject)
 {
-	UObject* Object = EditorObject.Get();
+	const UObject* Object = EditorObject.Get();
 	if (Object == nullptr)
 	{
 		return;
