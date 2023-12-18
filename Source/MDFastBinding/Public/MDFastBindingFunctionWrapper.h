@@ -1,13 +1,14 @@
 ﻿#pragma once
 
 #include "MDFastBindingMemberReference.h"
+#include "UObject/WeakFieldPtr.h"
 
 #include "MDFastBindingFunctionWrapper.generated.h"
 
 DECLARE_DELEGATE_RetVal_OneParam(UObject*, FMDGetFunctionOwner, UObject*);
 DECLARE_DELEGATE_RetVal(UClass*, FMDGetFunctionOwnerClass);
 DECLARE_DELEGATE_ThreeParams(FMDPopulateFunctionParam, UObject*, const FProperty*, void*);
-DECLARE_DELEGATE_RetVal_ThreeParams(bool, FMDFunctionFilter, UFunction*, const FProperty*, const TArray<const FProperty*>&);
+DECLARE_DELEGATE_RetVal_ThreeParams(bool, FMDFunctionFilter, UFunction*, const TWeakFieldPtr<const FProperty>&, const TArray<TWeakFieldPtr<const FProperty>>&);
 DECLARE_DELEGATE_RetVal(bool, FMDShouldCallFunction)
 
 /**
@@ -25,7 +26,7 @@ public:
 
 	UClass* GetFunctionOwnerClass() const;
 
-	const TArray<const FProperty*>& GetParams();
+	TArray<const FProperty*> GetParams();
 
 	const FProperty* GetReturnProp();
 
@@ -40,7 +41,7 @@ public:
 
 	static FString FunctionToString(UFunction* Func);
 
-	static FString FunctionToString_Internal(UFunction* Func, const FProperty* ReturnProp, const TArray<const FProperty*>& Params);
+	static FString FunctionToString_Internal(UFunction* Func, const TWeakFieldPtr<const FProperty>& ReturnProp, const TArray<TWeakFieldPtr<const FProperty>>& Params);
 #endif
 
 #if WITH_EDITOR
@@ -65,13 +66,17 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<UFunction> FunctionPtr = nullptr;
 
+	bool ShouldRebuildFunctionData() const;
+	
 #if WITH_EDITORONLY_DATA
 	TOptional<uint64> LastFrameFunctionUpdated;
 #endif
 
-	TArray<const FProperty*> Params;
+	TArray<TWeakFieldPtr<const FProperty>> Params;
+	TArray<const FProperty*> CachedParams;
 
-	const FProperty* ReturnProp = nullptr;
+	TWeakFieldPtr<const FProperty> ReturnProp = nullptr;
+	const FProperty* CachedReturnProp = nullptr;
 
 	void* FunctionMemory = nullptr;
 	UObject* GetFunctionOwner(UObject* SourceObject) const;
@@ -79,4 +84,5 @@ private:
 	void PopulateParams(UObject* SourceObject);
 
 	void FixupFunctionMember();
+	void RefreshCachedProperties();
 };

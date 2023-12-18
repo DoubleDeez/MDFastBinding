@@ -2,6 +2,7 @@
 
 #include "MDFastBindingFunctionWrapper.h"
 #include "MDFastBindingValueBase.h"
+#include "UObject/WeakFieldPtr.h"
 #include "MDFastBindingValue_Function.generated.h"
 
 /**
@@ -36,7 +37,7 @@ protected:
 	virtual UObject* GetFunctionOwner(UObject* SourceObject);
 	virtual UClass* GetFunctionOwnerClass();
 	virtual void PopulateFunctionParam(UObject* SourceObject, const FProperty* Param, void* ValuePtr);
-	virtual bool IsFunctionValid(UFunction* Func, const FProperty* ReturnValue, const TArray<const FProperty*>& Params) const;
+	virtual bool IsFunctionValid(UFunction* Func, const TWeakFieldPtr<const FProperty>& ReturnValue, const TArray<TWeakFieldPtr<const FProperty>>& Params) const;
 
 	virtual void SetupBindingItems() override;
 

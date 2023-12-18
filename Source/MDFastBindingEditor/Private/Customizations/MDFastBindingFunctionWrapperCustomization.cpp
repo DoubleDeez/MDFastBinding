@@ -4,6 +4,7 @@
 #include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "MDFastBindingHelpers.h"
+#include "UObject/WeakFieldPtr.h"
 #include "Widgets/Images/SImage.h"
 #include "Widgets/Input/SComboButton.h"
 #include "Widgets/Layout/SBox.h"
@@ -109,13 +110,13 @@ TSharedRef<SWidget> FMDFastBindingFunctionWrapperCustomization::BuildFunctionWid
 			.ToolTipText(LOCTEXT("NullFunctionTooltip", "Clear the selection"));
 	}
 
-	const FProperty* ReturnProp = nullptr;
-	TArray<const FProperty*> Params;
+	TWeakFieldPtr<const FProperty> ReturnProp = nullptr;
+	TArray<TWeakFieldPtr<const FProperty>> Params;
 	FMDFastBindingHelpers::SplitFunctionParamsAndReturnProp(Function, Params, ReturnProp);
 
 	const UEdGraphSchema_K2* Schema = GetDefault<UEdGraphSchema_K2>();
 	FEdGraphPinType PinType;
-	Schema->ConvertPropertyToPinType(ReturnProp, PinType);
+	Schema->ConvertPropertyToPinType(ReturnProp.Get(), PinType);
 
 	return SNew(SHorizontalBox)
 		+SHorizontalBox::Slot()
@@ -158,8 +159,8 @@ void FMDFastBindingFunctionWrapperCustomization::GatherPossibleFunctions()
 				{
 					if (FunctionWrapper->FunctionFilter.IsBound())
 					{
-						const FProperty* ReturnProp = nullptr;
-						TArray<const FProperty*> Params;
+						TWeakFieldPtr<const FProperty> ReturnProp = nullptr;
+						TArray<TWeakFieldPtr<const FProperty>> Params;
 						FMDFastBindingHelpers::SplitFunctionParamsAndReturnProp(*It, Params, ReturnProp);
 						if (!FunctionWrapper->FunctionFilter.Execute(*It, ReturnProp, Params))
 						{

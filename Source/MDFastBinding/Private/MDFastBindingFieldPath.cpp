@@ -1,7 +1,6 @@
 ﻿#include "MDFastBindingFieldPath.h"
 
 #include "MDFastBindingHelpers.h"
-#include "UObject/WeakFieldPtr.h"
 
 FMDFastBindingFieldPath::~FMDFastBindingFieldPath()
 {
@@ -18,13 +17,13 @@ bool FMDFastBindingFieldPath::BuildPath()
 	{
 		for (const FMDFastBindingMemberReference& FieldPathMember : FieldPathMembers)
 		{
-			const FProperty* NextProp = nullptr;
+			TWeakFieldPtr<const FProperty> NextProp = nullptr;
 			if (FieldPathMember.bIsFunction)
 			{
-				const UFunction* Func = FieldPathMember.ResolveMember<UFunction>();
+				UFunction* Func = FieldPathMember.ResolveMember<UFunction>();
 				CachedPath.Add(Func);
 
-				TArray<const FProperty*> Params;
+				TArray<TWeakFieldPtr<const FProperty>> Params;
 				FMDFastBindingHelpers::SplitFunctionParamsAndReturnProp(Func, Params, NextProp);
 			}
 			else if (const FProperty* Prop = FieldPathMember.ResolveMember<FProperty>())
@@ -35,15 +34,16 @@ bool FMDFastBindingFieldPath::BuildPath()
 			else if (OwnerStruct != nullptr)
 			{
 				// FMemberReference only supports members of UObjects, so we have to manually handle UStruct members
-				NextProp = OwnerStruct->FindPropertyByName(FieldPathMember.GetMemberName());
-				CachedPath.Add(NextProp);
+				const FProperty* StructProp = OwnerStruct->FindPropertyByName(FieldPathMember.GetMemberName());
+				NextProp = StructProp;
+				CachedPath.Add(StructProp);
 			}
 
-			if (const FObjectPropertyBase* ObjectProp = CastField<const FObjectPropertyBase>(NextProp))
+			if (const FObjectPropertyBase* ObjectProp = CastField<const FObjectPropertyBase>(NextProp.Get()))
 			{
 				OwnerStruct = ObjectProp->PropertyClass;
 			}
-			else if (const FStructProperty* StructProp = CastField<const FStructProperty>(NextProp))
+			else if (const FStructProperty* StructProp = CastField<const FStructProperty>(NextProp.Get()))
 			{
 				OwnerStruct = StructProp->Struct;
 			}
@@ -67,7 +67,22 @@ bool FMDFastBindingFieldPath::BuildPath()
 	return bIsPathValid;
 }
 
-const TArray<FFieldVariant>& FMDFastBindingFieldPath::GetFieldPath()
+TArray<FFieldVariant> FMDFastBindingFieldPath::GetFieldPath()
+{
+	const TArray<FMDFastBindingWeakFieldVariant>& WeakFieldPath = GetWeakFieldPath();
+
+	TArray<FFieldVariant> ReturnPath;
+	ReturnPath.Reserve(WeakFieldPath.Num());
+
+	for (const FMDFastBindingWeakFieldVariant& FieldPathVariant : WeakFieldPath)
+	{
+		ReturnPath.Add(FieldPathVariant.GetFieldVariant());
+	}
+
+	return ReturnPath;
+}
+
+const TArray<FMDFastBindingWeakFieldVariant>& FMDFastBindingFieldPath::GetWeakFieldPath()
 {
 #if WITH_EDITORONLY_DATA
 	// Only cached once per frame, since the user could change the path
@@ -103,11 +118,11 @@ TTuple<const FProperty*, void*> FMDFastBindingFieldPath::ResolvePathFromRootObje
 	{
 		bool bIsOwnerAUObject = true;
 		void* LastOwner = nullptr;
-		const TArray<FFieldVariant>& Path = GetFieldPath();
+		const TArray<FMDFastBindingWeakFieldVariant>& Path = GetWeakFieldPath();
 		for (int32 i = 0; i < Path.Num() && Owner != nullptr; ++i)
 		{
-			const FFieldVariant& FieldVariant = Path[i];
-			const FProperty* OwnerProp = nullptr;
+			const FMDFastBindingWeakFieldVariant& FieldVariant = Path[i];
+			TWeakFieldPtr<const FProperty> OwnerProp = nullptr;
 			LastOwner = Owner;
 
 			if (UFunction* Func = Cast<UFunction>(FieldVariant.ToUObject()))
@@ -137,7 +152,7 @@ TTuple<const FProperty*, void*> FMDFastBindingFieldPath::ResolvePathFromRootObje
 
 				OwnerUObject->ProcessEvent(Func, FuncMemory);
 
-				TArray<const FProperty*> Params;
+				TArray<TWeakFieldPtr<const FProperty>> Params;
 				FMDFastBindingHelpers::SplitFunctionParamsAndReturnProp(Func, Params, OwnerProp);
 				Owner = FuncMemory;
 			}
@@ -217,7 +232,7 @@ TTuple<const FProperty*, void*> FMDFastBindingFieldPath::ResolvePathFromRootObje
 					OutContainer = LastOwner;
 				}
 
-				return TTuple<const FProperty*, void*>{ OwnerProp, Owner };
+				return TTuple<const FProperty*, void*>{ OwnerProp.Get(), Owner };
 			}
 
 			bIsOwnerAUObject = OwnerProp != nullptr && OwnerProp->IsA(FObjectPropertyBase::StaticClass());
@@ -227,20 +242,26 @@ TTuple<const FProperty*, void*> FMDFastBindingFieldPath::ResolvePathFromRootObje
 	return { GetLeafProperty(), nullptr };
 }
 
+FFieldVariant FMDFastBindingFieldPath::GetLeafField()
+{
+	const TArray<FMDFastBindingWeakFieldVariant>& WeakFieldPath = GetWeakFieldPath();
+	return WeakFieldPath.IsEmpty() ? FFieldVariant{} : WeakFieldPath.Last().GetFieldVariant();
+}
+
 const FProperty* FMDFastBindingFieldPath::GetLeafProperty()
 {
-	const TArray<FFieldVariant>& Path = GetFieldPath();
+	const TArray<FMDFastBindingWeakFieldVariant>& Path = GetWeakFieldPath();
 
 	if (Path.Num() > 0)
 	{
-		const FFieldVariant& FieldVariant = Path.Last();
+		const FMDFastBindingWeakFieldVariant& FieldVariant = Path.Last();
 
 		if (const UFunction* Func = Cast<UFunction>(FieldVariant.ToUObject()))
 		{
-			const FProperty* ReturnProp = nullptr;
-			TArray<const FProperty*> Params;
+			TWeakFieldPtr<const FProperty> ReturnProp = nullptr;
+			TArray<TWeakFieldPtr<const FProperty>> Params;
 			FMDFastBindingHelpers::SplitFunctionParamsAndReturnProp(Func, Params, ReturnProp);
-			return ReturnProp;
+			return ReturnProp.Get();
 		}
 		else if (const FProperty* Prop = CastField<const FProperty>(FieldVariant.ToField()))
 		{
@@ -253,7 +274,7 @@ const FProperty* FMDFastBindingFieldPath::GetLeafProperty()
 
 bool FMDFastBindingFieldPath::IsLeafFunction()
 {
-	const TArray<FFieldVariant>& Path = GetFieldPath();
+	const TArray<FMDFastBindingWeakFieldVariant>& Path = GetWeakFieldPath();
 
 	if (Path.Num() > 0)
 	{
@@ -280,8 +301,8 @@ bool FMDFastBindingFieldPath::IsFunctionValidForPath(const UFunction& Func) cons
 		return false;
 	}
 
-	TArray<const FProperty*> Params;
-	const FProperty* ReturnProp = nullptr;
+	TArray<TWeakFieldPtr<const FProperty>> Params;
+	TWeakFieldPtr<const FProperty> ReturnProp = nullptr;
 	FMDFastBindingHelpers::SplitFunctionParamsAndReturnProp(&Func, Params, ReturnProp);
 
 	return Params.Num() == 0 && ReturnProp != nullptr;
@@ -504,12 +525,12 @@ void FMDFastBindingFieldPath::FixupFieldPath()
 				PathMember.FixUpReference(*OwnerClass);
 			}
 
-			const FProperty* NextProp = nullptr;
+			TWeakFieldPtr<const FProperty> NextProp = nullptr;
 			if (PathMember.bIsFunction)
 			{
 				const UFunction* Func = PathMember.ResolveMember<UFunction>();
 
-				TArray<const FProperty*> Params;
+				TArray<TWeakFieldPtr<const FProperty>> Params;
 				FMDFastBindingHelpers::SplitFunctionParamsAndReturnProp(Func, Params, NextProp);
 			}
 			else if (const FProperty* Prop = PathMember.ResolveMember<FProperty>())
@@ -521,11 +542,11 @@ void FMDFastBindingFieldPath::FixupFieldPath()
 				NextProp = OwnerStruct->FindPropertyByName(PathMember.GetMemberName());
 			}
 
-			if (const FObjectPropertyBase* ObjectProp = CastField<const FObjectPropertyBase>(NextProp))
+			if (const FObjectPropertyBase* ObjectProp = CastField<const FObjectPropertyBase>(NextProp.Get()))
 			{
 				OwnerStruct = ObjectProp->PropertyClass;
 			}
-			else if (const FStructProperty* StructProp = CastField<const FStructProperty>(NextProp))
+			else if (const FStructProperty* StructProp = CastField<const FStructProperty>(NextProp.Get()))
 			{
 				OwnerStruct = StructProp->Struct;
 			}

@@ -1,6 +1,7 @@
 ﻿#include "BindingDestinations/MDFastBindingDestination_Property.h"
 
 #include "MDFastBinding.h"
+#include "MDFastBindingFieldPath.h"
 
 #define LOCTEXT_NAMESPACE "MDFastBindingDestination_Property"
 
@@ -157,7 +158,7 @@ void UMDFastBindingDestination_Property::SetFieldPath(const TArray<FFieldVariant
 	PropertyPath.BuildPath();
 }
 
-const TArray<FFieldVariant>& UMDFastBindingDestination_Property::GetFieldPath()
+TArray<FFieldVariant> UMDFastBindingDestination_Property::GetFieldPath()
 {
 	return PropertyPath.GetFieldPath();
 }

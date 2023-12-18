@@ -4,6 +4,7 @@
 #include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "MDFastBindingHelpers.h"
+#include "UObject/WeakFieldPtr.h"
 #include "Widgets/Images/SImage.h"
 #include "Widgets/Input/SComboButton.h"
 #include "Widgets/Layout/SBox.h"
@@ -182,14 +183,14 @@ void FMDFastBindingFieldPathCustomization::BuildFieldPathMenu(FMenuBuilder& Menu
 		const FMDFastBindingFieldPath* FieldPath = ResolveFieldPath();
 		const bool bRecursive = FieldPath != nullptr && FieldPath->bAllowSubProperties;
 		TArray<FFieldVariant> Path = ParentPath;
-		const FProperty* FieldProp = nullptr;
+		TWeakFieldPtr<const FProperty> FieldProp = nullptr;
 		FText DisplayName;
 		FText ToolTip;
 		bool bIsFunction = false;
 		if (const UFunction* Func = Cast<UFunction>(Field.ToUObject()))
 		{
 			static const FText FuncToolTipFormat = LOCTEXT("FunctionMenuItemToolTipFormat", "{0} (returns {1}) \n{2}");
-			TArray<const FProperty*> Params;
+			TArray<TWeakFieldPtr<const FProperty>> Params;
 			FMDFastBindingHelpers::SplitFunctionParamsAndReturnProp(Func, Params, FieldProp);
 			
 			Path.Add(Func);
@@ -202,27 +203,27 @@ void FMDFastBindingFieldPathCustomization::BuildFieldPathMenu(FMenuBuilder& Menu
 			static const FText PropToolTipFormat = LOCTEXT("PropertyMenuItemToolTipFormat", "{0} ({1}) \n{2}");
 			
 			FieldProp = CastField<const FProperty>(Field.ToField());
-			Path.Add(FieldProp);
+			Path.Add(FieldProp.Get());
 			DisplayName = FText::FromName(FieldProp->GetFName());
 			ToolTip = FText::Format(PropToolTipFormat, FieldProp->GetDisplayNameText(), FText::FromString(FMDFastBindingHelpers::PropertyToString(*FieldProp)), FieldProp->GetToolTipText());
 		}
 
 		FUIAction OnFieldSelected = FUIAction(FExecuteAction::CreateSP(this, &FMDFastBindingFieldPathCustomization::SetFieldPath, Path));
-		const FObjectPropertyBase* ObjectProp = CastField<const FObjectPropertyBase>(FieldProp);
-		const FStructProperty* StructProp = CastField<const FStructProperty>(FieldProp);
+		const FObjectPropertyBase* ObjectProp = CastField<const FObjectPropertyBase>(FieldProp.Get());
+		const FStructProperty* StructProp = CastField<const FStructProperty>(FieldProp.Get());
 		if (bRecursive && ObjectProp != nullptr && GatherPossibleFields(ObjectProp->PropertyClass).Num() > 0)
 		{
 			FNewMenuDelegate NewMenuDelegate = FNewMenuDelegate::CreateSP(this, &FMDFastBindingFieldPathCustomization::BuildFieldPathMenu, static_cast<UStruct*>(ObjectProp->PropertyClass), Path);
-			MenuBuilder.AddSubMenu(OnFieldSelected, BuildPropertyWidget(FieldProp, DisplayName, ToolTip, bIsFunction), NewMenuDelegate);
+			MenuBuilder.AddSubMenu(OnFieldSelected, BuildPropertyWidget(FieldProp.Get(), DisplayName, ToolTip, bIsFunction), NewMenuDelegate);
 		}
 		else if (bRecursive && StructProp != nullptr && GatherPossibleFields(StructProp->Struct).Num() > 0)
 		{
 			FNewMenuDelegate NewMenuDelegate = FNewMenuDelegate::CreateSP(this, &FMDFastBindingFieldPathCustomization::BuildFieldPathMenu, static_cast<UStruct*>(StructProp->Struct), Path);
-			MenuBuilder.AddSubMenu(OnFieldSelected, BuildPropertyWidget(FieldProp, DisplayName, ToolTip, bIsFunction), NewMenuDelegate);
+			MenuBuilder.AddSubMenu(OnFieldSelected, BuildPropertyWidget(FieldProp.Get(), DisplayName, ToolTip, bIsFunction), NewMenuDelegate);
 		}
 		else
 		{
-			MenuBuilder.AddMenuEntry(OnFieldSelected, BuildPropertyWidget(FieldProp, DisplayName, ToolTip, bIsFunction));
+			MenuBuilder.AddMenuEntry(OnFieldSelected, BuildPropertyWidget(FieldProp.Get(), DisplayName, ToolTip, bIsFunction));
 		}
 
 	}

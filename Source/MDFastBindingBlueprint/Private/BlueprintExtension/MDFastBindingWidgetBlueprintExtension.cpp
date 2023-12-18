@@ -35,19 +35,6 @@ void UMDFastBindingWidgetBlueprintExtension::GetAllGraphs(TArray<UEdGraph*>& Gra
 	Super::GetAllGraphs(Graphs);
 #endif
 
-	// Since we don't serialize the binding graphs, we need to generate them on the fly
-	if (PinnedGraphs.IsEmpty() && BindingContainer != nullptr)
-	{
-		for (UMDFastBindingInstance* BindingInstance : BindingContainer->GetBindings())
-		{
-			const FString GraphName = FString::Printf(TEXT("FastBinding: %s"), *BindingInstance->GetBindingDisplayName().ToString());
-			UMDFastBindingGraph* GraphObj = NewObject<UMDFastBindingGraph>(GetWidgetBlueprint(), FName(*GraphName), RF_Transient);
-			GraphObj->Schema = UMDFastBindingGraphSchema::StaticClass();
-			GraphObj->SetBinding(BindingInstance);
-			PinnedGraphs.Add(GraphObj);
-		}
-	}
-
 	Graphs.Append(PinnedGraphs);
 }
 #endif
@@ -77,6 +64,9 @@ void UMDFastBindingWidgetBlueprintExtension::HandleCopyTermDefaultsToDefaultObje
 		
 			// There's a chance we could perform some compile-time steps here that would improve runtime performance
 			CompilerContext->AddExtension(WidgetBPClass, BindingClass);
+
+			// The blueprint has been fully recompiled here, we need to update the binding graphs
+			PopulatePinnedGraphs();
 		}
 	}
 }
@@ -101,7 +91,36 @@ void UMDFastBindingWidgetBlueprintExtension::HandleEndCompilation()
 {
 	Super::HandleEndCompilation();
 
-	CompilerContext = nullptr;
+	if (CompilerContext)
+	{
+		// If this class already has the class extension serialized, it had already been saved prior
+		// There's a chance it's being freshly loaded here so we need to generate the binding graphs
+		if (UWidgetBlueprintGeneratedClass* WidgetBPClass = Cast<UWidgetBlueprintGeneratedClass>(CompilerContext->NewClass))
+		{
+			if (WidgetBPClass->GetExtension<UMDFastBindingWidgetClassExtension>() != nullptr)
+			{
+				PopulatePinnedGraphs();
+			}
+		}
+
+		CompilerContext = nullptr;
+	}
+}
+
+void UMDFastBindingWidgetBlueprintExtension::PopulatePinnedGraphs()
+{
+	if (PinnedGraphs.IsEmpty() && BindingContainer != nullptr)
+	{	
+		// Since we don't serialize the binding graphs, we need to generate them on the fly
+		for (UMDFastBindingInstance* BindingInstance : BindingContainer->GetBindings())
+		{
+			const FString GraphName = FString::Printf(TEXT("FastBinding: %s"), *BindingInstance->GetBindingDisplayName().ToString());
+			UMDFastBindingGraph* GraphObj = NewObject<UMDFastBindingGraph>(GetWidgetBlueprint(), FName(*GraphName), RF_Transient);
+			GraphObj->Schema = UMDFastBindingGraphSchema::StaticClass();
+			GraphObj->SetBinding(BindingInstance);
+			PinnedGraphs.Add(GraphObj);
+		}
+	}
 }
 
 UClass* UMDFastBindingWidgetBlueprintExtension::GetBindingOwnerClass() const

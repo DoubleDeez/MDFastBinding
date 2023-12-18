@@ -21,7 +21,7 @@ public:
 	virtual void OnVariableRenamed(UClass* VariableClass, const FName& OldVariableName, const FName& NewVariableName) override;
 
 	void SetFieldPath(const TArray<FFieldVariant>& Path);
-	const TArray<FFieldVariant>& GetFieldPath();
+	TArray<FFieldVariant> GetFieldPath();
 #endif
 
 #if WITH_EDITORONLY_DATA
