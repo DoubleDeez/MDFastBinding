@@ -46,7 +46,7 @@ private:
 	// Temporary graphs that are pinned for use with in the diff tool
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<class UMDFastBindingGraph>> PinnedGraphs;
-	void RefreshPinnedGraphs();
+	void PopulatePinnedGraphs();
 
 	FWidgetBlueprintCompilerContext* CompilerContext = nullptr;
 };

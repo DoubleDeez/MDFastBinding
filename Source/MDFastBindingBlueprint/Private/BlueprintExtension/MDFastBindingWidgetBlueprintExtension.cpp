@@ -66,7 +66,7 @@ void UMDFastBindingWidgetBlueprintExtension::HandleCopyTermDefaultsToDefaultObje
 			CompilerContext->AddExtension(WidgetBPClass, BindingClass);
 
 			// The blueprint has been fully recompiled here, we need to update the binding graphs
-			RefreshPinnedGraphs();
+			PopulatePinnedGraphs();
 		}
 	}
 }
@@ -99,7 +99,7 @@ void UMDFastBindingWidgetBlueprintExtension::HandleEndCompilation()
 		{
 			if (WidgetBPClass->GetExtension<UMDFastBindingWidgetClassExtension>() != nullptr)
 			{
-				RefreshPinnedGraphs();
+				PopulatePinnedGraphs();
 			}
 		}
 
@@ -107,7 +107,7 @@ void UMDFastBindingWidgetBlueprintExtension::HandleEndCompilation()
 	}
 }
 
-void UMDFastBindingWidgetBlueprintExtension::RefreshPinnedGraphs()
+void UMDFastBindingWidgetBlueprintExtension::PopulatePinnedGraphs()
 {
 	if (PinnedGraphs.IsEmpty() && BindingContainer != nullptr)
 	{	
