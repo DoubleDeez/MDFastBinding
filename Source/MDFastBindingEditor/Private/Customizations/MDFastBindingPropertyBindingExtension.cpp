@@ -141,7 +141,7 @@ namespace MDFastBindingPropertyBinding
 
 		GEditor->GetEditorSubsystem<UStatusBarSubsystem>()->TryToggleDrawer(FMDFastBindingEditorSummoner::DrawerId);
 	}
-	
+
 	static void CreateBinding(const UWidgetBlueprint* WidgetBlueprint, const UWidget* Widget, const FProperty* Property)
 	{
 		UMDFastBindingContainer* Container = RequestBindingContainer(const_cast<UWidgetBlueprint*>(WidgetBlueprint));
