@@ -85,7 +85,7 @@ void UMDFastBindingWidgetExtension::UpdateBindings()
 		for (TConstSetBitIterator<> It(TickingContainers); It; ++It)
 		{
 			const int32 Index = It.GetIndex();
-			UMDFastBindingContainer* Container = (Index == 0) ? BindingContainer : SuperBindingContainers[Index + 1];
+			UMDFastBindingContainer* Container = (Index == 0) ? BindingContainer : SuperBindingContainers[Index - 1];
 			if (Container != nullptr && Container->DoesNeedTick())
 			{
 				Container->UpdateBindings(UserWidget);
