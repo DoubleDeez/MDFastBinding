@@ -62,15 +62,16 @@ UObject* UMDFastBindingDestination_Property::GetPropertyOwner(UObject* SourceObj
 {
 	bool bDidUpdate = false;
 	const TTuple<const FProperty*, void*> PathRoot = GetBindingItemValue(SourceObject, MDFastBindingDestination_Property_Private::PathRootName, bDidUpdate);
-
 	bNeedsUpdate = bDidUpdate;
 
 	if (PathRoot.Value != nullptr)
 	{
-		if (UObject* Owner = *static_cast<UObject**>(PathRoot.Value))
-		{
-			return Owner;
-		}
+		return *static_cast<UObject**>(PathRoot.Value);
+	}
+	else if (PathRoot.Key != nullptr)
+	{
+		// null value, but key is valid so it failed to get a value, just return null as the owner
+		return nullptr;
 	}
 
 	return SourceObject;

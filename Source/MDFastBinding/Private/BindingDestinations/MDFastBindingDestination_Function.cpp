@@ -27,9 +27,15 @@ UObject* UMDFastBindingDestination_Function::GetFunctionOwner(UObject* SourceObj
 	bool bDidUpdate = false;
 	const TTuple<const FProperty*, void*> FunctionOwner = GetBindingItemValue(SourceObject, MDFastBindingDestination_Function_Private::FunctionOwnerName, bDidUpdate);
 	bNeedsUpdate |= bDidUpdate;
+
 	if (FunctionOwner.Value != nullptr)
 	{
 		return *static_cast<UObject**>(FunctionOwner.Value);
+	}
+	else if (FunctionOwner.Key != nullptr)
+	{
+		// null value, but key is valid so it failed to get a value, just return null as the owner
+		return nullptr;
 	}
 
 	return SourceObject;
