@@ -65,6 +65,11 @@ UObject* UMDFastBindingValue_Function::GetFunctionOwner(UObject* SourceObject)
 	{
 		return *static_cast<UObject**>(FunctionOwner.Value);
 	}
+	else if (FunctionOwner.Key != nullptr)
+	{
+		// null value, but key is valid so it failed to get a value, just return null as the owner
+		return nullptr;
+	}
 
 	return SourceObject;
 }
