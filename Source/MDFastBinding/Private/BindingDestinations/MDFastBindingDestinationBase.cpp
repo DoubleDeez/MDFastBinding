@@ -2,11 +2,17 @@
 
 #include "MDFastBindingInstance.h"
 #include "BindingValues/MDFastBindingValueBase.h"
+#include "Utils/MDFastBindingTraceHelpers.h"
 
 void UMDFastBindingDestinationBase::InitializeDestination(UObject* SourceObject)
 {
+#if defined(MDFASTBINDING_CONDENSED_PROFILING) && MDFASTBINDING_CONDENSED_PROFILING
+	MD_TRACE_CPUPROFILER_EVENT_SCOPE_FUNCTION_TEXT(*GetName());
+#else
 	TRACE_CPUPROFILER_EVENT_SCOPE_STR(__FUNCTION__);
 	TRACE_CPUPROFILER_EVENT_SCOPE_TEXT(*GetName());
+#endif
+	
 	InitializeDestination_Internal(SourceObject);
 
 	for (const FMDFastBindingItem& BindingItem : BindingItems)
@@ -20,8 +26,13 @@ void UMDFastBindingDestinationBase::InitializeDestination(UObject* SourceObject)
 
 void UMDFastBindingDestinationBase::UpdateDestination(UObject* SourceObject)
 {
+#if defined(MDFASTBINDING_CONDENSED_PROFILING) && MDFASTBINDING_CONDENSED_PROFILING
+	MD_TRACE_CPUPROFILER_EVENT_SCOPE_FUNCTION_TEXT(*GetName());
+#else
 	TRACE_CPUPROFILER_EVENT_SCOPE_STR(__FUNCTION__);
 	TRACE_CPUPROFILER_EVENT_SCOPE_TEXT(*GetName());
+#endif
+	
 	if (CheckCachedNeedsUpdate())
 	{
 		UpdateDestination_Internal(SourceObject);
@@ -30,8 +41,13 @@ void UMDFastBindingDestinationBase::UpdateDestination(UObject* SourceObject)
 
 void UMDFastBindingDestinationBase::TerminateDestination(UObject* SourceObject)
 {
+#if defined(MDFASTBINDING_CONDENSED_PROFILING) && MDFASTBINDING_CONDENSED_PROFILING
+	MD_TRACE_CPUPROFILER_EVENT_SCOPE_FUNCTION_TEXT(*GetName());
+#else
 	TRACE_CPUPROFILER_EVENT_SCOPE_STR(__FUNCTION__);
 	TRACE_CPUPROFILER_EVENT_SCOPE_TEXT(*GetName());
+#endif
+	
 	TerminateDestination_Internal(SourceObject);
 
 	for (const FMDFastBindingItem& BindingItem : BindingItems)
