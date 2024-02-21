@@ -112,7 +112,7 @@ void UMDFastBindingDestination_Property::SetupBindingItems()
 	Super::SetupBindingItems();
 
 	EnsureBindingItemExists(MDFastBindingDestination_Property_Private::PathRootName
-		, nullptr
+		, GetClass()->FindPropertyByName(GET_MEMBER_NAME_CHECKED(UMDFastBindingDestination_Property, ObjectProperty))
 		, LOCTEXT("PathRootToolTip", "The root object that has the property to set the value of. (Defaults to 'Self').")
 		, true);
 	EnsureBindingItemExists(MDFastBindingDestination_Property_Private::ValueSourceName
