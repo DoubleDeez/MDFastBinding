@@ -2,7 +2,10 @@
 
 #include "MDFastBindingFieldPath.h"
 #include "BindingDestinations/MDFastBindingDestinationBase.h"
+#include "UObject/WeakInterfacePtr.h"
 #include "MDFastBindingDestination_Property.generated.h"
+
+class INotifyFieldValueChanged;
 
 /**
  * Set the value of a property
@@ -33,6 +36,7 @@ public:
 protected:
 	virtual void InitializeDestination_Internal(UObject* SourceObject) override;
 	virtual void UpdateDestination_Internal(UObject* SourceObject) override;
+	virtual void TerminateDestination_Internal(UObject* SourceObject) override;
 
 	virtual void PostInitProperties() override;
 
@@ -40,6 +44,14 @@ protected:
 	virtual UStruct* GetPropertyOwnerStruct();
 
 	virtual void SetupBindingItems() override;
+
+	void BindFieldNotify(UObject* SourceObject);
+	void UnbindFieldNotify();
+	
+	UE::FieldNotification::FFieldId GetLeafFieldId(UObject* SourceObject);
+	
+	TWeakInterfacePtr<INotifyFieldValueChanged> BoundFieldNotify;
+	UE::FieldNotification::FFieldId BoundFieldId;
 
 	// Path to the property you want to set
 	UPROPERTY(EditDefaultsOnly, Category = "Binding")
