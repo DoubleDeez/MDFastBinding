@@ -1,5 +1,6 @@
 ﻿#include "BindingDestinations/MDFastBindingDestination_Property.h"
 
+#include "INotifyFieldValueChanged.h"
 #include "MDFastBinding.h"
 #include "MDFastBindingFieldPath.h"
 
@@ -21,6 +22,8 @@ void UMDFastBindingDestination_Property::InitializeDestination_Internal(UObject*
 	Super::InitializeDestination_Internal(SourceObject);
 
 	PropertyPath.BuildPath();
+
+	BindFieldNotify(SourceObject);
 }
 
 void UMDFastBindingDestination_Property::UpdateDestination_Internal(UObject* SourceObject)
@@ -46,8 +49,21 @@ void UMDFastBindingDestination_Property::UpdateDestination_Internal(UObject* Sou
 		}
 
 		FMDFastBindingModule::SetPropertyInContainer(Property.Key, PropertyContainer, Value.Key, Value.Value);
+
+		if (INotifyFieldValueChanged* FieldNotify = BoundFieldNotify.Get())
+		{
+			FieldNotify->BroadcastFieldValueChanged(BoundFieldId);
+		}
+		
 		MarkAsHasEverUpdated();
 	}
+}
+
+void UMDFastBindingDestination_Property::TerminateDestination_Internal(UObject* SourceObject)
+{
+	UnbindFieldNotify();
+	
+	Super::TerminateDestination_Internal(SourceObject);
 }
 
 void UMDFastBindingDestination_Property::PostInitProperties()
@@ -102,6 +118,47 @@ void UMDFastBindingDestination_Property::SetupBindingItems()
 	EnsureBindingItemExists(MDFastBindingDestination_Property_Private::ValueSourceName
 		, PropertyPath.GetLeafProperty()
 		, LOCTEXT("ValueSourceToolTip", "The value to assign to the specified property"));
+}
+
+void UMDFastBindingDestination_Property::BindFieldNotify(UObject* SourceObject)
+{
+	UnbindFieldNotify();
+
+	const UE::FieldNotification::FFieldId FieldId = GetLeafFieldId(SourceObject);
+
+	if (FieldId.IsValid())
+	{
+		if (UObject* PropertyOwner = GetPropertyOwner(SourceObject))
+		{
+			if (INotifyFieldValueChanged* FieldNotify = Cast<INotifyFieldValueChanged>(PropertyOwner))
+			{
+				BoundFieldNotify = FieldNotify;
+				BoundFieldId = FieldId;
+			}
+		}
+	}
+}
+
+void UMDFastBindingDestination_Property::UnbindFieldNotify()
+{
+	BoundFieldNotify.Reset();
+	BoundFieldId = {};
+}
+
+UE::FieldNotification::FFieldId UMDFastBindingDestination_Property::GetLeafFieldId(UObject* SourceObject)
+{
+	if (const FFieldVariant Field = PropertyPath.GetLeafField())
+	{
+		if (UObject* PropertyOwner = GetPropertyOwner(SourceObject))
+		{
+			if (const INotifyFieldValueChanged* FieldNotify = Cast<INotifyFieldValueChanged>(PropertyOwner))
+			{
+				return FieldNotify->GetFieldNotificationDescriptor().GetField(PropertyOwner->GetClass(), Field.GetFName());
+			}
+		}
+	}
+
+	return {};
 }
 
 #if WITH_EDITOR
