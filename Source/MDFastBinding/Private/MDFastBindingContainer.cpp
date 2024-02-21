@@ -1,13 +1,22 @@
 ﻿#include "MDFastBindingContainer.h"
+
 #include "MDFastBindingInstance.h"
 #include "MDFastBindingLog.h"
 #include "MDFastBindingOwnerInterface.h"
 #include "BindingDestinations/MDFastBindingDestinationBase.h"
 #include "Blueprint/UserWidget.h"
+#include "Utils/MDFastBindingTraceHelpers.h"
 #include "WidgetExtension/MDFastBindingWidgetExtension.h"
 
 void UMDFastBindingContainer::InitializeBindings(UObject* SourceObject)
 {
+#if defined(MDFASTBINDING_CONDENSED_PROFILING) && MDFASTBINDING_CONDENSED_PROFILING
+	MD_TRACE_CPUPROFILER_EVENT_SCOPE_FUNCTION_TEXT(*GetNameSafe(SourceObject));
+#else
+	TRACE_CPUPROFILER_EVENT_SCOPE_STR(__FUNCTION__);
+	TRACE_CPUPROFILER_EVENT_SCOPE_TEXT(*GetNameSafe(SourceObject));
+#endif
+	
 	if (const UUserWidget* OuterWidget = Cast<UUserWidget>(GetOuter()))
 	{
 		UE_CLOG(!OuterWidget->IsDesignTime(), LogMDFastBinding, Warning, TEXT("[%s] uses a deprecated property-based MDFastBindingContainer, resave it to automatically upgrade it to a widget extension"), *GetNameSafe(OuterWidget->GetClass()));
@@ -27,8 +36,12 @@ void UMDFastBindingContainer::InitializeBindings(UObject* SourceObject)
 
 void UMDFastBindingContainer::UpdateBindings(UObject* SourceObject)
 {
+#if defined(MDFASTBINDING_CONDENSED_PROFILING) && MDFASTBINDING_CONDENSED_PROFILING
+	MD_TRACE_CPUPROFILER_EVENT_SCOPE_FUNCTION_TEXT(*GetNameSafe(SourceObject));
+#else
 	TRACE_CPUPROFILER_EVENT_SCOPE_STR(__FUNCTION__);
 	TRACE_CPUPROFILER_EVENT_SCOPE_TEXT(*GetNameSafe(SourceObject));
+#endif
 
 	for (TConstSetBitIterator<> It(TickingBindings); It; ++It)
 	{
@@ -38,6 +51,13 @@ void UMDFastBindingContainer::UpdateBindings(UObject* SourceObject)
 
 void UMDFastBindingContainer::TerminateBindings(UObject* SourceObject)
 {
+#if defined(MDFASTBINDING_CONDENSED_PROFILING) && MDFASTBINDING_CONDENSED_PROFILING
+	MD_TRACE_CPUPROFILER_EVENT_SCOPE_FUNCTION_TEXT(*GetNameSafe(SourceObject));
+#else
+	TRACE_CPUPROFILER_EVENT_SCOPE_STR(__FUNCTION__);
+	TRACE_CPUPROFILER_EVENT_SCOPE_TEXT(*GetNameSafe(SourceObject));
+#endif
+	
 	for (UMDFastBindingInstance* Binding : Bindings)
 	{
 		Binding->TerminateBinding(SourceObject);

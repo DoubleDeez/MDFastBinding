@@ -41,8 +41,12 @@ void UMDFastBindingValueBase::TerminateValue(UObject* SourceObject)
 
 TTuple<const FProperty*, void*> UMDFastBindingValueBase::GetValue(UObject* SourceObject, bool& OutDidUpdate)
 {
+#if defined(MDFASTBINDING_CONDENSED_PROFILING) && MDFASTBINDING_CONDENSED_PROFILING
+	MD_TRACE_CPUPROFILER_EVENT_SCOPE_FUNCTION_TEXT(*GetName());
+#else
 	TRACE_CPUPROFILER_EVENT_SCOPE_STR(__FUNCTION__);
 	TRACE_CPUPROFILER_EVENT_SCOPE_TEXT(*GetName());
+#endif
 
 	OutDidUpdate = false;
 

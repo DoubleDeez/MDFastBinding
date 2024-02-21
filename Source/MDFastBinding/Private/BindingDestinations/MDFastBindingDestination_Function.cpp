@@ -1,6 +1,7 @@
 ﻿#include "BindingDestinations/MDFastBindingDestination_Function.h"
 
 #include "MDFastBinding.h"
+#include "Utils/MDFastBindingTraceHelpers.h"
 
 #define LOCTEXT_NAMESPACE "MDFastBindingDestination_Function"
 
@@ -18,6 +19,13 @@ void UMDFastBindingDestination_Function::InitializeDestination_Internal(UObject*
 
 void UMDFastBindingDestination_Function::UpdateDestination_Internal(UObject* SourceObject)
 {
+#if defined(MDFASTBINDING_CONDENSED_PROFILING) && MDFASTBINDING_CONDENSED_PROFILING
+	MD_TRACE_CPUPROFILER_EVENT_SCOPE_FUNCTION_TEXT(*Function.GetFunctionName().ToString());
+#else
+	TRACE_CPUPROFILER_EVENT_SCOPE_STR(__FUNCTION__);
+	TRACE_CPUPROFILER_EVENT_SCOPE_TEXT(*Function.GetFunctionName().ToString());
+#endif
+	
 	bNeedsUpdate = false;
 	Function.CallFunction(SourceObject);
 }

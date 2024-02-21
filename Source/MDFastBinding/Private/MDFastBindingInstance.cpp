@@ -3,6 +3,7 @@
 #include "MDFastBindingContainer.h"
 #include "BindingDestinations/MDFastBindingDestinationBase.h"
 #include "BindingValues/MDFastBindingValueBase.h"
+#include "Utils/MDFastBindingTraceHelpers.h"
 
 #if WITH_EDITOR
 #include "UObject/ObjectSaveContext.h"
@@ -39,6 +40,13 @@ UMDFastBindingContainer* UMDFastBindingInstance::GetBindingContainer() const
 
 void UMDFastBindingInstance::InitializeBinding(UObject* SourceObject)
 {
+#if defined(MDFASTBINDING_CONDENSED_PROFILING) && MDFASTBINDING_CONDENSED_PROFILING && WITH_EDITORONLY_DATA
+	MD_TRACE_CPUPROFILER_EVENT_SCOPE_FUNCTION_TEXT(*GetBindingDisplayName().ToString());
+#else
+	TRACE_CPUPROFILER_EVENT_SCOPE_STR(__FUNCTION__);
+	TRACE_CPUPROFILER_EVENT_SCOPE_TEXT(*GetBindingDisplayName().ToString());
+#endif
+	
 	if (BindingDestination != nullptr)
 	{
 		BindingDestination->InitializeDestination(SourceObject);
@@ -47,6 +55,13 @@ void UMDFastBindingInstance::InitializeBinding(UObject* SourceObject)
 
 bool UMDFastBindingInstance::UpdateBinding(UObject* SourceObject)
 {
+#if defined(MDFASTBINDING_CONDENSED_PROFILING) && MDFASTBINDING_CONDENSED_PROFILING && WITH_EDITORONLY_DATA
+	MD_TRACE_CPUPROFILER_EVENT_SCOPE_FUNCTION_TEXT(*GetBindingDisplayName().ToString());
+#else
+	TRACE_CPUPROFILER_EVENT_SCOPE_STR(__FUNCTION__);
+	TRACE_CPUPROFILER_EVENT_SCOPE_TEXT(*GetBindingDisplayName().ToString());
+#endif
+	
 	if (BindingDestination != nullptr)
 	{
 		BindingDestination->UpdateDestination(SourceObject);
@@ -58,6 +73,13 @@ bool UMDFastBindingInstance::UpdateBinding(UObject* SourceObject)
 
 void UMDFastBindingInstance::TerminateBinding(UObject* SourceObject)
 {
+#if defined(MDFASTBINDING_CONDENSED_PROFILING) && MDFASTBINDING_CONDENSED_PROFILING && WITH_EDITORONLY_DATA
+	MD_TRACE_CPUPROFILER_EVENT_SCOPE_FUNCTION_TEXT(*GetBindingDisplayName().ToString());
+#else
+	TRACE_CPUPROFILER_EVENT_SCOPE_STR(__FUNCTION__);
+	TRACE_CPUPROFILER_EVENT_SCOPE_TEXT(*GetBindingDisplayName().ToString());
+#endif
+	
 	if (BindingDestination != nullptr)
 	{
 		BindingDestination->TerminateDestination(SourceObject);

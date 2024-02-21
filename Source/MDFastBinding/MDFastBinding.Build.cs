@@ -27,5 +27,7 @@ public class MDFastBinding : ModuleRules
 				"SlateCore"
 			}
 		);
+		
+		PrivateDefinitions.Add("MDFASTBINDING_CONDENSED_PROFILING=0");
 	}
 }
