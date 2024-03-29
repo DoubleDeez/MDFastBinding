@@ -3,7 +3,7 @@
 #include "Containers/Array.h"
 #include "Containers/UnrealString.h"
 #include "UObject/WeakFieldPtr.h"
-
+#include "MDFastBindingHelpers.generated.h"
 
 class FProperty;
 class UFunction;
@@ -21,3 +21,21 @@ public:
 
 	static bool DoesClassHaveSuperClassBindings(UWidgetBlueprintGeneratedClass* Class);
 };
+
+UCLASS(Hidden, MinimalAPI)
+class UMDFastBindingProperties : public UObject
+{
+	GENERATED_BODY()
+
+public:
+	static const FObjectProperty* GetObjectProperty()
+	{
+		static const FObjectProperty* Property = CastFieldChecked<FObjectProperty>(StaticClass()->FindPropertyByName(TEXT("ObjectProperty")));
+		return Property;
+	}
+
+private:
+	UPROPERTY(Transient)
+	TObjectPtr<UObject> ObjectProperty;
+};
+

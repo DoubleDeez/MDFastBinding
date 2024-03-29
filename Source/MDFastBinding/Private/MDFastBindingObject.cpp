@@ -42,25 +42,30 @@ TTuple<const FProperty*, void*> FMDFastBindingItem::GetValue(UObject* SourceObje
 		return Result;
 	}
 
+	{
+		const FProperty* EffectiveItemProp = ItemProperty.IsValid() ? ItemProperty.Get() : UMDFastBindingProperties::GetObjectProperty();
+		if (AllocatedDefaultValue != nullptr)
+		{
+			return TTuple<const FProperty*, void*>{ EffectiveItemProp, AllocatedDefaultValue };
+		}
+
+		if (IsSelfPin() || IsWorldContextPin())
+		{
+			bHasRetrievedDefaultValue = true;
+			UObject** SourceObjectPtr = &SourceObject;
+			AllocatedDefaultValue = FMemory::Malloc(EffectiveItemProp->GetSize(), EffectiveItemProp->GetMinAlignment());
+			EffectiveItemProp->InitializeValue(AllocatedDefaultValue);
+			EffectiveItemProp->CopyCompleteValue(AllocatedDefaultValue, SourceObjectPtr);
+			OutDidUpdate = true;
+
+			return TTuple<const FProperty*, void*>{ EffectiveItemProp, AllocatedDefaultValue };
+		}
+	}
+
 	const FProperty* ItemProp = ItemProperty.Get();
 	if (ItemProp == nullptr)
 	{
 		return {};
-	}
-
-	if (AllocatedDefaultValue != nullptr)
-	{
-		return TTuple<const FProperty*, void*>{ ItemProp, AllocatedDefaultValue };
-	}
-
-	if (IsSelfPin() || IsWorldContextPin())
-	{
-		bHasRetrievedDefaultValue = true;
-		UObject** SourceObjectPtr = &SourceObject;
-		AllocatedDefaultValue = FMemory::Malloc(ItemProp->GetSize(), ItemProp->GetMinAlignment());
-		ItemProp->InitializeValue(AllocatedDefaultValue);
-		ItemProp->CopyCompleteValue(AllocatedDefaultValue, SourceObjectPtr);
-		return TTuple<const FProperty*, void*>{ ItemProp, AllocatedDefaultValue };
 	}
 
 	OutDidUpdate = !HasRetrievedDefaultValue();
