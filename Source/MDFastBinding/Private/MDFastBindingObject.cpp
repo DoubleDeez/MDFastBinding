@@ -5,6 +5,7 @@
 #include "MDFastBindingHelpers.h"
 #include "MDFastBindingInstance.h"
 #include "BindingValues/MDFastBindingValueBase.h"
+#include "UObject/ObjectSaveContext.h"
 #include "UObject/TextProperty.h"
 
 #if WITH_EDITORONLY_DATA
@@ -146,6 +147,20 @@ const FName& UMDFastBindingObject::FindOrCreateExtendableItemName(const FName& B
 	}
 
 	return Result;
+}
+
+void UMDFastBindingObject::PreSave(FObjectPreSaveContext SaveContext)
+{
+	Super::PreSave(SaveContext);
+
+#if WITH_EDITORONLY_DATA
+	// Make sure editor-only meta data is copied over when saving
+	for (FMDFastBindingItem& BindingItem : BindingItems)
+	{
+		BindingItem.bIsSelfPin = DoesBindingItemDefaultToSelf(BindingItem.ItemName);
+		BindingItem.bIsWorldContextPin = IsBindingItemWorldContextObject(BindingItem.ItemName);
+	}
+#endif
 }
 
 UClass* UMDFastBindingObject::GetBindingOwnerClass() const
@@ -395,6 +410,7 @@ FMDFastBindingItem& UMDFastBindingObject::EnsureBindingItemExists(const FName& I
 	}
 
 #if WITH_EDITORONLY_DATA
+	// These are only set at editor time since they depend on editor-only meta data
 	BindingItem->bIsSelfPin = DoesBindingItemDefaultToSelf(ItemName);
 	BindingItem->bIsWorldContextPin = IsBindingItemWorldContextObject(ItemName);
 #endif

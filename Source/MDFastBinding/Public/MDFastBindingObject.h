@@ -143,6 +143,8 @@ public:
 
 	static const FName& FindOrCreateExtendableItemName(const FName& Base, int32 Index);
 
+	virtual void PreSave(FObjectPreSaveContext SaveContext) override;
+
 // Editor only operations
 #if WITH_EDITORONLY_DATA
 	virtual bool DoesBindingItemDefaultToSelf(const FName& InItemName) const { return false; }
