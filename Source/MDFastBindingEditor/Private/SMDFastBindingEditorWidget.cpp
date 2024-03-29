@@ -263,7 +263,7 @@ void SMDFastBindingEditorWidget::AssignBindingData(UBlueprint* BindingOwnerBP)
 		}
 		else
 		{
-			MDFastBindingEditorHelpers::InitBindingContainerInBlueprint(BindingOwnerBP);
+			BindingContainer = MDFastBindingEditorHelpers::InitBindingContainerInBlueprint(BindingOwnerBP);
 		}
 
 		if (const UWidgetBlueprint* WidgetBP = Cast<UWidgetBlueprint>(BindingOwnerBP))
