@@ -76,6 +76,7 @@ public:
 	TTuple<const FProperty*, void*> ResolvePathFromRootObject(UObject* RootObject, void*& OutContainer);
 
 	FFieldVariant GetLeafField();
+	UE::FieldNotification::FFieldId GetLeafFieldId();
 	const FProperty* GetLeafProperty();
 	bool IsLeafFunction();
 

@@ -1,5 +1,6 @@
 ﻿#include "BindingDestinations/MDFastBindingDestination_Property.h"
 
+#include "INotifyFieldValueChanged.h"
 #include "MDFastBinding.h"
 #include "MDFastBindingFieldPath.h"
 
@@ -21,6 +22,7 @@ void UMDFastBindingDestination_Property::InitializeDestination_Internal(UObject*
 	Super::InitializeDestination_Internal(SourceObject);
 
 	PropertyPath.BuildPath();
+	BoundFieldId = PropertyPath.GetLeafFieldId();
 }
 
 void UMDFastBindingDestination_Property::UpdateDestination_Internal(UObject* SourceObject)
@@ -45,7 +47,19 @@ void UMDFastBindingDestination_Property::UpdateDestination_Internal(UObject* Sou
 			return;
 		}
 
+		// Check identical before setting the new value below
+		const bool bShouldBroadcastField = BoundFieldId.IsValid() && (!HasEverUpdated() || !Property.Key->Identical(Property.Value, Value.Value));
+
 		FMDFastBindingModule::SetPropertyInContainer(Property.Key, PropertyContainer, Value.Key, Value.Value);
+
+		if (bShouldBroadcastField)
+		{
+			if (INotifyFieldValueChanged* FieldNotify = Cast<INotifyFieldValueChanged>(RootObject))
+			{
+				FieldNotify->BroadcastFieldValueChanged(BoundFieldId);
+			}
+		}
+
 		MarkAsHasEverUpdated();
 	}
 }

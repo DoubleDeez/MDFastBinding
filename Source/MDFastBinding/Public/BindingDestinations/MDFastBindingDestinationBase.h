@@ -32,6 +32,8 @@ protected:
 	// Must be called manually by child classes after updated the destination
 	void MarkAsHasEverUpdated();
 
+	bool HasEverUpdated() const { return bHasEverUpdated; }
+
 private:
 	UPROPERTY(Transient)
 	bool bHasEverUpdated = false;

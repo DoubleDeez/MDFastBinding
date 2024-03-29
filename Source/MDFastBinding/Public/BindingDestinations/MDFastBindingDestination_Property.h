@@ -50,4 +50,6 @@ protected:
 
 	UPROPERTY(Transient)
 	bool bNeedsUpdate = false;
+
+	UE::FieldNotification::FFieldId BoundFieldId;
 };

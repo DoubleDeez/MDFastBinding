@@ -1,5 +1,6 @@
 ﻿#include "MDFastBindingFieldPath.h"
 
+#include "INotifyFieldValueChanged.h"
 #include "MDFastBindingHelpers.h"
 
 FMDFastBindingFieldPath::~FMDFastBindingFieldPath()
@@ -246,6 +247,23 @@ FFieldVariant FMDFastBindingFieldPath::GetLeafField()
 {
 	const TArray<FMDFastBindingWeakFieldVariant>& WeakFieldPath = GetWeakFieldPath();
 	return WeakFieldPath.IsEmpty() ? FFieldVariant{} : WeakFieldPath.Last().GetFieldVariant();
+}
+
+UE::FieldNotification::FFieldId FMDFastBindingFieldPath::GetLeafFieldId()
+{
+	if (const FFieldVariant Field = GetLeafField())
+	{
+		const UClass* FieldOwner = Field.GetOwnerClass();
+		if (IsValid(FieldOwner))
+		{
+			if (const INotifyFieldValueChanged* FieldNotify = Cast<INotifyFieldValueChanged>(FieldOwner->GetDefaultObject()))
+			{
+				return FieldNotify->GetFieldNotificationDescriptor().GetField(FieldOwner, Field.GetFName());
+			}
+		}
+	}
+
+	return {};
 }
 
 const FProperty* FMDFastBindingFieldPath::GetLeafProperty()
