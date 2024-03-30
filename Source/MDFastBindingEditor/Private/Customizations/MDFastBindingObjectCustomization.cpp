@@ -30,7 +30,7 @@ bool FMDFastBindingObjectCustomization::IsPropertyReadOnly(const FPropertyAndPar
 					// Cannot edit EventBased objects update type
 					if (BindingObject->GetUpdateType() == EMDFastBindingUpdateType::EventBased)
 					{
-						return true;;
+						return true;
 					}
 
 				}

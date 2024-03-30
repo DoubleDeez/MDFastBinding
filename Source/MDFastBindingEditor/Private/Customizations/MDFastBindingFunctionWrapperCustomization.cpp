@@ -2,7 +2,6 @@
 
 #include "DetailWidgetRow.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
-#include "Kismet2/BlueprintEditorUtils.h"
 #include "MDFastBindingHelpers.h"
 #include "UObject/WeakFieldPtr.h"
 #include "Widgets/Images/SImage.h"
@@ -14,7 +13,10 @@
 
 bool FMDFastBindingFunctionWrapperCustomization::IsFunctionValidForWrapper(const UFunction* Func)
 {
-	return Func != nullptr && Func->HasAnyFunctionFlags(FUNC_BlueprintCallable) && !Func->HasMetaData(TEXT("DeprecatedFunction")) && !Func->HasMetaData(TEXT("Hidden"));
+	return IsValid(Func)
+		&& Func->HasAllFunctionFlags(FUNC_BlueprintCallable) && !Func->HasAllFunctionFlags(FUNC_EditorOnly | FUNC_Delegate)
+		&& !Func->GetBoolMetaData(FBlueprintMetadata::MD_BlueprintInternalUseOnly) && !Func->HasMetaData(FBlueprintMetadata::MD_DeprecatedFunction)
+		&& !Func->HasMetaData(TEXT("Hidden"));
 }
 
 void FMDFastBindingFunctionWrapperCustomization::CustomizeHeader(TSharedRef<IPropertyHandle> PropertyHandle,

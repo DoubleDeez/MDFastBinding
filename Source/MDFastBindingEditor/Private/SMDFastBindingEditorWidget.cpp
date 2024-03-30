@@ -20,6 +20,8 @@
 #include "SMDFastBindingInstanceRow.h"
 #include "WidgetBlueprint.h"
 #include "Blueprint/WidgetBlueprintGeneratedClass.h"
+#include "BlueprintEditorSettings.h"
+#include "Customizations/MDFastBindingFunctionWrapperCustomization.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "Util/MDFastBindingEditorHelpers.h"
 #include "Widgets/Layout/SWidgetSwitcher.h"
@@ -51,16 +53,131 @@ class FMDFastBindingDestinationClassFilter : public IClassViewerFilter
 	}
 };
 
+class FMDFastBindingCustomFunctionClassFilter : public IClassViewerFilter
+{
+	bool DoesClassPassFunctionFilter(FString FunctionName, const UClass* InClass) const
+	{
+		TArray<TWeakObjectPtr<UObject>> OuterObjects = DetailsView->GetSelectedObjects();
+
+		// Check for external function references
+		if (FunctionName.Contains(TEXT(".")))
+		{
+			OuterObjects.Empty();
+			const UFunction* FilterFunction = FindObject<UFunction>(nullptr, *FunctionName, true);
+			if (ensureMsgf(FilterFunction && FilterFunction->HasAnyFunctionFlags(EFunctionFlags::FUNC_Static), TEXT("Invalid ClassFilterFunction: %s"), *FunctionName))
+			{
+				UObject* GetOptionsCDO = FilterFunction->GetOuterUClass()->GetDefaultObject();
+				FilterFunction->GetName(FunctionName);
+				OuterObjects.Add(GetOptionsCDO);
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		for (const TWeakObjectPtr<UObject>& OuterObjectPtr : OuterObjects)
+		{
+			if (UObject* OuterObject = OuterObjectPtr.Get())
+			{
+				if (UFunction* FilterFunction = OuterObject->GetClass()->FindFunctionByName(*FunctionName))
+				{
+					if (ensureAlwaysMsgf(IsValidFilterFunction(FilterFunction), TEXT("%s on %s is not a valid Filter Function (UClass* param and bool return value)"), *FunctionName, *GetNameSafe(OuterObject)))
+					{
+						FEditorScriptExecutionGuard ScriptExecutionGuard;
+
+						struct {
+							const UClass* Class;
+							bool bPassedFilter;
+						} Args = { InClass, false };
+
+						OuterObject->ProcessEvent(FilterFunction, &Args);
+
+						if (!Args.bPassedFilter)
+						{
+							return false;
+						}
+					}
+				}
+			}
+		}
+
+		return true;
+	}
+
+	static bool IsValidFilterFunction(const UFunction* Function)
+	{
+		if (!IsValid(Function) || Function->NumParms != 2)
+		{
+			return false;
+		}
+
+		bool bFoundClassParam = false;
+
+		for (TFieldIterator<const FProperty> It(Function); It; ++It)
+		{
+			if (const FProperty* Param = *It)
+			{
+				if (Param->HasAnyPropertyFlags(CPF_Parm))
+				{
+					if (!bFoundClassParam)
+					{
+						if (!Param->IsA<FClassProperty>())
+						{
+							return false;
+						}
+
+						bFoundClassParam = true;
+					}
+					else if (!Param->IsA<FBoolProperty>())
+					{
+						return false;
+					}
+				}
+			}
+		}
+
+		return true;
+	}
+
+	virtual bool IsClassAllowed(const FClassViewerInitializationOptions& InInitOptions, const UClass* InClass, TSharedRef<FClassViewerFilterFuncs> InFilterFuncs ) override
+	{
+		if (InInitOptions.PropertyHandle.IsValid() && InInitOptions.PropertyHandle->HasMetaData("ClassFilterFunction"))
+		{
+			return DoesClassPassFunctionFilter(InInitOptions.PropertyHandle->GetMetaData("ClassFilterFunction"), InClass);
+		}
+
+		return true;
+	}
+
+	virtual bool IsUnloadedClassAllowed(const FClassViewerInitializationOptions& InInitOptions, const TSharedRef<const IUnloadedBlueprintData> InUnloadedClassData, TSharedRef<FClassViewerFilterFuncs> InFilterFuncs) override
+	{
+		if (InInitOptions.PropertyHandle.IsValid() && InInitOptions.PropertyHandle->HasMetaData("ClassFilterFunction"))
+		{
+			// Best we can do is check native functions for unloaded classes
+			return DoesClassPassFunctionFilter(InInitOptions.PropertyHandle->GetMetaData("ClassFilterFunction"), InUnloadedClassData->GetNativeParent());
+		}
+
+		return true;
+	}
+
+public:
+	TSharedPtr<IDetailsView> DetailsView;
+};
+
 void SMDFastBindingEditorWidget::Construct(const FArguments&, const TWeakPtr<FBlueprintEditor> InBlueprintEditor)
 {
 	BlueprintEditor = InBlueprintEditor;
 
+	TSharedRef<FMDFastBindingCustomFunctionClassFilter> ClassFilter = MakeShared<FMDFastBindingCustomFunctionClassFilter>();
 	FDetailsViewArgs DetailsViewArgs;
 	DetailsViewArgs.bLockable = false;
 	DetailsViewArgs.bShowPropertyMatrixButton = false;
 	DetailsViewArgs.bHideSelectionTip = true;
+	DetailsViewArgs.ClassViewerFilters.Emplace(ClassFilter);
 	DetailsView = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor").CreateDetailView(DetailsViewArgs);
 	DetailsView->OnFinishedChangingProperties().AddSP(this, &SMDFastBindingEditorWidget::OnDetailsPanelPropertyChanged);
+	ClassFilter->DetailsView = DetailsView;
 
 	UBlueprint* Blueprint = InBlueprintEditor.Pin()->GetBlueprintObj();
 	AssignBindingData(Blueprint);

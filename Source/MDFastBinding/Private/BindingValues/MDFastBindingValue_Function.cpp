@@ -99,7 +99,13 @@ void UMDFastBindingValue_Function::PopulateFunctionParam(UObject* SourceObject, 
 
 bool UMDFastBindingValue_Function::IsFunctionValid(UFunction* Func, const TWeakFieldPtr<const FProperty>& ReturnValue, const TArray<TWeakFieldPtr<const FProperty>>& Params) const
 {
-	return ReturnValue.IsValid();
+	return ReturnValue.IsValid() && IsValid(Func)
+#if WITH_EDITORONLY_DATA
+		&& !Func->GetBoolMetaData(TEXT("BlueprintInternalUseOnly")) && !Func->HasMetaData(TEXT("DeprecatedFunction"))
+		&& !Func->HasMetaData(TEXT("Hidden"))
+#endif
+		&& Func->HasAllFunctionFlags(FUNC_BlueprintCallable)
+		&& !Func->HasAnyFunctionFlags(FUNC_EditorOnly | FUNC_Delegate);
 }
 
 void UMDFastBindingValue_Function::SetupBindingItems()

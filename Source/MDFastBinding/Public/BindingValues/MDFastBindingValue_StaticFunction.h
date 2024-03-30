@@ -23,6 +23,10 @@ protected:
 	virtual UClass* GetFunctionOwnerClass() override { return FunctionOwnerClass; }
 	virtual bool IsFunctionValid(UFunction* Func, const TWeakFieldPtr<const FProperty>& ReturnValue, const TArray<TWeakFieldPtr<const FProperty>>& Params) const override;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Binding")
+	UPROPERTY(EditDefaultsOnly, Category = "Binding", meta = (ClassFilterFunction = "DoesClassHaveValidStaticFunctions"))
 	TSubclassOf<UObject> FunctionOwnerClass;
+
+private:
+	UFUNCTION()
+	bool DoesClassHaveValidStaticFunctions(const UClass* InClass) const;
 };
