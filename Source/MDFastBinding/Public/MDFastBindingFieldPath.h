@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "MDFastBindingMemberReference.h"
+#include "FieldNotificationId.h"
 #include "UObject/UnrealType.h"
 #include "UObject/WeakFieldPtr.h"
 
