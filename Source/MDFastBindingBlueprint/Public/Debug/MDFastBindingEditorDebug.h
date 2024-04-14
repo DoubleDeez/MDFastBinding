@@ -61,7 +61,11 @@ protected:
 		return new FMDFastBindingWatchedObjectNodeLineItem(WatchedObjectPtr.Get());
 	}
 
+#if ENGINE_MAJOR_VERSION > 5 || ENGINE_MINOR_VERSION >= 4
+	virtual UObject* GetParentObject() const override;
+#else
 	virtual UObject* GetParentObject() override;
+#endif
 
 	virtual void ExtendContextMenu(class FMenuBuilder& MenuBuilder, bool bInDebuggerTab) override;
 
@@ -146,7 +150,11 @@ protected:
 
 	virtual TTuple<const FProperty*, void*> GetPropertyInstance() const override;
 
+#if ENGINE_MAJOR_VERSION > 5 || ENGINE_MINOR_VERSION >= 4
+	virtual UObject* GetParentObject() const override;
+#else
 	virtual UObject* GetParentObject() override;
+#endif
 
 	virtual void ExtendContextMenu(class FMenuBuilder& MenuBuilder, bool bInDebuggerTab) override;
 

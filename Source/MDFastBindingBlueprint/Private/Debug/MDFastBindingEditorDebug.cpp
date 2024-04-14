@@ -74,7 +74,11 @@ void FMDFastBindingWatchedObjectNodeLineItem::UpdateCachedChildren() const
 	CachedPins.GenerateValueArray(CachedChildren.GetValue());
 }
 
+#if ENGINE_MAJOR_VERSION > 5 || ENGINE_MINOR_VERSION >= 4
+UObject* FMDFastBindingWatchedObjectNodeLineItem::GetParentObject() const
+#else
 UObject* FMDFastBindingWatchedObjectNodeLineItem::GetParentObject()
+#endif
 {
 	return WatchedObjectPtr.Get();
 }
@@ -400,7 +404,11 @@ TTuple<const FProperty*, void*> FMDFastBindingItemDebugLineItem::GetPropertyInst
 	return {};
 }
 
+#if ENGINE_MAJOR_VERSION > 5 || ENGINE_MINOR_VERSION >= 4
+UObject* FMDFastBindingItemDebugLineItem::GetParentObject() const
+#else
 UObject* FMDFastBindingItemDebugLineItem::GetParentObject()
+#endif
 {
 	return DebugObjectPtr.Get();
 }
